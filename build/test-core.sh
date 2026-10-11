@@ -9,7 +9,7 @@ cd "$ROOT"
 CC="${HOST_CC:-cc}"
 OUT="$(mktemp -d)"
 trap 'rm -rf "$OUT"' EXIT
-FLAGS=(-std=c99 -g -Wall -Wextra -Werror)
+FLAGS=(-std=c11 -g -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wstrict-prototypes -Werror)
 if "$CC" -fsanitize=address,undefined -x c -o "$OUT/probe" - <<<'int main(void){return 0;}' 2>/dev/null; then
   FLAGS+=(-fsanitize=address,undefined -fno-sanitize-recover=all)
 fi

@@ -74,7 +74,7 @@ Otros archivos:
 3. El modelo puede devolver una respuesta normal o una llamada a `shell`.
 4. Si devuelve `shell`, el programa muestra comando y motivo.
 5. Si se rechaza, devuelve al modelo que el usuario lo rechazó; si se aprueba, ejecuta mediante `cmd.exe`.
-6. El resultado vuelve como mensaje de herramienta y el modelo puede continuar, dentro de un límite de 25 pasos por mensaje.
+6. El resultado vuelve como mensaje de herramienta y el modelo puede continuar, dentro de un límite de 25 pasos por mensaje (`MAX_TURNS`).
 7. Antes de cada request se recorta el historial a ~192 KB descartando intercambios completos (nunca separa un `tool_calls` de sus resultados).
 
 ## Constraints / design choices
@@ -83,7 +83,7 @@ Otros archivos:
 - HTTP: WinHTTP del sistema, TLS/certificados dependen de la instalación de Windows 7.
 - JSON: parser embebido pequeño, sin dependencia externa; debe considerarse código sensible y probarse contra respuestas inesperadas.
 - Ejecución: `cmd.exe /d /s /c` vía `CreateProcessW`; no es un sandbox y el quoting de comandos tiene límites.
-- Memoria: respuesta ≤ 1 MB, historial ~192 KB (blando: el último intercambio siempre se conserva), salida de comando ≤ 24 KB, comando ≤ 2000 bytes, JSON ≤ 20 000 tokens y 64 niveles.
+- Memoria: respuesta ≤ 1 MB (`MAX_HTTP`), historial ~192 KB (`MAX_HISTORY`, blando: el último intercambio siempre se conserva), salida de comando ≤ 24 KB (`MAX_OUTPUT`), comando ≤ 2000 bytes (`MAX_COMMAND`), JSON ≤ 20 000 tokens (`MAX_TOKENS`) y 64 niveles (`MAX_DEPTH`), comandos con límite de 180 s (`CMD_TIMEOUT_MS`).
 - Texto: todo es UTF-8 internamente; la consola usa la API UTF-16 y la salida de comandos se convierte desde el code page OEM.
 
 ## Future changes

@@ -1,0 +1,2 @@
+# Static checks and host tests (a few seconds). Skip once with: git commit --no-verify
+bash scripts/check.sh

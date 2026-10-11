@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+# File length ceiling (AGENTS.md: aim for ~200 lines, 300 max). Split along a real interface.
+set -euo pipefail
+MAX="${MAX_LINES:-300}"
+fail=0
+for f in "$@"; do
+  [ -f "$f" ] || continue
+  n=$(wc -l <"$f")
+  if [ "$n" -gt "$MAX" ]; then
+    echo "check-size: $f tiene $n lineas (maximo $MAX). Dividir por interfaz real." >&2
+    fail=1
+  fi
+done
+exit "$fail"

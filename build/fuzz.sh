@@ -20,8 +20,9 @@ CORE=(src/util.c src/json.c src/conversation.c src/policy.c src/version.c src/pr
 mkdir -p "$OUT/json" "$OUT/stream"
 printf '{"choices":[{"message":{"content":"hola"}}]}' >"$OUT/json/seed"
 printf 'data: {"choices":[{"delta":{"content":"hi"}}]}\n\ndata: [DONE]\n\n' >"$OUT/stream/seed"
+mkdir -p fuzz-findings # a crashing input is kept here (git-ignored) to become a regression test
 for t in json stream; do
   "$CC" "${FLAGS[@]}" -o "$OUT/fuzz_$t" "tests/fuzz_$t.c" "${CORE[@]}"
-  "$OUT/fuzz_$t" -max_total_time="$SECS" -max_len=65536 "$OUT/$t" 2>&1 | tail -1
+  "$OUT/fuzz_$t" -max_total_time="$SECS" -max_len=65536 -artifact_prefix=fuzz-findings/ "$OUT/$t" 2>&1 | tail -1
 done
 echo "fuzz: OK ($SECS s por parser)"

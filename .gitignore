@@ -9,3 +9,5 @@ diagnostics-*/
 dist/
 relay/node_modules/
 relay/.wrangler/
+node_modules/
+fuzz-findings/

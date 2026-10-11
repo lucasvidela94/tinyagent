@@ -39,9 +39,18 @@ Maintain a small, auditable, low-resource, general-purpose terminal agent (in th
 
 1. Read `docs/ARCHITECTURE.md`, `docs/SECURITY.md` and `docs/TEST_PLAN.md` before changing execution, networking or parsing.
 2. Keep changes small and document assumptions. Keep each source file under ~300 lines (aim for ~200); split along a real module interface, not arbitrarily. Windows calls stay in `*_win32.c` / `main.c` so the rest stays host-testable.
-3. Test compilation for 32-bit Windows, not just the host OS, and run `build/test-core.sh`. Check the imported DLLs: Windows 7 has no UCRT by default.
+3. Test compilation for 32-bit Windows, not just the host OS, and run `scripts/check.sh --build` (the husky pre-commit hook runs `scripts/check.sh`; `pnpm install` once sets it up; Node is a dev tool only, never a runtime requirement). Run `build/fuzz.sh` after touching `json` or `stream`. Check the imported DLLs: Windows 7 has no UCRT by default.
 4. Add regression cases for malformed JSON, missing fields, unknown tools, failed network requests, rejected commands and oversized outputs.
 5. Do not describe the build as tested on Windows 7 until it has actually run on that target.
+
+## Agent rules (what pre-commit cannot check)
+
+- Justify a new dependency or file in the commit message. One commit does one thing, <400 lines without tests (commits go straight to `main`).
+- No single-implementation abstractions (no vtable/provider until two real cases).
+- Behavior change requires a test. Refactor changes no behavior.
+- Never edit `build/` or config to make a check pass; fix the code or discuss the check.
+- New `strcpy/strcat/lstrcpyW/lstrcatW` needs a length guard on the lines above; `gets/sprintf/strtok/system/popen/wsprintf/A-variants/alloca` are never accepted (`scripts/check-banned.sh`).
+- Comments state why, never repeat the code.
 
 ## Current status
 
