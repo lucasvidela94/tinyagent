@@ -7,6 +7,8 @@ Agente de terminal de propósito general (en la línea de OpenCode o Pi) para **
 - **Cada comando lo aprobás vos** antes de que se ejecute. Los riesgosos piden además escribir `EJECUTAR`.
 - Equipo de prueba principal: Noblex NT1013E, Windows 7 SP1 32 bits, Atom N2600, 2 GB RAM.
 
+Sitio y descargas: **https://tinyshell.lucasan-videla.workers.dev**
+
 > **Estado:** prototipo. Compila y pasa los tests en Linux, pero todavía **no se probó en el equipo Windows 7 real**. Ver [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md).
 
 ## Instalar
