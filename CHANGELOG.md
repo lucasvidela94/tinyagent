@@ -8,7 +8,7 @@
 - Up to 25 steps per message; prompt asks for plain text and step-by-step work.
 - Agent loop moved to `src/session_win32.c`; `/ayuda` lists commands.
 - Sends the `x-opencode-session` header (random ID per conversation, new on `/reiniciar`): OpenCode Go rejects requests without it (HTTP 400 `MissingSessionID`), found in the first real test.
-- Prompt asks for simple punctuation (no arrows/emoji), which the Windows 7 raster font shows as `?`.
+- Console output is fitted to the font: with a raster font (Windows 7 default), characters missing from the console code page are replaced by ASCII stand-ins (`->`, `...`, `"`, `-`, `v`; emoji dropped) instead of `?`. TrueType fonts are left alone. The prompt also asks for simple punctuation, but the code is what guarantees it.
 - Verified under wine against the real API: tool call, approval, execution, tool result accepted over several round trips, final answer. Also plain mode, Credential Manager, 401 path, TUI layout in a pty.
 
 ## 0.4.0 — updates and installer

@@ -10,7 +10,7 @@ Maintain a small, auditable, low-resource, general-purpose terminal agent (in th
 - Prefer C and Windows system APIs. Do not add Node.js, Go, Python, Electron, Docker, a database, or a background service as runtime requirements.
 - Use WinHTTP for HTTPS unless a tested compatibility issue requires a documented alternative.
 - Keep the CLI synchronous and memory-bounded; the target machine is resource constrained.
-- UI: minimal inline TUI (Pi/OpenCode/Claude Code style) drawn with the console API, no ANSI escapes (the Windows 7 console has none), only glyphs in the default raster font (no arrows or ellipsis characters), plain mode when redirected. Approvals are typed (`s` + Enter), never a single key.
+- UI: minimal inline TUI (Pi/OpenCode/Claude Code style) drawn with the console API, no ANSI escapes (the Windows 7 console has none), only glyphs in the default raster font (no arrows or ellipsis characters in our own strings; model and command text is fitted by `console_win32` + `ascii_fallback()`), plain mode when redirected. Approvals are typed (`s` + Enter), never a single key.
 - Keep all shell execution behind local approval. Never implement auto-approval.
 - Do not store API keys in source, config files, logs, or diagnostic bundles. The only allowed store is the Windows Credential Manager (`src/credential_win32.c`), opt-in after the user is asked; `--logout` deletes it.
 - Updates stay manual, ask before installing, and must verify the release signature and self-test before replacing the binary. Never commit the private signing key; only `keys/release-public.pem` and `src/release_key.h`.

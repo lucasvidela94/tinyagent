@@ -27,6 +27,10 @@ int utf8_cols(const char *s, size_t n);
  * at the last space. Always at least one code point unless s is empty or starts with '\n'. */
 size_t text_fit(const char *s, int cols);
 
+/* ASCII stand-in for a code point that old console fonts cannot show ("->" for U+2192,
+ * "" for emoji and invisible joiners), or NULL if there is none. */
+const char *ascii_fallback(unsigned long cp);
+
 /* Escapes s for a JSON string body. Invalid UTF-8 becomes \\ufffd, so output is always valid. */
 char *jesc(const char *s);
 

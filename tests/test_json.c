@@ -147,6 +147,16 @@ static void test_text_fit(void) {
   CHECK(text_fit("abc", 0) == 1);               /* always makes progress */
 }
 
+static void test_ascii_fallback(void) {
+  CHECK(!strcmp(ascii_fallback(0x2192), "->"));   /* the arrow the model used in the first real test */
+  CHECK(!strcmp(ascii_fallback(0x2026), "..."));
+  CHECK(!strcmp(ascii_fallback(0x201C), "\""));
+  CHECK(!strcmp(ascii_fallback(0x1F600), ""));     /* emoji are dropped */
+  CHECK(!strcmp(ascii_fallback(0xFE0F), ""));      /* invisible variation selector */
+  CHECK(ascii_fallback(0x00E1) == NULL);           /* accented letters exist in the code page */
+  CHECK(ascii_fallback('a') == NULL);
+}
+
 int main(void) {
   test_json_structure();
   test_json_too_many_tokens();
@@ -155,5 +165,6 @@ int main(void) {
   test_jesc();
   test_utf8();
   test_text_fit();
+  test_ascii_fallback();
   return CHECK_DONE("test_json");
 }

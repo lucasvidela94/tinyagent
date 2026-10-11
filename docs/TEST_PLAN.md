@@ -29,11 +29,13 @@
 - [x] `--version`, `--help`, unknown flag, `--update` without release key.
 - [x] Plain mode (piped input): key prompt, save to Credential Manager, reuse on next start, `--logout`, `/ayuda`, unknown command, real HTTPS request to opencode.ai with a fake key → 401 handled with `/clave` hint.
 - [x] TUI in a pseudo-terminal (rendered with pyte): editor between rules and footer, user block with background and wrapping, editor erased after submit, correct placement when the buffer is full.
+- [x] Glyph fitting: `→ … “” — ✅ 😀` render as `-> ... "" - v` (emoji dropped), accents intact.
 - [x] Real commands through `cmd.exe`: output preview (`... +851 líneas · exit=0`), `pause` returns at once (stdin = NUL), risky command asks `EJECUTAR`.
 
 ## TUI (Windows 7 x86)
 
 - [ ] Rules (`─`) and `·` render in the default raster font; colors readable on the default black background.
+- [ ] With the raster font, model text with arrows/quotes/emoji shows ASCII stand-ins (`->`, `"`), accents intact; with Consolas/Lucida the original glyphs show.
 - [ ] Editor: arrows/F7 history and right-click paste work; text appears inside the editor.
 - [ ] Pasting several lines does not answer `ejecutar?` (input flushed).
 - [ ] After ~300 lines (buffer full) the editor still lands in the right place.

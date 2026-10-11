@@ -102,6 +102,23 @@ size_t text_fit(const char *s, int cols) {
   return n;
 }
 
+static const struct { unsigned short cp; const char *ascii; } FALLBACK[] = {
+    {0x00A0, " "},   {0x2013, "-"},  {0x2014, "-"},  {0x2018, "'"},  {0x2019, "'"},   {0x201A, "'"},
+    {0x201C, "\""}, {0x201D, "\""}, {0x201E, "\""}, {0x2022, "*"},  {0x2026, "..."}, {0x2039, "<"},
+    {0x203A, ">"},   {0x2190, "<-"}, {0x2191, "^"},  {0x2192, "->"}, {0x2193, "v"},   {0x2194, "<->"},
+    {0x21D2, "=>"},  {0x2212, "-"},  {0x2248, "~"},  {0x2260, "!="}, {0x2264, "<="},  {0x2265, ">="},
+    {0x2705, "v"},   {0x2713, "v"},  {0x2714, "v"},  {0x2717, "x"},  {0x2718, "x"},   {0x274C, "x"},
+    {0x26A0, "!"},   {0x2139, "i"},  {0x200B, ""},   {0x200C, ""},   {0x200D, ""},    {0xFE0F, ""},
+};
+
+const char *ascii_fallback(unsigned long cp) {
+  size_t i;
+  if (cp >= 0x10000) return ""; /* emoji and other astral symbols: drop rather than show "??" */
+  for (i = 0; i < sizeof FALLBACK / sizeof FALLBACK[0]; i++)
+    if (FALLBACK[i].cp == cp) return FALLBACK[i].ascii;
+  return NULL;
+}
+
 char *jesc(const char *s) {
   Buf b = {0};
   const unsigned char *p = (const unsigned char *)s;
