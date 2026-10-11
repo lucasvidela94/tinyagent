@@ -1,0 +1,8 @@
+tinyshell.exe
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+diagnostics-*/
+*.log
