@@ -6,9 +6,10 @@
 #include "config.h"
 #include "console.h"
 #include "http.h"
+#include "instructions.h"
 #include "json.h"
 #include "policy.h"
-#include "prompt.h"
+#include "machine.h"
 #include "session.h"
 #include "shell.h"
 #include "stream.h"
@@ -24,6 +25,17 @@ static void new_session_id(Session *s) {
   sys_random(r, sizeof r);
   strcpy(s->session_id, "tinyshell-");
   for (i = 0; i < 16; i++) snprintf(s->session_id + 10 + 2 * i, 3, "%02x", r[i]);
+}
+
+/* Instructions for this platform's shell, then the machine as detected at startup. */
+static char *system_prompt(void) {
+  char *head = instructions(system_dialect());
+  Buf b = {0};
+  buf_str(&b, head);
+  free(head);
+  buf_str(&b, "Environment (detected at startup): ");
+  system_details(&b);
+  return buf_take(&b);
 }
 
 void session_init(Session *s) {
@@ -57,7 +69,7 @@ static char *decide(Session *s, const ToolCall *tc) {
     tui_error(problem);
     return xstrdup(problem);
   }
-  risk = risk_reason(tc->command);
+  risk = risk_reason(system_dialect(), tc->command);
   tui_proposal(tc->command, tc->reason, risk);
   s->proposed++;
   console_flush_input(); /* leftover pasted lines must not answer the question */

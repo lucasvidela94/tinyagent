@@ -1,11 +1,11 @@
 # System prompt notes
 
-The system prompt lives in `src/platform/win32/prompt_win32.c` (no runtime file dependency). It is written in English, which models follow most precisely, and tells the model to reply in the user's language.
+The system prompt is built in code, with no runtime file: `src/core/instructions.c` writes the instructions, taking the shell-specific parts (machine noun, shell, heavy-scan examples, built-in tools, what counts as a system change) from the platform's dialect (`src/core/dialect_cmd.c` for Windows, `src/core/dialect_sh.c` for Linux); `src/app/session.c` appends the machine detected at startup (`machine.h`). It is written in English, which models follow most precisely, and tells the model to reply in the user's language.
 
 ## Shape
 
-- **Task-agnostic.** TinyShell is a general-purpose terminal agent for old Windows PCs, in the spirit of OpenCode or Pi, not a single-purpose cleanup or repair bot. The prompt lists example uses (troubleshooting, inspecting files, writing scripts, maintenance, questions) without privileging any.
-- **Machine-agnostic.** No hardcoded hardware. At startup the program appends what it detects: Windows name and build/service pack (`RtlGetVersion`), 32/64-bit, total/free RAM, logical CPUs and current directory.
+- **Task-agnostic.** TinyShell is a general-purpose terminal agent for old PCs (Windows or Linux), in the spirit of OpenCode or Pi, not a single-purpose cleanup or repair bot. The prompt lists example uses (troubleshooting, inspecting files, writing scripts, maintenance, questions) without privileging any.
+- **Machine-agnostic.** No hardcoded hardware. At startup the program appends what it detects: OS name and version (Windows: `RtlGetVersion`; Linux: distro and kernel), 32/64-bit, total/free RAM, logical CPUs and current directory.
 - **Tool contract.** One `shell` tool; every command is approved by a human; stdin is empty; time and output limits are stated with the values from `src/config.h`.
 
 ## Working rules it gives the model

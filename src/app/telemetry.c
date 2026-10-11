@@ -6,7 +6,7 @@
 #include "config.h"
 #include "console.h"
 #include "http.h"
-#include "prompt.h"
+#include "machine.h"
 #include "report.h"
 #include "settings.h"
 #include "sys.h"

@@ -53,6 +53,8 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/core/version.c` | `version_compare`, `version_from_output` | versiones X.Y.Z y salida de `--version` para el updater | portable |
 | `src/core/charset.c` | `charset_encode`, `charset_decode`, `charset_from_locale` | texto para terminales que no son UTF-8 (`LANG=C` o Latin-1 en distros viejas) | portable |
 | `src/core/command.c` | `command_result` | el texto con que vuelve al modelo el resultado de un comando, igual en todas las plataformas | portable |
+| `src/core/dialect.h`, `dialect_cmd.c`, `dialect_sh.c` | `DIALECT_CMD`, `DIALECT_SH` | lo que depende del shell, como datos: reglas de riesgo y guía del prompt para `cmd.exe` y `/bin/sh` | portable |
+| `src/core/instructions.c` | `instructions` | instrucciones agnósticas de tarea del prompt, con las partes del dialecto | portable |
 | `src/core/policy.c` | `command_problem`, `risk_reason`, `is_yes` | rechazo previo, heurística de riesgo, respuesta de aprobación | portable |
 | `src/platform/win32/console_win32.c` | `say`, `read_line`, `console_*` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas; colores, ancho, cursor, borrar filas, vaciar entrada | Win32 |
 | `src/platform/win32/settings_win32.c` | `settings_load`, `settings_save_model` | `%LOCALAPPDATA%\TinyShell\config.ini` (`GetPrivateProfileStringW`), plantilla comentada en el primer arranque | Win32 |
@@ -72,7 +74,7 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/platform/posix/console_posix.c`, `console_input_posix.c` | igual que `console_win32` | escapes ANSI, posición del cursor con `ESC[6n`, termios (modo canónico para líneas, carácter a carácter para claves y menús), charset del locale | POSIX |
 | `src/platform/posix/shell_posix.c` | `run_command` | `/bin/sh -c` en su propio grupo de procesos; timeout y Ctrl+C matan el grupo | POSIX |
 | `src/platform/posix/cancel_posix.c` | `cancel_*` | SIGINT sin `SA_RESTART` (corta la lectura pendiente), SIGPIPE ignorado | POSIX |
-| `src/platform/win32/prompt_win32.c` | `system_prompt` | instrucciones agnósticas de tarea + equipo detectado al arrancar (versión de Windows, arquitectura, RAM, CPUs, carpeta actual) | Win32 |
+| `src/platform/win32/machine_win32.c` | `system_os`, `system_details`, `system_dialect` | equipo detectado al arrancar (versión de Windows, arquitectura, RAM, CPUs, carpeta actual) y el dialecto `cmd` | Win32 |
 | `src/platform/win32/verify_win32.c` | `signature_valid`, `sha256_hex` | firma RSA-3072/SHA-256 de releases con la CryptoAPI; clave pública en `src/release_key.h` | Win32 |
 | `src/app/update.c` | `update_run`, `update_rollback` | `--update`: version.txt → descarga → firma → self-test → swap con el hermano `.old` (`version_sibling`); `--rollback`. Usa `sys` para ruta propia, renombrar y el asset del release | portable |
 | `src/app/main.c` | `main` | subcomandos (`login`, `logout`) y flags (`--version/--update/--rollback`), API key, bucle de chat y comandos `/` | Win32 |

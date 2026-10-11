@@ -8,7 +8,7 @@
 #include "http.h"
 #include "json.h"
 #include "policy.h"
-#include "prompt.h"
+#include "machine.h"
 #include "report.h"
 #include "reporter.h"
 #include "sys.h"
