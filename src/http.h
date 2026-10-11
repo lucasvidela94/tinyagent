@@ -20,6 +20,13 @@ char *http_post(const Provider *p, const char *body, const char *api_key, const 
  * error. Caller frees. Callers that need TLS must pass an https:// URL. */
 char *http_get(const char *url, const char *api_key, size_t max, size_t *len);
 
+/* POSTs a JSON body (no API key) to an http(s) URL; used for reports and telemetry.
+ * quiet = 1: prints nothing and gives up after a few seconds, for background-free
+ * telemetry that must never slow the user down. Returns the 2xx body or NULL. */
+char *http_post_json(const char *url, const char *body, int quiet, size_t max);
+
+unsigned long http_last_error(void); /* WinHTTP error code of the last failure, 0 if none */
+
 /* HTTP status of the last request (e.g. 401 for a rejected API key), 0 if none arrived. */
 unsigned long http_last_status(void);
 

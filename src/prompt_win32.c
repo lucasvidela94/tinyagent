@@ -52,7 +52,7 @@ static void add_wide(Buf *b, const wchar_t *w) {
 }
 
 /* RtlGetVersion reports the real version; GetVersionEx lies on 8.1+ without a manifest. */
-static void add_os(Buf *b) {
+void system_os(Buf *b) {
   typedef LONG(WINAPI * RtlGetVersionFn)(OSVERSIONINFOW *);
   OSVERSIONINFOW v;
   RtlGetVersionFn get = NULL;
@@ -76,7 +76,7 @@ static void add_os(Buf *b) {
   buf_str(b, ")");
 }
 
-static void add_environment(Buf *b) {
+void system_details(Buf *b) {
   char num[160];
   wchar_t cwd[MAX_PATH];
   SYSTEM_INFO si;
@@ -84,8 +84,7 @@ static void add_environment(Buf *b) {
   GetNativeSystemInfo(&si);
   mem.dwLength = sizeof mem;
   if (!GlobalMemoryStatusEx(&mem)) mem.ullTotalPhys = mem.ullAvailPhys = 0;
-  buf_str(b, "Environment (detected at startup): ");
-  add_os(b);
+  system_os(b);
   snprintf(num, sizeof num, ", %s, %lu MB RAM (%lu MB free), %lu logical CPUs, current directory ",
            si.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64 ? "64-bit" : "32-bit",
            (unsigned long)(mem.ullTotalPhys >> 20), (unsigned long)(mem.ullAvailPhys >> 20),
@@ -103,6 +102,7 @@ char *system_prompt(void) {
   snprintf(head, (size_t)(n > 0 ? n : 0) + 1, INSTRUCTIONS, CMD_TIMEOUT_MS / 1000, MAX_OUTPUT);
   buf_str(&b, head);
   free(head);
-  add_environment(&b);
+  buf_str(&b, "Environment (detected at startup): ");
+  system_details(&b);
   return buf_take(&b);
 }

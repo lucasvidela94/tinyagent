@@ -10,6 +10,8 @@ typedef struct {
   History history;
   Provider provider;
   long tokens_in, tokens_out; /* summed from the API "usage" field */
+  int turns, proposed, approved, rejected; /* counters for beta telemetry */
+  unsigned long started_ms;
   char session_id[48];        /* random per conversation, sent in the provider's session header */
   char api_key[1024];
 } Session;

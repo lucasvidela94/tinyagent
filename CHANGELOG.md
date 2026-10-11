@@ -6,6 +6,8 @@
 - Any model of the provider: the list comes from `<base>/models` (38 for OpenCode Go today), so new models show up without a new release. `/modelo` opens the same list; `/modelo <nombre>` still sets one directly. `deepseek-v4.1-flash` stays only as the default.
 - Menu with filtering: type to narrow the list (e.g. `glm`), 10 rows at a time, Esc cancels; numbered fallback when not in a console.
 - API keys are typed with asterisks everywhere (first run too), so a right-click paste is visible on Windows 7.
+- `tinyshell reporte` / `/reporte`: describe the problem; the report (system, provider, recent errors and, if accepted, the conversation) is saved locally, shown and sent only after `s`. The relay (`relay/`, Cloudflare Worker + D1) keeps the full report private and opens a public GitHub issue with the redacted summary. Without network: email the saved file to the maintainer.
+- Beta telemetry: on by default while 0.x, announced on first run, `tinyshell telemetria on|off|--ver`. Metadata only (sessions, step/approval counts, tokens, duration, error codes), one short silent request per event, logged locally.
 - Console input split into `console_input_win32.c`; menu in `tui_select_win32.c`; login in `login_win32.c`.
 
 ## 0.5.0 — minimal TUI, saved API key, any provider

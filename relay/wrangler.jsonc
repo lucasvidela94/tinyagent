@@ -1,0 +1,15 @@
+{
+  // TinyShell relay: reports (private D1 + public GitHub issue) and beta telemetry.
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "tinyshell-relay",
+  "main": "src/index.js",
+  "compatibility_date": "2026-10-11",
+  "workers_dev": true,
+  "preview_urls": false,
+  "observability": { "enabled": true, "traces": { "enabled": true } },
+  "vars": { "GITHUB_REPO": "lucasvidela94/tinyagent" },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "tinyshell-relay", "database_id": "71feaaaf-6dd4-4885-aeab-05a7e1fef755" }
+  ]
+  // Secrets (wrangler secret put): GITHUB_TOKEN (fine-grained, Issues: read/write on GITHUB_REPO), IP_SALT.
+}

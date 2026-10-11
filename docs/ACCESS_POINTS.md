@@ -14,6 +14,8 @@
 | `tinyshell --rollback` | Undo update | Swaps `tinyshell.exe` and `tinyshell.old.exe` |
 | `tinyshell login` | Sign in | Provider menu, API key with asterisks (checked against `<base>/models`; rejected keys are not saved), model menu with filtering; saves key + `[provider]` |
 | `tinyshell logout` (`--logout`) | Forget key | Deletes the saved API key of the current provider |
+| `tinyshell reporte` / `/reporte` | Report a problem | Asks what happened, builds the report, saves it, shows it, sends after `s` (falls back to emailing the file) |
+| `tinyshell telemetria on\|off\|--ver` | Telemetry | Turn beta telemetry on/off; show what was sent |
 | `/ayuda`, `/login`, `/modelo [x]` | Session commands | Show commands; run the login flow; pick a model from the live list or set one by name (saved to `config.ini`) |
 | `/reiniciar` | Session reset | Drops the conversation history, keeps the system prompt |
 | `run_command()` (`src/shell_win32.c`) | Local command boundary | `CreateProcessW` of `%SystemRoot%\System32\cmd.exe /d /s /c "<cmd>"`, stdin = NUL, 180 s limit, output capped at 24 KB |
@@ -27,6 +29,12 @@
 - Content: JSON, OpenAI-compatible chat-completions messages and tool declaration.
 
 The API key is read from the Windows Credential Manager if the user chose to save it (target `TinyShell/<provider name>`, one per provider), otherwise requested at startup without echo, and held in process memory. Do not commit or email it. The endpoint/model are compiled constants in `src/config.h` at this stage. TLS 1.1/1.2 are requested explicitly via `WINHTTP_OPTION_SECURE_PROTOCOLS`.
+
+## Reports and telemetry access point
+
+- `POST https://tinyshell-relay.lucasan-videla.workers.dev/v1/report`: only after the user reviews the report and answers `s`. No API key is sent.
+- `POST .../v1/event`: beta telemetry (`session_start`, `session_end`, `error`), metadata only, 3-4 s timeouts, silent on failure, logged locally in `%LOCALAPPDATA%\TinyShell\telemetria.log`. Off with `tinyshell telemetria off`.
+- Local files: `%LOCALAPPDATA%\TinyShell\reportes\reporte-*.txt` (exactly what a report sends), `telemetria.log`.
 
 ## Release access point (updates only)
 

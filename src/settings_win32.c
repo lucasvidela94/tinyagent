@@ -78,9 +78,39 @@ void settings_load(Provider *p) {
   apply(p, "session_header");
 }
 
+static int widen(const char *s, wchar_t *w, int cap) { return MultiByteToWideChar(CP_UTF8, 0, s, -1, w, cap) != 0; }
+
+int settings_set(const char *section, const char *key, const char *value) {
+  wchar_t ws[64], wk[64], wv[600];
+  if (!path_w[0] && !resolve_path()) return 0;
+  if (!widen(section, ws, 64) || !widen(key, wk, 64) || !widen(value, wv, 600)) return 0;
+  return WritePrivateProfileStringW(ws, wk, wv, path_w) != 0;
+}
+
+int settings_get(const char *section, const char *key, char *out, size_t cap) {
+  wchar_t ws[64], wk[64], wv[600];
+  out[0] = 0;
+  if (!path_w[0] && !resolve_path()) return 0;
+  if (!widen(section, ws, 64) || !widen(key, wk, 64)) return 0;
+  GetPrivateProfileStringW(ws, wk, L"\x01", wv, 600, path_w);
+  if (wv[0] == 1) return 0;
+  return WideCharToMultiByte(CP_UTF8, 0, wv, -1, out, (int)cap, NULL, NULL) != 0;
+}
+
+int settings_file(const char *name, wchar_t *out, size_t cap) {
+  wchar_t wn[64];
+  int dir;
+  if (!path_w[0] && !resolve_path()) return 0;
+  dir = lstrlenW(path_w) - lstrlenW(L"config.ini");
+  if (!widen(name, wn, 64) || (size_t)(dir + lstrlenW(wn) + 1) > cap) return 0;
+  lstrcpynW(out, path_w, dir + 1);
+  lstrcatW(out, wn);
+  return 1;
+}
+
 static int save(const wchar_t *key, const char *value) {
   wchar_t w[600];
-  if (!path_w[0] || !MultiByteToWideChar(CP_UTF8, 0, value, -1, w, 600)) return 0;
+  if (!path_w[0] || !widen(value, w, 600)) return 0;
   return WritePrivateProfileStringW(L"provider", key, w, path_w) != 0;
 }
 

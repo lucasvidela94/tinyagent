@@ -7,3 +7,5 @@ tinyshell.exe
 diagnostics-*/
 *.log
 dist/
+relay/node_modules/
+relay/.wrangler/

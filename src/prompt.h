@@ -7,4 +7,8 @@
  * Caller frees. */
 char *system_prompt(void);
 
+#include "util.h"
+void system_os(Buf *b);      /* "Windows 7 (6.1 build 7601, Service Pack 1)" */
+void system_details(Buf *b); /* one line: OS, 32/64-bit, RAM, CPUs, current folder */
+
 #endif

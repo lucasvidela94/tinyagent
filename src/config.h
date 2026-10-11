@@ -8,6 +8,9 @@
 #define TINYSHELL_VERSION_W TINYSHELL_WIDEN(TINYSHELL_VERSION)
 /* Release assets: version.txt, tinyshell.exe, tinyshell.exe.sig, install.bat, SHA256SUMS.
  * Must stay https://: downloads are authenticated by signature, but version.txt is not. */
+/* Problem reports and beta telemetry (relay/ in this repo, a Cloudflare Worker). */
+#define RELAY_URL "https://tinyshell-relay.lucasan-videla.workers.dev"
+#define REPORT_EMAIL "lucasan.videla@gmail.com" /* fallback when the relay cannot be reached */
 #define UPDATE_BASE_URL "https://github.com/lucasvidela94/tinyagent/releases/latest/download/"
 
 #define MAX_HTTP (1024 * 1024)   /* API response body, bytes */

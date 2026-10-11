@@ -31,6 +31,7 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/json.c` | `json_parse/key/index/str` | tokenizer acotado (profundidad, tokens), `\uXXXX` → UTF-8 | portable |
 | `src/conversation.c` | `History`, `build_request`, `ToolCall` | historial con recorte por intercambios completos, body de la request, extracción de tool calls | portable |
 | `src/provider.c` | `provider_defaults`, `provider_set` | proveedor (nombre, URL, modelo, header de sesión), valores por defecto y validación de `config.ini` | portable |
+| `src/report.c` | `errlog_*`, `redact`, `report_json`, `event_json` | errores recientes, limpieza de keys y datos personales, cuerpos para el relay | portable |
 | `src/version.c` | `version_compare`, `version_from_output` | versiones X.Y.Z y salida de `--version` para el updater | portable |
 | `src/policy.c` | `command_problem`, `risk_reason`, `is_yes` | rechazo previo, heurística de riesgo, respuesta de aprobación | portable |
 | `src/console_win32.c` | `say`, `read_line`, `console_*` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas; colores, ancho, cursor, borrar filas, vaciar entrada | Win32 |
@@ -39,6 +40,8 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/console_input_win32.c` | `read_line`, `read_secret`, `read_key` | entrada: líneas, keys con `*`, teclas para menús | Win32 |
 | `src/tui_select_win32.c` | `tui_select` | menú con flechas, filtro tipeando y ventana de 10 filas | Win32 |
 | `src/login_win32.c` | `login_run`, `login_pick_model` | `tinyshell login`: proveedor, key (validada con `/models`), modelo de la lista en vivo | Win32 |
+| `src/reporter_win32.c` | `reporter_run` | `/reporte`: arma, guarda en `.txt`, muestra y envía el informe | Win32 |
+| `src/telemetry_win32.c` | `telemetry_init/event/error` | telemetría de la beta: aviso, `telemetria on/off/--ver`, registro local de lo enviado | Win32 |
 | `src/credential_win32.c` | `credential_load/save/delete` | API key opcional en el Administrador de credenciales (DPAPI por usuario) | Win32 |
 | `src/session_win32.c` | `session_send` | historial, gate de aprobación (`decide`), bucle de turnos, conteo de tokens | Win32 |
 | `src/http_win32.c` | `http_post`, `http_get` | WinHTTP sobre cualquier URL http(s) (`WinHttpCrackUrl`), TLS 1.2 explícito, errores legibles, cuerpo acotado; GET de releases solo por HTTPS | Win32 |
@@ -57,6 +60,7 @@ Otros archivos:
 - `build/test-core.sh`: tests de los módulos portables (ASan/UBSan si están disponibles).
 - `build/gen-signing-key.sh`: crea una vez el par de claves de releases (privada fuera del repo).
 - `build/release.sh`: tests, build, firma, tag y `gh release create` (`--dry-run` disponible).
+- `relay/`: Cloudflare Worker + D1 que recibe reportes (issue público con resumen + informe completo privado) y telemetría.
 - `scripts/install.bat`: instalador publicado en cada release (curl/bitsadmin o copia local por USB).
 - `scripts/collect-diagnostics.bat`: diagnóstico local separado; no necesita API.
 - `docs/`: decisiones, operación, seguridad, pruebas y hoja de ruta.

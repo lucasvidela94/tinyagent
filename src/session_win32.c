@@ -14,6 +14,7 @@
 #include "prompt.h"
 #include "session.h"
 #include "shell.h"
+#include "telemetry.h"
 #include "tui.h"
 #include "util.h"
 
@@ -34,6 +35,8 @@ void session_init(Session *s) {
   char *sys = system_prompt();
   new_session_id(s);
   memset(&s->history, 0, sizeof s->history);
+  s->turns = s->proposed = s->approved = s->rejected = 0;
+  s->started_ms = GetTickCount();
   s->tokens_in = s->tokens_out = 0;
   history_add(&s->history, message_json("system", sys), 0);
   free(sys);
@@ -51,7 +54,7 @@ void session_free(Session *s) {
 }
 
 /* The approval gate. Returns the text sent back to the model as the tool result. */
-static char *decide(const ToolCall *tc) {
+static char *decide(Session *s, const ToolCall *tc) {
   const char *problem = command_problem(tc), *risk;
   char answer[64], *out;
   if (problem) {
@@ -61,16 +64,22 @@ static char *decide(const ToolCall *tc) {
   }
   risk = risk_reason(tc->command);
   tui_proposal(tc->command, tc->reason, risk);
+  s->proposed++;
   console_flush_input(); /* leftover pasted lines must not answer the question */
   say("  ejecutar? [s/N] ");
-  if (read_line(answer, sizeof answer, 1) != LINE_OK || !is_yes(answer))
+  if (read_line(answer, sizeof answer, 1) != LINE_OK || !is_yes(answer)) {
+    s->rejected++;
     return xstrdup("Usuario rechazó la ejecución. No se ejecutó nada.");
+  }
   if (risk) {
     console_flush_input();
     console_write("  escribí EJECUTAR para confirmar: ", COLOR_DANGER);
-    if (read_line(answer, sizeof answer, 1) != LINE_OK || strcmp(answer, "EJECUTAR"))
+    if (read_line(answer, sizeof answer, 1) != LINE_OK || strcmp(answer, "EJECUTAR")) {
+      s->rejected++;
       return xstrdup("Cancelado por seguridad. No se ejecutó nada.");
+    }
   }
+  s->approved++;
   out = run_command(tc->command);
   tui_output(out);
   return out;
@@ -95,6 +104,7 @@ static int handle_response(Session *s, const Json *j) {
   if (msg < 0) {
     char *e = json_str(j, json_key(j, json_key(j, 0, "error"), "message"));
     tui_error(*e ? e : "Respuesta sin message.");
+    telemetry_error("api", "sin message", "chat");
     free(e);
     return 0;
   }
@@ -106,7 +116,7 @@ static int handle_response(Session *s, const Json *j) {
       ToolCall tc;
       char *out;
       tool_call_parse(j, json_index(j, calls, i), &tc);
-      out = decide(&tc);
+      out = decide(s, &tc);
       history_add(&s->history, tool_result_json(tc.id, out), 0); /* every call gets a result */
       free(out);
       tool_call_free(&tc);
@@ -136,9 +146,19 @@ unsigned long session_send(Session *s, const char *text) {
     resp = http_post(&s->provider, body, s->api_key, s->session_id);
     tui_thinking(0);
     free(body);
-    if (!resp) return http_last_status() ? http_last_status() : 1;
+    s->turns++;
+    if (!resp) {
+      char code[32];
+      unsigned long status = http_last_status();
+      snprintf(code, sizeof code, status ? "http %lu" : "winhttp %lu", status ? status : http_last_error());
+      telemetry_error("red", code, "chat");
+      return status ? status : 1;
+    }
     if (json_parse(&j, resp)) more = handle_response(s, &j);
-    else tui_error("Respuesta JSON inválida. No se ejecutó nada.");
+    else {
+      tui_error("Respuesta JSON inválida. No se ejecutó nada.");
+      telemetry_error("api", "json inválido", "chat");
+    }
     json_free(&j);
     free(resp);
     if (!more) return 0;

@@ -34,6 +34,12 @@
 - `http://` URLs are allowed for LAN model servers but warned at every start: the key and the whole conversation (including command output) travel unencrypted.
 - Changing the URL sends your prompts and command output to that server: only point it at services you trust.
 
+## Reports and telemetry
+
+- **Reports** are sent only after the user sees them and answers `s`. The public summary (version, Windows, provider/model, description, recent error codes) has the PC name, Windows user and home folder replaced; the full report (adds this session's conversation, if the user accepts) is stored only in the private D1 database and is readable only by the maintainer. Anything key-shaped (`sk-...`, `Bearer ...`) is removed from both, and the relay redacts again before writing to GitHub. Everything sent is also saved locally in `reportes\`.
+- **Telemetry** during the 0.x beta is on by default, announced on the first run, and off with `tinyshell telemetria off`. It carries metadata only: install ID (random), version, Windows version, provider/model, step and approval counts, token counts, duration, and error kind/code/stage. Never prompts, commands, outputs, paths or keys. Each event is one request with 3-4 s timeouts, silent if it fails; nothing runs in the background. `tinyshell telemetria --ver` shows exactly what was sent.
+- The relay stores IPs only as a salted hash and rate-limits reports and events.
+
 ## Updates and installation
 
 - Updates are never automatic and always ask. They do not need the API key.

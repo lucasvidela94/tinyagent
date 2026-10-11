@@ -10,9 +10,11 @@
 #include "console.h"
 #include "credential.h"
 #include "login.h"
+#include "reporter.h"
 #include "policy.h"
 #include "session.h"
 #include "settings.h"
+#include "telemetry.h"
 #include "tui.h"
 #include "update.h"
 #include "util.h"
@@ -22,6 +24,8 @@ static int usage(void) {
       "  sin argumentos  abre una sesión\n"
       "  login           elegir proveedor, guardar la API key y elegir modelo\n"
       "  logout          borrar la API key guardada del proveedor actual\n"
+      "  reporte         contar un problema a los desarrolladores (muestra todo antes de enviar)\n"
+      "  telemetria      on | off | --ver (datos técnicos de la beta)\n"
       "  --version       muestra la versión\n"
       "  --update        busca, verifica e instala la última versión\n"
       "  --rollback      vuelve a la versión anterior (tinyshell.old.exe)\n"
@@ -29,7 +33,7 @@ static int usage(void) {
   return 0;
 }
 
-static int run_flag(const char *flag) {
+static int run_flag(const char *flag, const char *arg) {
   Provider p;
   settings_load(&p);
   if (!strcmp(flag, "--version") || !strcmp(flag, "-v")) {
@@ -39,6 +43,11 @@ static int run_flag(const char *flag) {
   if (!strcmp(flag, "--update")) return update_run();
   if (!strcmp(flag, "--rollback")) return update_rollback();
   if (!strcmp(flag, "login") || !strcmp(flag, "--login")) return login_run(NULL, NULL, 0) ? 0 : 1;
+  if (!strcmp(flag, "reporte")) {
+    telemetry_init();
+    return reporter_run(NULL);
+  }
+  if (!strcmp(flag, "telemetria")) return telemetry_command(arg);
   if (!strcmp(flag, "logout") || !strcmp(flag, "--logout")) {
     say(credential_delete(p.name) ? "API key de %s borrada.\n" : "No se pudo borrar la API key de %s.\n", p.name);
     return 0;
@@ -93,6 +102,7 @@ static void model_command(Session *s, const char *arg) {
 static void help(void) {
   tui_note("/modelo [x]  elegir modelo de la lista (o escribir el nombre)\n"
            "/login       cambiar de proveedor o de API key\n"
+           "/reporte     contar un problema a los desarrolladores\n"
            "/reiniciar   empezar una conversación nueva\n"
            "/actualizar  buscar e instalar la última versión\n"
            "/salir       terminar");
@@ -129,6 +139,7 @@ static void chat(Session *s) {
       session_reset(s);
       tui_note("conversación nueva");
     } else if (!strcmp(input, "/actualizar")) update_run();
+    else if (!strcmp(input, "/reporte")) reporter_run(s);
     else if (!strcmp(input, "/login") || !strcmp(input, "/clave")) login_run(&s->provider, s->api_key, sizeof s->api_key);
     else if (!strncmp(input, "/modelo", 7) && (!input[7] || input[7] == ' ')) model_command(s, input + 7);
     else if (input[0] == '/') tui_error("Comando desconocido. /ayuda muestra los comandos.");
@@ -142,7 +153,7 @@ int main(int argc, char **argv) {
   char banner[160];
   console_init();
   tui_init();
-  if (argc > 1) return run_flag(argv[1]);
+  if (argc > 1) return run_flag(argv[1], argc > 2 ? argv[2] : NULL);
   settings_load(&s.provider);
   snprintf(banner, sizeof banner, "TinyShell %s · %s · /ayuda", TINYSHELL_VERSION, s.provider.name);
   tui_note(banner);
@@ -154,8 +165,24 @@ int main(int argc, char **argv) {
     SecureZeroMemory(s.api_key, sizeof s.api_key);
     return 1;
   }
+  telemetry_init();
   session_init(&s);
+  {
+    char data[400];
+    snprintf(data, sizeof data, "{\"provider\":\"%s\",\"model\":\"%s\",\"tui\":%d}", s.provider.name,
+             s.provider.model, tui_is_fancy());
+    telemetry_event("session_start", data);
+  }
   chat(&s);
+  {
+    char data[300];
+    snprintf(data, sizeof data,
+             "{\"turns\":%d,\"proposed\":%d,\"approved\":%d,\"rejected\":%d,\"tokens_in\":%ld,"
+             "\"tokens_out\":%ld,\"seconds\":%lu}",
+             s.turns, s.proposed, s.approved, s.rejected, s.tokens_in, s.tokens_out,
+             (GetTickCount() - s.started_ms) / 1000);
+    telemetry_event("session_end", data);
+  }
   session_free(&s);
   return 0;
 }

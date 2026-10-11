@@ -83,6 +83,7 @@ C:\Users\Samira · 7.2k in · 0.6k out · 12%    deepseek-v4.1-flash
 |---|---|
 | `/ayuda` | muestra los comandos |
 | `/modelo [x]` | elegir modelo de la lista (o escribir el nombre) |
+| `/reporte` | contar un problema a los desarrolladores |
 | `/login` | cambiar de proveedor, key o modelo |
 | `/reiniciar` | empieza una conversación nueva |
 | `/actualizar` | igual que `tinyshell --update` |
@@ -106,6 +107,25 @@ session_header =
 - `session_header` es solo para OpenCode Go (`x-opencode-session`); dejalo vacío para los demás.
 - Un servidor en tu red (LM Studio, Ollama en otra PC) funciona con `http://` y sin key; TinyShell avisa que esa conexión no va cifrada.
 - `/modelo` muestra la lista de modelos del proveedor para elegir; `/modelo otro-modelo` lo cambia directo. Se guarda en `config.ini`.
+
+## Reportar un problema
+
+Si algo falla, escribí `/reporte` dentro de TinyShell (o `tinyshell reporte` en CMD):
+
+1. contás en una línea qué pasó;
+2. TinyShell arma el informe (versión, Windows, modelo, últimos errores y, si aceptás, la conversación), lo guarda en `%LOCALAPPDATA%\TinyShell\reportes\` y **te muestra todo lo que se va a enviar**;
+3. solo si respondés `s` se envía: se abre un issue público en GitHub con un resumen sin datos personales, y el informe completo queda privado para el desarrollador.
+
+Si no hay internet, mandá el archivo guardado a lucasan.videla@gmail.com.
+
+### Telemetría (beta)
+
+Mientras TinyShell esté en beta (versiones 0.x) envía datos técnicos para encontrar errores antes de que los reportes: versión, Windows, modelo, cantidad de pasos y aprobaciones, duración y códigos de error. **Nunca** lo que escribís, los comandos ni sus salidas. Se avisa la primera vez.
+
+```bat
+tinyshell telemetria --ver   :: lo que se envió
+tinyshell telemetria off     :: apagarla
+```
 
 ## Actualizar y volver atrás
 

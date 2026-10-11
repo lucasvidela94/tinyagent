@@ -77,6 +77,10 @@ static wchar_t *auth_headers(const char *api_key, const char *session_header, co
   return w;
 }
 
+static unsigned long last_status; /* 0 when no HTTP response arrived */
+static unsigned long last_error;  /* WinHTTP error of the last failed request, 0 if none */
+static int quiet;                 /* telemetry: print nothing, give up fast */
+
 /* Reads the body into b, refusing more than max bytes. 0 on WinHTTP error or overflow. */
 static int read_body(HINTERNET req, Buf *b, size_t max) {
   char chunk[8192];
@@ -85,7 +89,7 @@ static int read_body(HINTERNET req, Buf *b, size_t max) {
     if (!WinHttpReadData(req, chunk, sizeof chunk, &got)) return 0;
     if (!got) return 1;
     if (b->len + got > max) {
-      say("\nLa respuesta supera %lu bytes; se descartó.\n", (unsigned long)max);
+      if (!quiet) say("\nLa respuesta supera %lu bytes; se descartó.\n", (unsigned long)max);
       SetLastError(0);
       return 0;
     }
@@ -93,9 +97,9 @@ static int read_body(HINTERNET req, Buf *b, size_t max) {
   }
 }
 
-static unsigned long last_status; /* 0 when no HTTP response arrived */
 
 unsigned long http_last_status(void) { return last_status; }
+unsigned long http_last_error(void) { return last_error; }
 
 typedef struct {
   wchar_t host[256], path[1024];
@@ -137,18 +141,19 @@ static char *request(const char *label, const Target *t, const wchar_t *method, 
   Buf b = {0};
   char *out = NULL;
 
-  last_status = 0;
+  last_status = last_error = 0;
   ses = WinHttpOpen(L"TinyShell/" TINYSHELL_VERSION_W, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME,
                     WINHTTP_NO_PROXY_BYPASS, 0);
   if (!ses) goto fail;
   enable_tls12(ses);
-  WinHttpSetTimeouts(ses, 15000, 15000, 30000, 120000);
+  if (quiet) WinHttpSetTimeouts(ses, 3000, 3000, 4000, 4000);
+  else WinHttpSetTimeouts(ses, 15000, 15000, 30000, 120000);
   stage = "conectar";
   if (!(con = WinHttpConnect(ses, t->host, t->port, 0))) goto fail;
   if (!(req = WinHttpOpenRequest(con, method, t->path, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
                                  t->secure ? WINHTTP_FLAG_SECURE : 0)))
     goto fail;
-  if (api_key) hdr = auth_headers(api_key, session_header, session_id, &hdr_bytes);
+  if (api_key || body) hdr = auth_headers(api_key ? api_key : "", session_header, session_id, &hdr_bytes);
   stage = "enviar";
   if (!WinHttpSendRequest(req, hdr ? hdr : WINHTTP_NO_ADDITIONAL_HEADERS, hdr ? (DWORD)-1L : 0,
                           body ? (LPVOID)body : WINHTTP_NO_REQUEST_DATA, len, len, 0))
@@ -165,14 +170,14 @@ static char *request(const char *label, const Target *t, const wchar_t *method, 
   } else {
     if (b.len > 300) b.p[300] = 0;
     if (*status_hint(status) && status < 500) b.len = 0; /* the hint says it; skip the raw JSON */
-    say("\n%s respondió HTTP %lu%s%s%s\n", label, (unsigned long)status, status_hint(status),
+    if (!quiet) say("\n%s respondió HTTP %lu%s%s%s\n", label, (unsigned long)status, status_hint(status),
         b.len ? ": " : "", b.len ? b.p : "");
   }
   goto done;
 
 fail:
-  err = GetLastError();
-  if (err) say("\nNo se pudo contactar %s (%s): error %lu, %s.\n", label, stage, (unsigned long)err, winhttp_hint(err));
+  last_error = err = GetLastError();
+  if (err && !quiet) say("\nNo se pudo contactar %s (%s): error %lu, %s.\n", label, stage, (unsigned long)err, winhttp_hint(err));
 done:
   free(b.p);
   if (hdr) {
@@ -204,4 +209,15 @@ char *http_get(const char *url, const char *api_key, size_t max, size_t *len) {
   }
   return request(t.secure ? "el servidor" : "el servidor (http)", &t, L"GET", api_key && *api_key ? api_key : NULL,
                  NULL, NULL, NULL, max, len);
+}
+
+char *http_post_json(const char *url, const char *body, int quiet_mode, size_t max) {
+  Target t;
+  char *out;
+  last_status = last_error = 0;
+  if (!crack(url, &t)) return NULL;
+  quiet = quiet_mode;
+  out = request("el servidor de reportes", &t, L"POST", NULL, NULL, NULL, body, max, NULL);
+  quiet = 0;
+  return out;
 }
