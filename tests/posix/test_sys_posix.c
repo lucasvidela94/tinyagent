@@ -51,6 +51,9 @@ static void test_files(void) {
   CHECK(t && !strcmp(t, "x"));
   free(t);
   CHECK(sys_read_file("/no/such/file", 10, NULL) == NULL);
+  t = sys_read_file("/proc/self/status", 4096, &n); /* procfs reports size 0 */
+  CHECK(t && n > 0 && strstr(t, "Name:"));
+  free(t);
   free(p.p);
 }
 

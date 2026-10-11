@@ -91,12 +91,28 @@ int sys_data_path(const char *name, Buf *out) {
   return ok;
 }
 
+/* Files that report no size (/proc, pipes): read until EOF, keeping at most max bytes. */
+static char *read_unsized(int fd, size_t max, size_t *len) {
+  Buf b = {0};
+  size_t dropped = 0;
+  char chunk[4096];
+  ssize_t r;
+  while ((r = read(fd, chunk, sizeof chunk)) > 0) buf_add_capped(&b, chunk, (size_t)r, max, &dropped);
+  if (len) *len = b.len;
+  return buf_take(&b);
+}
+
 char *sys_read_file(const char *path, size_t max, size_t *len) {
   int fd = open(path, O_RDONLY);
   struct stat st;
   size_t size, got = 0;
   char *data;
   if (fd < 0) return NULL;
+  if (fstat(fd, &st) == 0 && S_ISREG(st.st_mode) && st.st_size == 0) {
+    data = read_unsized(fd, max, len);
+    close(fd);
+    return data;
+  }
   size = fstat(fd, &st) == 0 && st.st_size > 0 ? (size_t)st.st_size : 0;
   if (size > max) {
     lseek(fd, -(off_t)max, SEEK_END); /* keep the end */

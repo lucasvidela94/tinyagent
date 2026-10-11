@@ -26,7 +26,8 @@ void sys_identity(Buf *host, Buf *user, Buf *home);
 int sys_data_path(const char *name, Buf *out);
 
 /* The last `max` bytes of a file (all of it if smaller), NUL-terminated, length in *len.
- * NULL if it cannot be read. Caller frees. */
+ * Files that report no size (Linux /proc) are read to the end, keeping the first `max`
+ * bytes. NULL if it cannot be read. Caller frees. */
 char *sys_read_file(const char *path, size_t max, size_t *len);
 /* Creates or replaces the file (SYS_APPEND: adds to the end). New files are private to the
  * user where the OS has permissions; SYS_EXECUTABLE also makes them runnable. 1 on success. */
