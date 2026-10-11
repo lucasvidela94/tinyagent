@@ -95,7 +95,7 @@ char *build_request(const History *h, const char *model) {
     if (i) buf_str(&b, ",");
     buf_str(&b, h->m[i].json);
   }
-  buf_str(&b, "],\"temperature\":0.1,\"max_tokens\":4096,");
+  buf_str(&b, "],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"max_tokens\":4096,");
   buf_str(&b, TOOLS);
   buf_str(&b, "}");
   return buf_take(&b);

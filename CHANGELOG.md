@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0 — streaming, Ctrl+C, license
+
+- Streaming: answers appear as they arrive (server-sent events), replacing "pensando...". Tool-call pieces are joined and the usual response is rebuilt, so approval and history work as before; providers that do not stream are handled transparently. Token counts come from the stream.
+- Ctrl+C cancels instead of killing TinyShell: it aborts the model request or the running command (whole process tree), counts as "no" at an approval, ends the session cleanly at an empty prompt, and stops the current turn (remaining tool calls get a "cancelled" result).
+- No fixed `temperature` in requests: some models (e.g. `kimi-k2.7-code`) only accept their default, found while testing.
+- MIT license.
+
 ## 0.6.0 — login and any model
 
 - `tinyshell login`: pick a provider (arrows + Enter), paste the API key (one `*` per character, Backspace works), pick a model from the provider's live list, done. The model list request doubles as a key check: a rejected key (401/403) is never saved. `tinyshell logout` deletes it; `/login` does the same flow inside a session.

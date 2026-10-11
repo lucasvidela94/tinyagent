@@ -89,7 +89,7 @@ C:\Users\Samira · 7.2k in · 0.6k out · 12%    deepseek-v4.1-flash
 | `/actualizar` | igual que `tinyshell --update` |
 | `/salir` | termina |
 
-En el editor funcionan las teclas de siempre del CMD: flechas para mensajes anteriores, F7 para el historial, clic derecho para pegar. Límites para no ahogar una máquina vieja: cada comando corre sin entrada interactiva y se corta a los 180 s; la salida que ve el modelo se recorta a 24 KB; el historial a ~192 KB.
+**Ctrl+C** cancela lo que esté pasando (la respuesta del modelo o el comando en curso) sin cerrar TinyShell; en el prompt vacío, sale. En el editor funcionan las teclas de siempre del CMD: flechas para mensajes anteriores, F7 para el historial, clic derecho para pegar. Límites para no ahogar una máquina vieja: cada comando corre sin entrada interactiva y se corta a los 180 s; la salida que ve el modelo se recorta a 24 KB; el historial a ~192 KB.
 
 ## Proveedor y modelo
 
@@ -191,3 +191,7 @@ Cada release, desde `main` limpio:
 - [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) y [`docs/ROADMAP.md`](docs/ROADMAP.md).
 - [`docs/PC_PROFILE.md`](docs/PC_PROFILE.md): el equipo de prueba.
 - [`scripts/collect-diagnostics.bat`](scripts/collect-diagnostics.bat): informe local sin API.
+
+## Licencia
+
+[MIT](LICENSE).

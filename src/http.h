@@ -6,13 +6,15 @@
 
 #include "provider.h"
 
-/* POSTs to the provider's chat-completions URL (http or https). session_id goes in the
- * provider's session header, if it has one (OpenCode Go rejects requests without
- * x-opencode-session). Returns the 2xx response body
- * (at most MAX_HTTP bytes; caller frees), or NULL after printing a readable error:
- * WinHTTP code with a hint, or HTTP status with the start of the body. The API key is only
- * used for the Authorization header and is never printed. */
-char *http_post(const Provider *p, const char *body, const char *api_key, const char *session_id);
+typedef void (*HttpChunk)(void *ctx, const char *data, size_t n);
+
+/* POSTs to the provider's chat-completions URL (http or https) and hands the 2xx body to
+ * on_chunk as it arrives (streaming). session_id goes in the provider's session header,
+ * if it has one (OpenCode Go rejects requests without x-opencode-session). Returns 1 on
+ * a complete 2xx response, 0 after printing a readable error (WinHTTP code with a hint,
+ * or HTTP status with the start of the body). The API key is never printed. */
+int http_post_stream(const Provider *p, const char *body, const char *api_key, const char *session_id,
+                     HttpChunk on_chunk, void *ctx);
 
 /* GETs an http(s) URL (redirects followed), with "Authorization: Bearer <api_key>" when
  * api_key is non-empty. Refuses bodies over max bytes. Returns the body (binary-safe,

@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cancel.h"
 #include "config.h"
 #include "console.h"
 #include "http.h"
@@ -14,6 +15,7 @@
 #include "prompt.h"
 #include "session.h"
 #include "shell.h"
+#include "stream.h"
 #include "telemetry.h"
 #include "tui.h"
 #include "util.h"
@@ -95,8 +97,9 @@ static void count_usage(Session *s, const Json *j) {
   free(out);
 }
 
-/* Handles one parsed response. Returns 1 if the model is waiting for tool results. */
-static int handle_response(Session *s, const Json *j) {
+/* Handles one parsed response (text already shown if `streamed`). Returns 1 if the model
+ * is waiting for tool results. */
+static int handle_response(Session *s, const Json *j, int streamed) {
   int choice = json_index(j, json_key(j, 0, "choices"), 0);
   int msg = json_key(j, choice, "message"), calls = json_key(j, msg, "tool_calls"), i;
   char *text, *finish;
@@ -110,21 +113,22 @@ static int handle_response(Session *s, const Json *j) {
   }
   text = json_str(j, json_key(j, msg, "content"));
   if (json_size(j, calls) > 0) {
-    if (*text) tui_text(text);
+    if (*text && !streamed) tui_text(text);
     history_add(&s->history, json_raw(j, msg), 0);
     for (i = 0; i < json_size(j, calls); i++) {
       ToolCall tc;
       char *out;
       tool_call_parse(j, json_index(j, calls, i), &tc);
-      out = decide(s, &tc);
+      /* After Ctrl+C every remaining call still needs a result, but nothing is asked or run. */
+      out = cancel_requested() ? xstrdup("Cancelado por el usuario con Ctrl+C. No se ejecutó nada.") : decide(s, &tc);
       history_add(&s->history, tool_result_json(tc.id, out), 0); /* every call gets a result */
       free(out);
       tool_call_free(&tc);
     }
     free(text);
-    return 1;
+    return !cancel_requested(); /* a cancelled turn stops here */
   }
-  tui_text(*text ? text : "(respuesta vacía)");
+  if (!streamed || !*text) tui_text(*text ? text : "(respuesta vacía)");
   finish = json_str(j, json_key(j, choice, "finish_reason"));
   if (!strcmp(finish, "length")) tui_note("(respuesta cortada por límite de tokens)");
   free(finish);
@@ -133,20 +137,49 @@ static int handle_response(Session *s, const Json *j) {
   return 0;
 }
 
+typedef struct { Stream st; int shown; } Live;
+
+static void live_text(void *ctx, const char *text) {
+  Live *l = (Live *)ctx;
+  if (!l->shown) tui_thinking(0); /* the first words replace "pensando..." */
+  l->shown = 1;
+  tui_stream(text);
+}
+
+static void live_chunk(void *ctx, const char *data, size_t n) { stream_feed(&((Live *)ctx)->st, data, n, live_text, ctx); }
+
+/* One streamed round trip: shows text as it arrives, returns the rebuilt response. */
+static char *round_trip(Session *s, const char *body, int *shown) {
+  Live l;
+  char *resp = NULL;
+  stream_init(&l.st);
+  l.shown = 0;
+  tui_thinking(1);
+  if (http_post_stream(&s->provider, body, s->api_key, s->session_id, live_chunk, &l)) resp = stream_response(&l.st);
+  if (!l.shown) tui_thinking(0);
+  tui_stream_end();
+  stream_free(&l.st);
+  *shown = l.shown;
+  return resp;
+}
+
 unsigned long session_send(Session *s, const char *text) {
   int turn;
+  cancel_reset();
   history_add(&s->history, message_json("user", text), 1);
   for (turn = 0; turn < MAX_TURNS; turn++) {
     Json j = {0};
-    int more = 0;
+    int more = 0, shown = 0;
     char *body, *resp;
     history_trim(&s->history, MAX_HISTORY);
     body = build_request(&s->history, s->provider.model);
-    tui_thinking(1);
-    resp = http_post(&s->provider, body, s->api_key, s->session_id);
-    tui_thinking(0);
+    resp = round_trip(s, body, &shown);
     free(body);
     s->turns++;
+    if (!resp && cancel_requested()) {
+      tui_note("cancelado");
+      return 0;
+    }
     if (!resp) {
       char code[32];
       unsigned long status = http_last_status();
@@ -154,7 +187,7 @@ unsigned long session_send(Session *s, const char *text) {
       telemetry_error("red", code, "chat");
       return status ? status : 1;
     }
-    if (json_parse(&j, resp)) more = handle_response(s, &j);
+    if (json_parse(&j, resp)) more = handle_response(s, &j, shown);
     else {
       tui_error("Respuesta JSON inválida. No se ejecutó nada.");
       telemetry_error("api", "json inválido", "chat");

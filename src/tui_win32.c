@@ -109,6 +109,21 @@ void tui_thinking(int on) {
 
 void tui_text(const char *text) { say("\n%s\n", text); }
 
+static int streaming;
+
+void tui_stream(const char *text) {
+  if (!streaming) {
+    say("\n");
+    streaming = 1;
+  }
+  console_write(text, COLOR_NORMAL);
+}
+
+void tui_stream_end(void) {
+  if (streaming) say("\n");
+  streaming = 0;
+}
+
 void tui_line(const char *indent, const char *text, int color) {
   console_write(indent, color);
   console_write(text, color);

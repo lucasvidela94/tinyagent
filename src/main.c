@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cancel.h"
 #include "config.h"
 #include "console.h"
 #include "credential.h"
@@ -152,6 +153,7 @@ int main(int argc, char **argv) {
   Session s;
   char banner[160];
   console_init();
+  cancel_init();
   tui_init();
   if (argc > 1) return run_flag(argv[1], argc > 2 ? argv[2] : NULL);
   settings_load(&s.provider);

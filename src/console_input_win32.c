@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "cancel.h"
 #include "console.h"
 #include "util.h"
 
@@ -71,6 +72,10 @@ int read_line(char *out, size_t cap, int echo) {
   SecureZeroMemory(w, cap * sizeof(wchar_t)); /* may hold the API key */
   free(w);
   trim_line(out);
+  if (cancel_take_input_interrupt()) { /* Ctrl+C: the line is discarded */
+    out[0] = 0;
+    return LINE_EOF;
+  }
   return got_any ? status : LINE_EOF;
 }
 
@@ -120,6 +125,10 @@ int read_secret(char *out, size_t cap) {
   say("\n");
   status = finish_wide(w, wn, cap, out, cap, status);
   trim_line(out);
+  if (cancel_take_input_interrupt()) {
+    SecureZeroMemory(out, cap);
+    return LINE_EOF;
+  }
   return got_any ? status : LINE_EOF;
 }
 

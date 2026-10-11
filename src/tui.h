@@ -18,6 +18,8 @@ void tui_user(const char *text); /* the submitted message, as a full-width shade
 
 void tui_thinking(int on); /* "pensando..." while waiting; erased when the answer arrives */
 void tui_text(const char *text);  /* assistant text */
+void tui_stream(const char *text); /* a streamed piece of assistant text, printed at once */
+void tui_stream_end(void);         /* ends the streamed paragraph, if any */
 void tui_note(const char *text);  /* secondary information, dimmed */
 void tui_error(const char *text); /* problems, in red */
 

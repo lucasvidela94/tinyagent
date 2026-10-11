@@ -38,6 +38,10 @@
 - [x] Reports and telemetry end to end (wine → deployed relay → D1): first-run notice; `session_start`, `error` (`http 401`) and `session_end` events stored with metadata only; `/reporte` with conversation stored privately (#1), public summary with the user name redacted, local `.txt` written; `telemetria --ver` shows the same events. Relay rejects unknown events, bodies over the limit and wrong methods.
 - [x] Public GitHub issue created by the relay (`[reporte]` title, `reporte` label, redacted summary in a code block, private ID; no user name in the body). Test issue #1 closed and D1 cleared afterwards.
 
+- [x] Streaming against the real API (wine, `kimi-k2.7-code`): text appears in place of "pensando...", a tool call arrives in pieces and runs, the tool result is accepted, token counts shown; `stream_options` accepted by OpenCode Go.
+- [x] Ctrl+C (wine pty): a 30 s `ping` is killed at once with "[cancelado por el usuario con Ctrl+C]" and TinyShell keeps running; at a prompt with half-typed text the line is discarded and the session ends cleanly.
+- [x] A model that rejects `temperature` (only default allowed) works now that none is sent.
+
 ## TUI (Windows 7 x86)
 
 - [ ] Rules (`─`) and `·` render in the default raster font; colors readable on the default black background.
@@ -45,6 +49,7 @@
 - [ ] Editor: arrows/F7 history and right-click paste work; text appears inside the editor.
 - [ ] Pasting several lines does not answer `ejecutar?` (input flushed).
 - [ ] `tinyshell login`: arrows move in the menus, right-click paste fills the key with `*`.
+- [ ] Ctrl+C on the real console: cancels a running command and a model request; ends the session at an empty prompt.
 - [ ] After ~300 lines (buffer full) the editor still lands in the right place.
 
 ## Install and update (Windows 7 x86)

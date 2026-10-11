@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "cancel.h"
 #include "config.h"
 #include "shell.h"
 #include "util.h"
@@ -71,7 +72,8 @@ static char *finish(Buf *out, size_t dropped, int timed_out, DWORD code) {
     snprintf(tail, sizeof tail, "\n[salida truncada: %lu bytes omitidos]", (unsigned long)dropped);
     buf_str(&res, tail);
   }
-  if (timed_out) snprintf(tail, sizeof tail, "\n[tiempo agotado: terminado tras %d s]", CMD_TIMEOUT_MS / 1000);
+  if (cancel_requested()) snprintf(tail, sizeof tail, "\n[cancelado por el usuario con Ctrl+C]");
+  else if (timed_out) snprintf(tail, sizeof tail, "\n[tiempo agotado: terminado tras %d s]", CMD_TIMEOUT_MS / 1000);
   else snprintf(tail, sizeof tail, "\n[exit=%lu]", (unsigned long)code);
   buf_str(&res, tail);
   return buf_take(&res);
@@ -123,9 +125,11 @@ char *run_command(const char *cmd) {
    * process already runs inside a job; then only cmd.exe itself can be terminated. */
   in_job = job && AssignProcessToJobObject(job, pi.hProcess);
   ResumeThread(pi.hThread);
+  cancel_watch_process(in_job ? job : NULL, pi.hProcess); /* Ctrl+C kills the tree */
   CloseHandle(pi.hThread);
 
   timed_out = collect(rd, pi.hProcess, &out, &dropped);
+  cancel_release_process();
   if (timed_out) {
     if (in_job) TerminateJobObject(job, 1);
     else TerminateProcess(pi.hProcess, 1);
