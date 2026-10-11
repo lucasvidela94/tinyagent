@@ -1,12 +1,12 @@
-/* Regression tests for src/stream.c: SSE parsing with arbitrary chunk boundaries, joined
+/* Regression tests for src/core/stream.c: SSE parsing with arbitrary chunk boundaries, joined
  * tool-call arguments, usage, keep-alives, CRLF, and servers that do not stream.
  * Run: ./build/test-core.sh */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "../src/json.h"
-#include "../src/stream.h"
+#include "json.h"
+#include "stream.h"
 #include "check.h"
 
 static char seen[512];

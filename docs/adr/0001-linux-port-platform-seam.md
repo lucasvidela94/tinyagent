@@ -25,11 +25,15 @@ Un **seam de plataforma** con dos adaptadores: Win32 (el actual) y POSIX. Con Li
 seam deja de ser hipotético: hay dos adaptadores reales.
 
 ```
-src/          núcleo portable + los .h, que son las interfaces del seam (una sola definición)
-src/win32/    adaptadores Windows
-src/posix/    adaptadores Linux
-vendor/       librería TLS (solo posix)
+src/core/             portable, testeado en el host
+src/app/              el programa (sesión, TUI, login, reportes, main)
+src/platform/         las interfaces del seam (una sola definición)
+src/platform/win32/   adaptadores Windows
+src/platform/posix/   adaptadores Linux
+vendor/               librería TLS (solo posix)
 ```
+
+La regla de dependencias entre capas la verifica `build/checks/includes.sh`.
 
 - Sin `#ifdef` de plataforma en el núcleo: cada script de build elige su carpeta.
 - `sys.h` (nuevo): random, reloj monótono, carpeta actual, carpeta de datos, archivos con
@@ -58,7 +62,7 @@ Linux:
 
 1. Paso 0, solo Windows y sin cambiar comportamiento: renombrar los módulos mal
    etiquetados, `sys.h`, limpiar las interfaces que dejan ver Windows, dialecto de shell,
-   `update` portable y mover los adaptadores a `src/win32/`. Mismo binario, mismos tests.
+   `update` portable y ordenar `src/` por capas. Mismo binario, mismos tests.
 2. Adaptadores posix: sys, consola, shell y cancel; después HTTP con TLS; al final
    credenciales y update.
 3. Release dual (`tinyshell.exe` y `tinyshell-linux-i386`, firmados) y sitio.

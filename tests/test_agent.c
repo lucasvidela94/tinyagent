@@ -1,14 +1,14 @@
-/* Regression tests for src/conversation.c and src/policy.c: tool-call extraction,
+/* Regression tests for src/core/conversation.c and src/core/policy.c: tool-call extraction,
  * unknown tools, rejected and risky commands, approval answers, history bounds and
  * oversized output. Run: ./build/test-core.sh */
 #include <stdlib.h>
 #include <string.h>
 
-#include "../src/config.h"
-#include "../src/conversation.h"
-#include "../src/json.h"
-#include "../src/policy.h"
-#include "../src/util.h"
+#include "config.h"
+#include "conversation.h"
+#include "json.h"
+#include "policy.h"
+#include "util.h"
 #include "check.h"
 
 static ToolCall parse_call(const char *response) {

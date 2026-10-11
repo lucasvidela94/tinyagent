@@ -4,7 +4,7 @@
   "description": "Solo herramientas de desarrollo (hooks de git). TinyShell no usa Node en runtime.",
   "scripts": {
     "prepare": "husky",
-    "check": "bash scripts/check.sh"
+    "check": "bash build/check.sh"
   },
   "devDependencies": {
     "husky": "^9.1.7"

@@ -1,12 +1,12 @@
-/* Regression tests for src/json.c and src/util.c: malformed and oversized input,
+/* Regression tests for src/core/json.c and src/core/util.c: malformed and oversized input,
  * missing fields, null content, \u escapes, invalid UTF-8, text fitting for the TUI. Run: ./build/test-core.sh */
 #include <stdlib.h>
 #include <string.h>
 
-#include "../src/config.h"
-#include "../src/conversation.h"
-#include "../src/json.h"
-#include "../src/util.h"
+#include "config.h"
+#include "conversation.h"
+#include "json.h"
+#include "util.h"
 #include "check.h"
 
 static int parses(const char *s) {

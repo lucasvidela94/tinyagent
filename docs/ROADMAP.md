@@ -1,32 +1,44 @@
 # Roadmap
 
-## P0 — required before real use
+## P0: required before real use
 
-- [ ] Cross-compile as PE32 x86 and inspect binary architecture.
+- [x] Cross-compile as PE32 x86 and inspect imports (`build/build-linux-mingw.sh`, CI).
 - [ ] Test start-up and WinHTTP TLS on the actual Windows 7 SP1 machine.
-- [ ] Validate a harmless chat-completions request with the selected API/model.
-- [ ] Validate one tool-call round trip with `ver` or `whoami`.
-- [ ] Fix any API schema/parser issues revealed by real responses.
-- [ ] Verify rejection always means zero local command execution.
-- [x] Add bounded history and response limits (code + host tests; still to observe on target).
+- [ ] Validate a chat-completions request and one tool-call round trip on the target. (Done under
+      wine with the real OpenCode Go API, streaming included; not yet on Windows 7.)
+- [ ] Verify on the target that a rejection always means zero local command execution.
+- [x] Bounded history and response limits (code + host tests; still to observe on target).
 
-## P1 — safety and robustness
+## P1: safety and robustness
 
-- [ ] Add explicit read-only mode and default-deny command allowlist.
-- [ ] Replace shell-string execution with safer process creation where feasible. (Partial: `CreateProcessW` + job + timeout, still `cmd.exe /c`.)
-- [x] Add robust HTTP status/error reporting without leaking credentials.
-- [x] Unit-test JSON escaping, token boundaries, missing fields and malformed responses (`tests/`).
-- [x] Add session reset command (`/reiniciar`) and history trimming.
-- [ ] Check command exit status and capture stdout/stderr separately if feasible.
+- [ ] Explicit read-only mode and default-deny command allowlist.
+- [ ] Safer process creation where feasible. (Partial: `CreateProcessW` + job + timeout, still
+      `cmd.exe /c`.)
+- [x] HTTP status/error reporting without leaking credentials.
+- [x] Host tests for JSON, token boundaries, missing fields and malformed responses; libFuzzer
+      on the JSON and SSE parsers (`build/fuzz.sh`).
+- [x] Session reset (`/reiniciar`) and history trimming.
+- [x] Exit status in every command result (`[exit=N]`). Separate stdout/stderr: not planned.
+- [x] Ctrl+C cancels the request or the command without killing TinyShell.
 
-## P2 — useful harness features
+## P2: useful harness features
 
-- [ ] Optional diagnostic bundles with user review before sharing.
+- [x] Problem reports shown in full before sending (`/reporte`) and opt-out beta telemetry.
 - [ ] Read-only file inspection with explicit path approval.
 - [ ] Carefully scoped file edits using before/after diff and backup.
 - [ ] Small local project/context file describing the machine and allowed actions.
-- [x] Configuration for endpoint/model, with secrets kept outside config (`config.ini` + Credential Manager, `/modelo`).
-- [ ] Repeatable CI cross-build and artifact checksum. (Partial: local `build/release.sh` with SHA256SUMS and signature.)
+- [x] Endpoint/model configuration with secrets outside config (`config.ini` + Credential
+      Manager, `tinyshell login`, `/modelo`).
+- [x] CI cross-build and checks; signed releases with SHA256SUMS (`build/release.sh`).
+
+## P3: Linux (`docs/adr/0001-linux-port-platform-seam.md`)
+
+- [x] Layered `src/` with the platform seam and an enforced include rule.
+- [ ] Rest of step 0: clean the Windows-shaped interfaces (`cancel`, `http_last_error`),
+      portable `update`, shell dialect as data.
+- [ ] POSIX adapters: sys, console, shell and cancel; HTTP with Mbed TLS; credentials; update.
+- [ ] Static i386 musl build, `install.sh`, dual signed release, site section.
+- [ ] Decide API key storage on Linux and the hardware floor (open questions in the ADR).
 
 ## Explicitly out of scope for the low-spec target
 

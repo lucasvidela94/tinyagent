@@ -19,7 +19,7 @@
 
 ## Important implementation caveats
 
-- `risk_reason()` (`src/policy.c`) is only a keyword heuristic; it can miss destructive commands and can flag harmless commands. It is not a security boundary. It flags `^`, `>`, `&`, delete/format/partition tools, `chkdsk /f /r /x /b`, registry/service/firewall/boot changes, process killing, permission changes, installers and script hosts.
+- `risk_reason()` (`src/core/policy.c`) is only a keyword heuristic; it can miss destructive commands and can flag harmless commands. It is not a security boundary. It flags `^`, `>`, `&`, delete/format/partition tools, `chkdsk /f /r /x /b`, registry/service/firewall/boot changes, process killing, permission changes, installers and script hosts.
 - Checks enforced in local code before the user is even asked (`command_problem()`): only the `shell` tool, non-empty command, at most 2000 bytes, no control characters or line breaks. What is displayed for approval is exactly what runs.
 - Over-long typed lines are consumed and refused, and pending console input is flushed before every approval question, so leftover or multi-line pasted input can never answer it.
 - Since all commands already ask for confirmation, that confirmation is the primary safeguard. Read the full command before answering yes.
@@ -30,7 +30,7 @@
 ## Provider configuration
 
 - `config.ini` never holds secrets; API keys stay in the Credential Manager, one per provider `name`.
-- Values are validated in local code (`src/provider.c`): URL must be `http://` or `https://` without spaces; `session_header` only letters, digits and `-` (no header injection); `name` only safe characters (it becomes the credential target). Invalid values are reported and the default is used.
+- Values are validated in local code (`src/core/provider.c`): URL must be `http://` or `https://` without spaces; `session_header` only letters, digits and `-` (no header injection); `name` only safe characters (it becomes the credential target). Invalid values are reported and the default is used.
 - `http://` URLs are allowed for LAN model servers but warned at every start: the key and the whole conversation (including command output) travel unencrypted.
 - Changing the URL sends your prompts and command output to that server: only point it at services you trust.
 

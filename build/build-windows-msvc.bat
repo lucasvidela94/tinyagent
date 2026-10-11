@@ -7,7 +7,8 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-cl /nologo /O1 /MT /W4 src\*.c winhttp.lib crypt32.lib advapi32.lib /Fe:tinyshell.exe
+rem Layout: see build/sources.sh
+cl /nologo /O1 /MT /W4 /Isrc /Isrc\core /Isrc\app /Isrc\platform /Isrc\platform\win32 src\core\*.c src\app\*.c src\platform\win32\*.c winhttp.lib crypt32.lib advapi32.lib /Fe:tinyshell.exe
 if errorlevel 1 exit /b 1
 echo Compilado: tinyshell.exe
 endlocal

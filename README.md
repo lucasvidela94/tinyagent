@@ -166,7 +166,14 @@ En Linux con MinGW-w64 (`sudo apt install mingw-w64` / `sudo pacman -S mingw-w64
 ```bash
 ./build/test-core.sh          # tests del núcleo portable (JSON, historial, política, versiones)
 ./build/build-linux-mingw.sh  # genera tinyshell.exe (PE32, enlaza msvcrt.dll, no la UCRT)
+./build/check.sh --build      # todos los chequeos + build (lo mismo que corre CI)
+./build/fuzz.sh               # fuzz de los parsers JSON y SSE (clang con libFuzzer)
 ```
+
+Para contribuir: `pnpm install` una vez activa el hook de pre-commit (husky), que corre
+`build/check.sh`. Node es solo herramienta de desarrollo: TinyShell no lo necesita para
+correr. El código está ordenado por capas (`src/core`, `src/app`, `src/platform`); ver
+[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 En Windows, desde el **x86 Native Tools Command Prompt** de Visual Studio: `build\build-windows-msvc.bat`.
 
@@ -185,7 +192,10 @@ Cada release, desde `main` limpio:
 ## Documentación
 
 - [`docs/GOALS.md`](docs/GOALS.md): objetivo y criterios de éxito.
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): módulos y flujo.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): capas, módulos y flujo.
+- [`docs/adr/`](docs/adr/): decisiones de arquitectura (port a Linux).
+- [`GLOSSARY.md`](GLOSSARY.md): términos del dominio.
+- [`docs/SYSTEM_PROMPT.md`](docs/SYSTEM_PROMPT.md): cómo está escrito el prompt del sistema.
 - [`docs/ACCESS_POINTS.md`](docs/ACCESS_POINTS.md): entradas locales, red y comandos.
 - [`docs/SECURITY.md`](docs/SECURITY.md): modelo de confianza y límites.
 - [`docs/OPERATIONS.md`](docs/OPERATIONS.md): instalación, problemas de TLS, diagnóstico.

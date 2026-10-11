@@ -1,8 +1,8 @@
-/* Regression tests for src/version.c: release version comparison and parsing of the
+/* Regression tests for src/core/version.c: release version comparison and parsing of the
  * self-test output used by the updater. Run: ./build/test-core.sh */
 #include <string.h>
 
-#include "../src/version.h"
+#include "version.h"
 #include "check.h"
 
 static void test_compare(void) {

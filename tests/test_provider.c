@@ -1,10 +1,10 @@
-/* Regression tests for src/provider.c: defaults and validation of config.ini values
+/* Regression tests for src/core/provider.c: defaults and validation of config.ini values
  * (URL scheme, header-injection attempts, names used as Credential Manager targets).
  * Run: ./build/test-core.sh */
 #include <string.h>
 
-#include "../src/json.h"
-#include "../src/provider.h"
+#include "json.h"
+#include "provider.h"
 #include "check.h"
 
 static void test_defaults(void) {

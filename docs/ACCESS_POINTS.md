@@ -4,10 +4,10 @@
 
 | Point | Purpose | Current behavior |
 |---|---|---|
-| `main()` (`src/main.c`) | Program entry point | Starts CLI, asks for API key without echo; console I/O uses the UTF-16 console API (no code-page change) |
+| `main()` (`src/app/main.c`) | Program entry point | Starts CLI, asks for API key without echo; console I/O uses the UTF-16 console API (no code-page change) |
 | Editor (between two rules, footer below) | User request | One message per line in any language (max 4095 bytes; longer lines are refused). Native console editing: arrows, F7 history, right-click paste |
 | Prompt `ejecutar? [s/N]` (pending input is flushed first) | Local approval gate | Only `s`, `si` or `sí` (any case) approves. Anything else, EOF or an over-long line rejects |
-| `EJECUTAR` confirmation | Extra gate | Required when `risk_reason()` (`src/policy.c`) flags the command; the reason is shown |
+| `EJECUTAR` confirmation | Extra gate | Required when `risk_reason()` (`src/core/policy.c`) flags the command; the reason is shown |
 | `/salir` or `/exit` | Session termination | Ends the process |
 | `tinyshell --version` / `--help` | CLI flags | Print version / usage and exit |
 | `tinyshell --update` or `/actualizar` | Self-update | Manual only; asks; verifies RSA signature; self-tests the new binary; keeps `tinyshell.old.exe` |

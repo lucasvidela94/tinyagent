@@ -22,37 +22,53 @@ CLI (main)
 
 ## Source map
 
+`src/` está ordenado por capas (rutas en `build/sources.sh`; decisión en
+`docs/adr/0001-linux-port-platform-seam.md`):
+
+```
+src/config.h, release_key.h   constantes de build
+src/core/                     portable, testeado en el host (build/test-core.sh)
+src/app/                      el programa: sesión, TUI, login, reportes, main
+src/platform/                 el seam de plataforma: un .h por servicio del sistema
+src/platform/win32/           adaptadores Windows (después: platform/posix/)
+```
+
+Regla de dependencias, verificada en cada commit por `build/checks/includes.sh`:
+`core` solo incluye `core` y `config.h`; `platform/*.h` incluye `core`; `app` incluye
+`core`, `app` y `platform`, nunca un adaptador; un adaptador incluye `core`, `platform` y
+su propia carpeta, nunca `app` ni otra plataforma. Los `#include` no llevan rutas.
+
 Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de mantenimiento: ningún archivo pasa de ~300 líneas (objetivo ~200); si crece, se divide por una interfaz real, no por tamaño.
 
 | Módulo | Interfaz | Responsabilidad | Plataforma |
 |---|---|---|---|
 | `src/config.h` | constantes | endpoint, modelo, límites (`MAX_HTTP`, `MAX_HISTORY`, `MAX_OUTPUT`, `MAX_COMMAND`, `CMD_TIMEOUT_MS`…) | — |
-| `src/util.c` | `Buf`, `utf8_valid`, `jesc` | buffers, validación UTF-8, escape JSON (bytes inválidos → `\ufffd`) | portable |
-| `src/json.c` | `json_parse/key/index/str` | tokenizer acotado (profundidad, tokens), `\uXXXX` → UTF-8 | portable |
-| `src/conversation.c` | `History`, `build_request`, `ToolCall` | historial con recorte por intercambios completos, body de la request, extracción de tool calls | portable |
-| `src/provider.c` | `provider_defaults`, `provider_set` | proveedor (nombre, URL, modelo, header de sesión), valores por defecto y validación de `config.ini` | portable |
-| `src/report.c` | `errlog_*`, `redact`, `report_json`, `event_json` | errores recientes, limpieza de keys y datos personales, cuerpos para el relay | portable |
-| `src/stream.c` | `stream_feed`, `stream_response` | streaming SSE: texto en vivo, une los pedazos de tool calls, rearma la respuesta normal | portable |
-| `src/version.c` | `version_compare`, `version_from_output` | versiones X.Y.Z y salida de `--version` para el updater | portable |
-| `src/policy.c` | `command_problem`, `risk_reason`, `is_yes` | rechazo previo, heurística de riesgo, respuesta de aprobación | portable |
+| `src/core/util.c` | `Buf`, `utf8_valid`, `jesc` | buffers, validación UTF-8, escape JSON (bytes inválidos → `\ufffd`) | portable |
+| `src/core/json.c` | `json_parse/key/index/str` | tokenizer acotado (profundidad, tokens), `\uXXXX` → UTF-8 | portable |
+| `src/core/conversation.c` | `History`, `build_request`, `ToolCall` | historial con recorte por intercambios completos, body de la request, extracción de tool calls | portable |
+| `src/core/provider.c` | `provider_defaults`, `provider_set` | proveedor (nombre, URL, modelo, header de sesión), valores por defecto y validación de `config.ini` | portable |
+| `src/core/report.c` | `errlog_*`, `redact`, `report_json`, `event_json` | errores recientes, limpieza de keys y datos personales, cuerpos para el relay | portable |
+| `src/core/stream.c` | `stream_feed`, `stream_response` | streaming SSE: texto en vivo, une los pedazos de tool calls, rearma la respuesta normal | portable |
+| `src/core/version.c` | `version_compare`, `version_from_output` | versiones X.Y.Z y salida de `--version` para el updater | portable |
+| `src/core/policy.c` | `command_problem`, `risk_reason`, `is_yes` | rechazo previo, heurística de riesgo, respuesta de aprobación | portable |
 | `src/console_win32.c` | `say`, `read_line`, `console_*` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas; colores, ancho, cursor, borrar filas, vaciar entrada | Win32 |
 | `src/settings_win32.c` | `settings_load`, `settings_save_model` | `%LOCALAPPDATA%\TinyShell\config.ini` (`GetPrivateProfileStringW`), plantilla comentada en el primer arranque | Win32 |
-| `src/tui.c` | `tui_prompt`, `tui_user`, `tui_proposal`, `tui_output`… | TUI mínima en línea: bloque del usuario, propuesta, resumen de salida, editor entre reglas, footer; modo plano si no hay consola | portable |
+| `src/app/tui.c` | `tui_prompt`, `tui_user`, `tui_proposal`, `tui_output`… | TUI mínima en línea: bloque del usuario, propuesta, resumen de salida, editor entre reglas, footer; modo plano si no hay consola | portable |
 | `src/console_input_win32.c` | `read_line`, `read_secret`, `read_key` | entrada: líneas, keys con `*`, teclas para menús | Win32 |
-| `src/tui_select.c` | `tui_select` | menú con flechas, filtro tipeando y ventana de 10 filas | portable |
-| `src/login.c` | `login_run`, `login_pick_model` | `tinyshell login`: proveedor, key (validada con `/models`), modelo de la lista en vivo | portable |
-| `src/reporter.c` | `reporter_run` | `/reporte`: arma, guarda en `.txt`, muestra y envía el informe | portable |
-| `src/telemetry.c` | `telemetry_init/event/error` | telemetría de la beta: aviso, `telemetria on/off/--ver`, registro local de lo enviado | portable |
+| `src/app/tui_select.c` | `tui_select` | menú con flechas, filtro tipeando y ventana de 10 filas | portable |
+| `src/app/login.c` | `login_run`, `login_pick_model` | `tinyshell login`: proveedor, key (validada con `/models`), modelo de la lista en vivo | portable |
+| `src/app/reporter.c` | `reporter_run` | `/reporte`: arma, guarda en `.txt`, muestra y envía el informe | portable |
+| `src/app/telemetry.c` | `telemetry_init/event/error` | telemetría de la beta: aviso, `telemetria on/off/--ver`, registro local de lo enviado | portable |
 | `src/cancel_win32.c` | `cancel_*` | Ctrl+C: cierra el pedido HTTP o mata el comando desde el hilo del handler, con handles protegidos; corta la lectura pendiente | Win32 |
 | `src/credential_win32.c` | `credential_load/save/delete` | API key opcional en el Administrador de credenciales (DPAPI por usuario) | Win32 |
-| `src/session.c` | `session_send` | historial, gate de aprobación (`decide`), bucle de turnos, conteo de tokens | portable |
+| `src/app/session.c` | `session_send` | historial, gate de aprobación (`decide`), bucle de turnos, conteo de tokens | portable |
 | `src/sys_win32.c` | `sys_random`, `sys_ms`, `sys_data_path`, `sys_read_file`… | primitivas del sistema con rutas UTF-8: random, reloj, carpeta actual, carpeta de datos (`%LOCALAPPDATA%\TinyShell`), archivos, identidad | Win32 |
 | `src/http_win32.c` | `http_post_stream`, `http_get`, `http_post_json` | WinHTTP sobre cualquier URL http(s) (`WinHttpCrackUrl`), TLS 1.2 explícito, errores legibles, cuerpo acotado; GET de releases solo por HTTPS | Win32 |
 | `src/shell_win32.c` | `run_command` | `cmd.exe /d /s /c` vía `CreateProcessW`, job + timeout, salida OEM → UTF-8 | Win32 |
 | `src/prompt_win32.c` | `system_prompt` | instrucciones agnósticas de tarea + equipo detectado al arrancar (versión de Windows, arquitectura, RAM, CPUs, carpeta actual) | Win32 |
 | `src/verify_win32.c` | `signature_valid`, `sha256_hex` | firma RSA-3072/SHA-256 de releases con la CryptoAPI; clave pública en `src/release_key.h` | Win32 |
 | `src/update_win32.c` | `update_run`, `update_rollback` | `--update`: version.txt → descarga → firma → self-test → swap con `.old.exe`; `--rollback` | Win32 |
-| `src/main.c` | `main` | subcomandos (`login`, `logout`) y flags (`--version/--update/--rollback`), API key, bucle de chat y comandos `/` | Win32 |
+| `src/app/main.c` | `main` | subcomandos (`login`, `logout`) y flags (`--version/--update/--rollback`), API key, bucle de chat y comandos `/` | Win32 |
 
 Los módulos portables no incluyen `<windows.h>` y se prueban en el host con `build/test-core.sh` (`tests/`). Los adapters Win32 tienen un solo adapter cada uno: el seam es el `.h`, no hay capa de abstracción extra.
 
