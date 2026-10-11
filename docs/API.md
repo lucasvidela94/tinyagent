@@ -5,6 +5,8 @@
 - `POST https://opencode.ai/zen/go/v1/chat/completions`
 - Header: `Authorization: Bearer <API key>`
 - Header: `Content-Type: application/json`
+- Header: `x-opencode-session: tinyshell-<32 hex>`: one random ID per conversation (new on `/reiniciar`). **Required**: without it OpenCode Go answers HTTP 400 `MissingSessionID`.
+- User-Agent: `TinyShell/<version>` (OpenCode asks clients to identify themselves).
 - Model field: `deepseek-v4.1-flash`
 - Chat messages include a Spanish system instruction and session history.
 - Declares one function tool named `shell` with `command` and `reason` string arguments.

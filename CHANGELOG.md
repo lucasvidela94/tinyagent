@@ -7,7 +7,9 @@
 - Pending console input is flushed before every approval question (a multi-line paste can no longer answer it).
 - Up to 25 steps per message; prompt asks for plain text and step-by-step work.
 - Agent loop moved to `src/session_win32.c`; `/ayuda` lists commands.
-- Verified under wine: plain mode, Credential Manager, HTTPS 401 path, TUI layout in a pty, real `cmd.exe` commands.
+- Sends the `x-opencode-session` header (random ID per conversation, new on `/reiniciar`): OpenCode Go rejects requests without it (HTTP 400 `MissingSessionID`), found in the first real test.
+- Prompt asks for simple punctuation (no arrows/emoji), which the Windows 7 raster font shows as `?`.
+- Verified under wine against the real API: tool call, approval, execution, tool result accepted over several round trips, final answer. Also plain mode, Credential Manager, 401 path, TUI layout in a pty.
 
 ## 0.4.0 — updates and installer
 

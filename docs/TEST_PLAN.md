@@ -51,9 +51,10 @@
 
 ## API behavior
 
-- [ ] Simple text response appears.
-- [ ] Tool call for a read-only command appears with command and reason.
-- [ ] Tool result is accepted by API and the model produces a final response.
+- [x] Simple text response appears. (wine, real API, 2026-10-11)
+- [x] Tool call for a read-only command appears with command and reason. (wine, real API)
+- [x] Tool result is accepted by API and the model produces a final response; several round trips with the raw assistant message kept in history are accepted. (wine, real API)
+- [x] Missing `x-opencode-session` is rejected with HTTP 400; with it, requests succeed. (wine, real API)
 - [ ] HTTP 401 and 429 are reported usefully.
 - [ ] Malformed JSON does not trigger shell execution.
 - [ ] Unknown tool name is never executed.

@@ -1,5 +1,7 @@
 #include "win32.h"
 
+#include <wincrypt.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,8 +17,22 @@
 #include "tui.h"
 #include "util.h"
 
+/* "tinyshell-" + 32 random hex digits from the CryptoAPI; tick count as a last resort. */
+static void new_session_id(Session *s) {
+  HCRYPTPROV prov = 0;
+  BYTE r[16];
+  int i, ok = CryptAcquireContextW(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT) &&
+              CryptGenRandom(prov, sizeof r, r);
+  if (prov) CryptReleaseContext(prov, 0);
+  if (!ok)
+    for (i = 0; i < 16; i++) r[i] = (BYTE)(GetTickCount() >> (i % 4 * 8)) ^ (BYTE)(i * 37);
+  strcpy(s->session_id, "tinyshell-");
+  for (i = 0; i < 16; i++) snprintf(s->session_id + 10 + 2 * i, 3, "%02x", r[i]);
+}
+
 void session_init(Session *s) {
   char *sys = system_prompt();
+  new_session_id(s);
   memset(&s->history, 0, sizeof s->history);
   s->tokens_in = s->tokens_out = 0;
   history_add(&s->history, message_json("system", sys), 0);
@@ -26,6 +42,7 @@ void session_init(Session *s) {
 void session_reset(Session *s) {
   history_reset(&s->history);
   s->tokens_in = s->tokens_out = 0;
+  new_session_id(s);
 }
 
 void session_free(Session *s) {
@@ -116,7 +133,7 @@ unsigned long session_send(Session *s, const char *text) {
     history_trim(&s->history, MAX_HISTORY);
     body = build_request(&s->history);
     tui_thinking(1);
-    resp = http_post(body, s->api_key);
+    resp = http_post(body, s->api_key, s->session_id);
     tui_thinking(0);
     free(body);
     if (!resp) return http_last_status() ? http_last_status() : 1;

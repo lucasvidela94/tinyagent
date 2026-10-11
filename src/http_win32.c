@@ -47,7 +47,7 @@ static void enable_tls12(HINTERNET ses) {
         (unsigned long)GetLastError());
 }
 
-static wchar_t *auth_headers(const char *api_key, size_t *wbytes) {
+static wchar_t *auth_headers(const char *api_key, const char *session_id, size_t *wbytes) {
   Buf h = {0};
   char *s;
   wchar_t *w;
@@ -55,6 +55,11 @@ static wchar_t *auth_headers(const char *api_key, size_t *wbytes) {
   buf_str(&h, "Content-Type: application/json\r\nAuthorization: Bearer ");
   buf_str(&h, api_key);
   buf_str(&h, "\r\n");
+  if (session_id && *session_id) { /* OpenCode Go routes and caches per conversation */
+    buf_str(&h, "x-opencode-session: ");
+    buf_str(&h, session_id);
+    buf_str(&h, "\r\n");
+  }
   s = buf_take(&h);
   n = MultiByteToWideChar(CP_UTF8, 0, s, -1, NULL, 0);
   if (n <= 0) n = 1;
@@ -88,7 +93,8 @@ unsigned long http_last_status(void) { return last_status; }
 
 /* One HTTPS request. api_key and body may be NULL (plain GET). Redirects are followed. */
 static char *request(const char *label, const wchar_t *host, const wchar_t *path, const wchar_t *method,
-                     const char *api_key, const char *body, size_t max, size_t *out_len) {
+                     const char *api_key, const char *session_id, const char *body, size_t max,
+                     size_t *out_len) {
   HINTERNET ses = NULL, con = NULL, req = NULL;
   const char *stage = "abrir sesión";
   wchar_t *hdr = NULL;
@@ -108,7 +114,7 @@ static char *request(const char *label, const wchar_t *host, const wchar_t *path
   if (!(req = WinHttpOpenRequest(con, method, path, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
                                  WINHTTP_FLAG_SECURE)))
     goto fail;
-  if (api_key) hdr = auth_headers(api_key, &hdr_bytes);
+  if (api_key) hdr = auth_headers(api_key, session_id, &hdr_bytes);
   stage = "enviar";
   if (!WinHttpSendRequest(req, hdr ? hdr : WINHTTP_NO_ADDITIONAL_HEADERS, hdr ? (DWORD)-1L : 0,
                           body ? (LPVOID)body : WINHTTP_NO_REQUEST_DATA, len, len, 0))
@@ -145,8 +151,8 @@ done:
   return out;
 }
 
-char *http_post(const char *body, const char *api_key) {
-  return request("OpenCode Go", API_HOST, API_PATH, L"POST", api_key, body, MAX_HTTP, NULL);
+char *http_post(const char *body, const char *api_key, const char *session_id) {
+  return request("OpenCode Go", API_HOST, API_PATH, L"POST", api_key, session_id, body, MAX_HTTP, NULL);
 }
 
 char *http_get(const char *url, size_t max, size_t *len) {
@@ -163,5 +169,5 @@ char *http_get(const char *url, size_t max, size_t *len) {
     say("\nURL inválida o no HTTPS: %s\n", url);
     return NULL;
   }
-  return request("GitHub", host, path, L"GET", NULL, NULL, max, len);
+  return request("GitHub", host, path, L"GET", NULL, NULL, NULL, max, len);
 }
