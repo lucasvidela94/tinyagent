@@ -1,6 +1,10 @@
 @echo off
 setlocal EnableExtensions
-set "OUT=%~dp0diagnostics-%COMPUTERNAME%"
+rem Locale-independent timestamp (YYYYMMDD-HHMMSS); %DATE% depends on the Windows language.
+set "LDT="
+for /f "tokens=2 delims==" %%I in ('wmic os get LocalDateTime /value 2^>nul ^| find "="') do set "LDT=%%I"
+if defined LDT (set "STAMP=%LDT:~0,8%-%LDT:~8,6%") else (set "STAMP=%RANDOM%%RANDOM%")
+set "OUT=%~dp0diagnostics-%COMPUTERNAME%-%STAMP%"
 if not exist "%OUT%" mkdir "%OUT%"
 set "REPORT=%OUT%\report.txt"
 (

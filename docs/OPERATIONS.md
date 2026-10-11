@@ -19,18 +19,23 @@
 3. Check HTTPS access in a supported browser if available.
 4. Confirm API key, account access, endpoint and model name.
 5. Check Windows 7 TLS 1.2 support, updates and trusted root certificates. Do not disable certificate validation as a workaround.
+   - TinyShell prints the WinHTTP error code with a hint: 12007 DNS, 12029 cannot connect, 12002 timeout, 12030 connection reset (often TLS), 12175/12157 TLS failure, 12045 untrusted root, 12037 bad date.
+   - TinyShell requests TLS 1.2 itself; this needs update **KB3140245**. If it is missing, a warning is printed at the first request. No `DefaultSecureProtocols` registry change is needed for TinyShell.
 
 ### Executable fails to start
 
 - Confirm it is PE32 / x86, not x64.
 - Check the compiler/runtime choice. MSVC `/MT` statically links the MSVC runtime, but system DLL requirements remain.
+- A MinGW build must import only `KERNEL32.dll`, `msvcrt.dll` and `WINHTTP.dll`. If it imports `api-ms-win-crt-*.dll` (UCRT), rebuild with `build/build-linux-mingw.sh` or install KB2999226.
 - Capture the exact error and compiler command.
 
 ### Command output is truncated or odd
 
 - Use a smaller, targeted command.
 - Avoid large recursive `dir /s`, full event logs, or unbounded listings on the low-memory PC.
-- Remember CMD code pages may affect accented characters even with UTF-8 console mode.
+- Output is capped at 24 KB (`[salida truncada: N bytes omitidos]`) and commands are killed after 180 s (`[tiempo agotado]`).
+- Command output is converted from the OEM code page (CP850 on Spanish Windows) to UTF-8 unless it is already valid UTF-8.
+- Commands run with stdin = NUL: anything that waits for input (`pause`, `date`, `chkdsk` prompts) gets EOF instead of hanging.
 
 ## Safe diagnostic examples
 

@@ -32,7 +32,15 @@ chmod +x build/build-linux-mingw.sh
 El resultado esperado es `tinyshell.exe`, Windows x86. Alternativa manual:
 
 ```bash
-i686-w64-mingw32-gcc -std=c99 -Os -s -Wall -Wextra -o tinyshell.exe agent.c -lwinhttp
+i686-w64-mingw32-gcc -std=c99 -Os -s -Wall -Wextra -mcrtdll=msvcrt-os -o tinyshell.exe src/*.c -lwinhttp
+```
+
+`-mcrtdll=msvcrt-os` enlaza contra el `msvcrt.dll` del sistema. Sin eso, algunos toolchains (p. ej. Arch) generan un binario que depende de la UCRT (`api-ms-win-crt-*.dll`), que Windows 7 no trae salvo con KB2999226. El script lo detecta y avisa.
+
+Tests del núcleo portable (JSON, historial, política de comandos), en el host:
+
+```bash
+./build/test-core.sh
 ```
 
 ## Compilar desde Windows
@@ -40,7 +48,7 @@ i686-w64-mingw32-gcc -std=c99 -Os -s -Wall -Wextra -o tinyshell.exe agent.c -lwi
 Con Visual Studio C++ Build Tools y un Windows SDK compatible, abrir **x86 Native Tools / Developer Command Prompt** y ejecutar:
 
 ```bat
-cl /nologo /O1 /MT /W3 agent.c winhttp.lib /Fe:tinyshell.exe
+cl /nologo /O1 /MT /W3 src\*.c winhttp.lib /Fe:tinyshell.exe
 ```
 
 También está `build/build-windows-msvc.bat`. Si el compilador instalado no soporta como objetivo Windows 7, el ejecutable puede compilar y aun así no funcionar en ese sistema antiguo.
@@ -49,10 +57,10 @@ También está `build/build-windows-msvc.bat`. Si el compilador instalado no sop
 
 1. Copiar `tinyshell.exe` a una carpeta local de la Noblex.
 2. Abrir CMD normal (no como administrador para la primera prueba) y ejecutar `tinyshell.exe`.
-3. Introducir la API key de OpenCode Go cuando la solicite. No se guarda en un archivo.
+3. Introducir la API key de OpenCode Go cuando la solicite (no se muestra al tipear). No se guarda en un archivo.
 4. Escribir una tarea en español, por ejemplo: `Revisá la versión de Windows, memoria disponible y procesos con mayor consumo; no cambies nada`.
-5. Leer la propuesta de comando. Solo se ejecuta si se responde `s`.
-6. Salir con `/salir`.
+5. Leer la propuesta de comando. Solo se ejecuta si se responde `s` o `si`; los comandos marcados como riesgosos piden además escribir `EJECUTAR`.
+6. `/reiniciar` borra el historial de la conversación; `/salir` termina.
 
 ## Modelo y API
 
@@ -67,9 +75,10 @@ La cuenta debe tener acceso al servicio/modelo y una API key válida. No se incl
 
 - Una herramienta: ejecución de comandos CMD con salida devuelta al modelo.
 - No tiene editor de archivos propio, explorador de proyecto, control de procesos interactivo, sandbox, rollback ni verificador formal de comandos.
+- Cada comando corre sin entrada interactiva, con límite de 180 s y salida acotada a 24 KB; el historial enviado se recorta a ~192 KB.
 - El filtro de comandos potencialmente peligrosos es heurístico y **no reemplaza el criterio del usuario**. Revisar cada comando completo antes de aprobarlo.
 - El prototipo no debe tratarse como un agente autónomo con permisos irrestrictos.
-- WinHTTP/TLS 1.2 y certificados raíz actualizados son requisitos prácticos para HTTPS en Windows 7. Si falla la conexión, comprobar primero fecha/hora, actualizaciones de certificados y compatibilidad TLS.
+- WinHTTP/TLS 1.2 y certificados raíz actualizados son requisitos prácticos para HTTPS en Windows 7. El programa pide TLS 1.2 explícitamente, lo que requiere KB3140245. Si falla la conexión, comprobar primero fecha/hora, actualizaciones de certificados y compatibilidad TLS.
 - La API puede cambiar o rechazar el formato de tool calling. Debe verificarse con una petición real y una tarea inocua antes de usarlo para reparar.
 
 ## Documentación del proyecto

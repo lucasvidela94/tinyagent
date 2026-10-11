@@ -24,8 +24,9 @@ Maintain a small, auditable, low-resource Windows x86 diagnostic agent for the N
 
 ## Codebase map
 
-- `agent.c`: CLI, JSON parsing/escaping, WinHTTP, message history, tool-call parsing, approval gate, CMD execution.
-- `build/build-linux-mingw.sh`: Linux-to-Windows x86 cross-build.
+- `src/`: one module per file, small header interface each. Portable C (testable on any host): `util` (buffers, UTF-8, JSON escaping), `json` (tokenizer), `conversation` (history, request body, tool-call extraction), `policy` (pre-approval checks, risk heuristic, yes/no). Win32 adapters: `console_win32` (UTF-16 console I/O), `http_win32` (WinHTTP), `shell_win32` (CreateProcess + pipe). `main.c`: approval gate and round-trip loop. `config.h`: endpoint, model and limits.
+- `tests/`: host-side regression tests for the portable modules (`build/test-core.sh`).
+- `build/build-linux-mingw.sh`: Linux-to-Windows x86 cross-build (links `msvcrt.dll`, not the UCRT).
 - `build/build-windows-msvc.bat`: Windows/MSVC build.
 - `scripts/collect-diagnostics.bat`: optional local diagnostic report.
 - `docs/`: project goals, architecture, entry points, target machine, operations, API, security, test plan and roadmap.
@@ -33,8 +34,8 @@ Maintain a small, auditable, low-resource Windows x86 diagnostic agent for the N
 ## Change process
 
 1. Read `docs/ARCHITECTURE.md`, `docs/SECURITY.md` and `docs/TEST_PLAN.md` before changing execution, networking or parsing.
-2. Keep changes small and document assumptions.
-3. Test compilation for 32-bit Windows, not just the host OS.
+2. Keep changes small and document assumptions. Keep each source file under ~300 lines (aim for ~200); split along a real module interface, not arbitrarily. Windows calls stay in `*_win32.c` / `main.c` so the rest stays host-testable.
+3. Test compilation for 32-bit Windows, not just the host OS, and run `build/test-core.sh`. Check the imported DLLs: Windows 7 has no UCRT by default.
 4. Add regression cases for malformed JSON, missing fields, unknown tools, failed network requests, rejected commands and oversized outputs.
 5. Do not describe the build as tested on Windows 7 until it has actually run on that target.
 

@@ -19,9 +19,11 @@
 
 ## Important implementation caveats
 
-- The current dangerous-command detector is only a keyword heuristic; it can miss destructive commands and can flag harmless commands. It is not a security boundary.
+- `risk_reason()` (`src/policy.c`) is only a keyword heuristic; it can miss destructive commands and can flag harmless commands. It is not a security boundary. It flags `^`, `>`, `&`, delete/format/partition tools, `chkdsk /f /r /x /b`, registry/service/firewall/boot changes, process killing, permission changes, installers and script hosts.
+- Checks enforced in local code before the user is even asked (`command_problem()`): only the `shell` tool, non-empty command, at most 2000 bytes, no control characters or line breaks. What is displayed for approval is exactly what runs.
+- Over-long typed lines are consumed and refused, so leftover input can never answer the approval prompt.
 - Since all commands already ask for confirmation, that confirmation is the primary safeguard. Read the full command before answering yes.
-- `_popen` executes through the Windows command interpreter. Quoting and shell metacharacters can change what runs.
+- Commands still run through `cmd.exe /d /s /c` (now via `CreateProcessW`, stdin = NUL, 180 s limit). Quoting and shell metacharacters can change what runs.
 - The process has broad access to the files available to its Windows account; no filesystem sandbox exists.
 - A compromised or malicious API response must never be granted automatic execution.
 
@@ -29,8 +31,8 @@
 
 - Add a strict default-deny allowlist for diagnostic commands.
 - Parse and display structured command risk; block destructive classes instead of only asking twice.
-- Add per-session command and output limits, API response size limits, and history trimming.
-- Use `CreateProcess` with explicit argument handling rather than composing a shell command string where feasible.
+- ~~Add output limits, API response size limits, and history trimming.~~ Done: 24 KB output, 1 MB response, ~192 KB history (whole exchanges dropped).
+- Use `CreateProcess` with explicit argument handling rather than composing a shell command string where feasible (`CreateProcess` is used, but still through `cmd.exe /c`).
 - Add an explicit `--read-only` mode.
 - Redact secrets and network identifiers from optional logs.
 - Test JSON parser and API response handling with malformed and oversized inputs.

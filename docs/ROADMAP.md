@@ -8,15 +8,15 @@
 - [ ] Validate one tool-call round trip with `ver` or `whoami`.
 - [ ] Fix any API schema/parser issues revealed by real responses.
 - [ ] Verify rejection always means zero local command execution.
-- [ ] Add bounded history and response limits.
+- [x] Add bounded history and response limits (code + host tests; still to observe on target).
 
 ## P1 — safety and robustness
 
 - [ ] Add explicit read-only mode and default-deny command allowlist.
-- [ ] Replace shell-string execution with safer process creation where feasible.
-- [ ] Add robust HTTP status/error reporting without leaking credentials.
-- [ ] Unit-test JSON escaping, token boundaries, missing fields and malformed responses.
-- [ ] Add session reset command and history trimming.
+- [ ] Replace shell-string execution with safer process creation where feasible. (Partial: `CreateProcessW` + job + timeout, still `cmd.exe /c`.)
+- [x] Add robust HTTP status/error reporting without leaking credentials.
+- [x] Unit-test JSON escaping, token boundaries, missing fields and malformed responses (`tests/`).
+- [x] Add session reset command (`/reiniciar`) and history trimming.
 - [ ] Check command exit status and capture stdout/stderr separately if feasible.
 
 ## P2 — useful harness features
