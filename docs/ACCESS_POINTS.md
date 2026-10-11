@@ -13,21 +13,19 @@
 | `tinyshell --update` or `/actualizar` | Self-update | Manual only; asks; verifies RSA signature; self-tests the new binary; keeps `tinyshell.old.exe` |
 | `tinyshell --rollback` | Undo update | Swaps `tinyshell.exe` and `tinyshell.old.exe` |
 | `tinyshell --logout` | Forget key | Deletes the saved API key from the Credential Manager |
-| `/ayuda`, `/clave` | Session commands | Show commands; enter a new API key (and optionally save it) |
+| `/ayuda`, `/clave`, `/modelo [x]` | Session commands | Show commands; enter a new API key (and optionally save it); show the provider or switch model (saved to `config.ini`) |
 | `/reiniciar` | Session reset | Drops the conversation history, keeps the system prompt |
 | `run_command()` (`src/shell_win32.c`) | Local command boundary | `CreateProcessW` of `%SystemRoot%\System32\cmd.exe /d /s /c "<cmd>"`, stdin = NUL, 180 s limit, output capped at 24 KB |
 
 ## Network access point
 
-- Method: `POST`
-- Host: `opencode.ai`
-- Path: `/zen/go/v1/chat/completions`
-- Transport: HTTPS via WinHTTP, port 443
-- Auth: `Authorization: Bearer <API key>`
-- Content: JSON, OpenAI-compatible chat-completions messages and tool declaration
-- Model: `deepseek-v4.1-flash`
+- Configured in `%LOCALAPPDATA%\TinyShell\config.ini`, section `[provider]`: `name`, `url`, `model`, `session_header`. Created with comments and examples on first run; edit with Notepad. `/modelo` shows it; `/modelo X` changes the model and saves it.
+- Default: `POST https://opencode.ai/zen/go/v1/chat/completions`, model `deepseek-v4.1-flash`, header `x-opencode-session`.
+- Transport: WinHTTP, `https://` (TLS 1.2 requested) or `http://` (warned at startup: key and conversation unencrypted; meant for a model server on the LAN).
+- Auth: `Authorization: Bearer <API key>` when a key is set (local servers can run without one).
+- Content: JSON, OpenAI-compatible chat-completions messages and tool declaration.
 
-The API key is read from the Windows Credential Manager if the user chose to save it (target `TinyShell/OpenCodeGo`), otherwise requested at startup without echo, and held in process memory. Do not commit or email it. The endpoint/model are compiled constants in `src/config.h` at this stage. TLS 1.1/1.2 are requested explicitly via `WINHTTP_OPTION_SECURE_PROTOCOLS`.
+The API key is read from the Windows Credential Manager if the user chose to save it (target `TinyShell/<provider name>`, one per provider), otherwise requested at startup without echo, and held in process memory. Do not commit or email it. The endpoint/model are compiled constants in `src/config.h` at this stage. TLS 1.1/1.2 are requested explicitly via `WINHTTP_OPTION_SECURE_PROTOCOLS`.
 
 ## Release access point (updates only)
 

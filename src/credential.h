@@ -6,8 +6,9 @@
 
 #include <stddef.h>
 
-int credential_load(char *out, size_t cap); /* 1 if a saved key was copied into out */
-int credential_save(const char *key);
-int credential_delete(void); /* 1 if deleted or there was none */
+/* One key per provider name, stored as "TinyShell/<provider>". */
+int credential_load(const char *provider, char *out, size_t cap); /* 1 if a saved key was copied */
+int credential_save(const char *provider, const char *key);
+int credential_delete(const char *provider); /* 1 if deleted or there was none */
 
 #endif

@@ -57,6 +57,8 @@
 - [x] Tool call for a read-only command appears with command and reason. (wine, real API)
 - [x] Tool result is accepted by API and the model produces a final response; several round trips with the raw assistant message kept in history are accepted. (wine, real API)
 - [x] Missing `x-opencode-session` is rejected with HTTP 400; with it, requests succeed. (wine, real API)
+- [x] Custom provider over `http://` (local mock): URL with query string, model from `config.ini`, no `Authorization` without key, no session header when empty, full tool loop, `/modelo X` saved. (wine)
+- [x] Invalid `config.ini` values (bad name, `ftp://`, header injection) are reported and defaults used. (wine)
 - [ ] HTTP 401 and 429 are reported usefully.
 - [ ] Malformed JSON does not trigger shell execution.
 - [ ] Unknown tool name is never executed.

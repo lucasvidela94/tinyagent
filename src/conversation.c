@@ -83,10 +83,14 @@ static const char *TOOLS =
     "\"reason\":{\"type\":\"string\",\"description\":\"Why this command is needed\"}},"
     "\"required\":[\"command\",\"reason\"],\"additionalProperties\":false}}}],\"tool_choice\":\"auto\"";
 
-char *build_request(const History *h) {
+char *build_request(const History *h, const char *model) {
   Buf b = {0};
+  char *em = jesc(model);
   int i;
-  buf_str(&b, "{\"model\":\"" MODEL "\",\"messages\":[");
+  buf_str(&b, "{\"model\":\"");
+  buf_str(&b, em);
+  buf_str(&b, "\",\"messages\":[");
+  free(em);
   for (i = 0; i < h->n; i++) {
     if (i) buf_str(&b, ",");
     buf_str(&b, h->m[i].json);

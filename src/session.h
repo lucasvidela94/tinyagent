@@ -4,15 +4,17 @@
 #define TINYSHELL_SESSION_H
 
 #include "conversation.h"
+#include "provider.h"
 
 typedef struct {
   History history;
+  Provider provider;
   long tokens_in, tokens_out; /* summed from the API "usage" field */
   char session_id[48];        /* random per conversation, sent as x-opencode-session */
   char api_key[1024];
 } Session;
 
-void session_init(Session *s); /* system prompt + new session ID; api_key is left as is */
+void session_init(Session *s); /* system prompt + new session ID; provider and api_key are left as is */
 void session_reset(Session *s); /* new conversation: history cleared, new session ID */
 void session_free(Session *s); /* also wipes the API key */
 

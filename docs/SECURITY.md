@@ -27,6 +27,13 @@
 - The process has broad access to the files available to its Windows account; no filesystem sandbox exists.
 - A compromised or malicious API response must never be granted automatic execution.
 
+## Provider configuration
+
+- `config.ini` never holds secrets; API keys stay in the Credential Manager, one per provider `name`.
+- Values are validated in local code (`src/provider.c`): URL must be `http://` or `https://` without spaces; `session_header` only letters, digits and `-` (no header injection); `name` only safe characters (it becomes the credential target). Invalid values are reported and the default is used.
+- `http://` URLs are allowed for LAN model servers but warned at every start: the key and the whole conversation (including command output) travel unencrypted.
+- Changing the URL sends your prompts and command output to that server: only point it at services you trust.
+
 ## Updates and installation
 
 - Updates are never automatic and always ask. They do not need the API key.

@@ -137,6 +137,7 @@ void tui_output(const char *output) {
     if (next) *next++ = 0;
     n = strlen(l);
     if (n && l[n - 1] == '\r') l[--n] = 0;
+    if (!l[strspn(l, " \t")]) continue; /* blank lines add nothing to a preview */
     if (is_meta(l)) {
       buf_str(&meta, meta.len ? " · " : "");
       buf_add(&meta, l + 1, n > 1 ? n - 2 : 0); /* without the brackets */

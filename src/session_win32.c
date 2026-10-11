@@ -131,9 +131,9 @@ unsigned long session_send(Session *s, const char *text) {
     int more = 0;
     char *body, *resp;
     history_trim(&s->history, MAX_HISTORY);
-    body = build_request(&s->history);
+    body = build_request(&s->history, s->provider.model);
     tui_thinking(1);
-    resp = http_post(body, s->api_key, s->session_id);
+    resp = http_post(&s->provider, body, s->api_key, s->session_id);
     tui_thinking(0);
     free(body);
     if (!resp) return http_last_status() ? http_last_status() : 1;

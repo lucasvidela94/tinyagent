@@ -10,8 +10,8 @@ Persona
   ▼
 CLI (main)
   ├── historial de mensajes JSON
-  ├── cliente HTTPS WinHTTP ─────────────► OpenCode Go Chat Completions
-  │                                         modelo deepseek-v4.1-flash
+  ├── cliente HTTP(S) WinHTTP ───────────► API compatible con OpenAI (config.ini)
+  │                                         por defecto OpenCode Go / deepseek-v4.1-flash
   │◄──────────────── respuesta JSON / tool call
   ├── parser JSON mínimo
   ├── control local de aprobación
@@ -30,13 +30,15 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/util.c` | `Buf`, `utf8_valid`, `jesc` | buffers, validación UTF-8, escape JSON (bytes inválidos → `\ufffd`) | portable |
 | `src/json.c` | `json_parse/key/index/str` | tokenizer acotado (profundidad, tokens), `\uXXXX` → UTF-8 | portable |
 | `src/conversation.c` | `History`, `build_request`, `ToolCall` | historial con recorte por intercambios completos, body de la request, extracción de tool calls | portable |
+| `src/provider.c` | `provider_defaults`, `provider_set` | proveedor (nombre, URL, modelo, header de sesión), valores por defecto y validación de `config.ini` | portable |
 | `src/version.c` | `version_compare`, `version_from_output` | versiones X.Y.Z y salida de `--version` para el updater | portable |
 | `src/policy.c` | `command_problem`, `risk_reason`, `is_yes` | rechazo previo, heurística de riesgo, respuesta de aprobación | portable |
 | `src/console_win32.c` | `say`, `read_line`, `console_*` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas; colores, ancho, cursor, borrar filas, vaciar entrada | Win32 |
+| `src/settings_win32.c` | `settings_load`, `settings_save_model` | `%LOCALAPPDATA%\TinyShell\config.ini` (`GetPrivateProfileStringW`), plantilla comentada en el primer arranque | Win32 |
 | `src/tui_win32.c` | `tui_prompt`, `tui_user`, `tui_proposal`, `tui_output`… | TUI mínima en línea: bloque del usuario, propuesta, resumen de salida, editor entre reglas, footer; modo plano si no hay consola | Win32 |
 | `src/credential_win32.c` | `credential_load/save/delete` | API key opcional en el Administrador de credenciales (DPAPI por usuario) | Win32 |
 | `src/session_win32.c` | `session_send` | historial, gate de aprobación (`decide`), bucle de turnos, conteo de tokens | Win32 |
-| `src/http_win32.c` | `http_post`, `http_get` | WinHTTP, TLS 1.2 explícito, errores legibles, cuerpo acotado; GET para releases | Win32 |
+| `src/http_win32.c` | `http_post`, `http_get` | WinHTTP sobre cualquier URL http(s) (`WinHttpCrackUrl`), TLS 1.2 explícito, errores legibles, cuerpo acotado; GET de releases solo por HTTPS | Win32 |
 | `src/shell_win32.c` | `run_command` | `cmd.exe /d /s /c` vía `CreateProcessW`, job + timeout, salida OEM → UTF-8 | Win32 |
 | `src/prompt_win32.c` | `system_prompt` | instrucciones agnósticas de tarea + equipo detectado al arrancar (versión de Windows, arquitectura, RAM, CPUs, carpeta actual) | Win32 |
 | `src/verify_win32.c` | `signature_valid`, `sha256_hex` | firma RSA-3072/SHA-256 de releases con la CryptoAPI; clave pública en `src/release_key.h` | Win32 |

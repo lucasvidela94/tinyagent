@@ -8,7 +8,7 @@ Proveer un agente de terminal pequeño y de propósito general (idea similar a O
 
 1. Ejecutable Win32/x86 compatible con el equipo objetivo, con consumo local bajo.
 2. No depender de Node.js, Go, Python, una base de datos ni un servicio en segundo plano al ejecutar el binario.
-3. Usar el API remoto de OpenCode Go y el modelo configurado `deepseek-v4.1-flash`.
+3. Hablar con cualquier API compatible con OpenAI chat completions, configurable en `config.ini` (por defecto OpenCode Go con `deepseek-v4.1-flash`).
 4. Mostrar comando exacto y motivo antes de ejecutarlo.
 5. Inspeccionar primero; cambios solo después de una aprobación consciente.
 6. Entregar salida y código de retorno al modelo para iterar sobre evidencia real.

@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.5.0 — minimal TUI and saved API key
+## 0.5.0 — minimal TUI, saved API key, any provider
+
+- Provider-agnostic: `%LOCALAPPDATA%\TinyShell\config.ini` (`[provider]` name, url, model, session_header; created with examples on first run) points TinyShell at any OpenAI-compatible endpoint: OpenCode Go (default), OpenAI, OpenRouter, DeepSeek, or an LM Studio/Ollama server on the LAN over `http://` (warned at startup; no key needed). Values validated locally; one saved API key per provider; `/modelo` shows or switches the model.
 
 - Minimal inline TUI in the style of Pi / OpenCode / Claude Code, drawn with the console API (no ANSI on Windows 7): shaded user block, `$ command` proposals (yellow, red when risky), dimmed output preview (`... +N líneas · exit 0`), `pensando...`, editor between two rules, footer with folder, tokens in/out, context % and model. Plain mode when redirected or narrower than 40 columns.
 - API key: optional save in the Windows Credential Manager (DPAPI, per user); `/clave` to change it, `tinyshell --logout` to delete it; rejected keys (401/403) explained without raw JSON.

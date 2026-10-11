@@ -20,7 +20,7 @@ void history_free(History *h);
 
 char *message_json(const char *role, const char *content);
 char *tool_result_json(const char *id, const char *output);
-char *build_request(const History *h); /* full POST body with the shell tool declared */
+char *build_request(const History *h, const char *model); /* POST body with the shell tool */
 
 /* One entry of message.tool_calls. Missing pieces become "", never NULL. */
 typedef struct { char *id, *name, *command, *reason; } ToolCall;

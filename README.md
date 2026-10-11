@@ -3,7 +3,7 @@
 Agente de terminal de propósito general (en la línea de OpenCode o Pi) para **PCs viejas con Windows y pocos recursos**: diagnosticar problemas, inspeccionar archivos, escribir scripts, hacer mantenimiento o responder preguntas sobre la máquina.
 
 - Un solo `.exe` de 32 bits en C (~70 KB). Sin Node, Python, .NET, servicios ni base de datos.
-- El modelo corre remoto (OpenCode Go, `deepseek-v4.1-flash`); la PC solo mantiene la consola, habla HTTPS y ejecuta comandos.
+- El modelo corre remoto, en cualquier API compatible con OpenAI (por defecto OpenCode Go con `deepseek-v4.1-flash`); la PC solo mantiene la consola, habla HTTPS y ejecuta comandos.
 - **Cada comando lo aprobás vos** antes de que se ejecute. Los riesgosos piden además escribir `EJECUTAR`.
 - Equipo de prueba principal: Noblex NT1013E, Windows 7 SP1 32 bits, Atom N2600, 2 GB RAM.
 
@@ -37,7 +37,7 @@ El instalador muestra el SHA-256 del ejecutable; comparalo con el que figura en 
 
 - Service Pack 1 y la actualización **KB3140245** (TinyShell pide TLS 1.2 por su cuenta; sin ella no puede conectarse).
 - Certificados raíz actualizados y fecha/hora correctas.
-- Una API key de [OpenCode Go](https://docs.opencode.ai/docs/go/).
+- Una API key de [OpenCode Go](https://docs.opencode.ai/docs/go/) u otro proveedor (ver "Proveedor y modelo").
 
 ## Usar
 
@@ -64,12 +64,30 @@ C:\Users\Samira · 7.2k in · 0.6k out · 12%    deepseek-v4.1-flash
 | Comando | Qué hace |
 |---|---|
 | `/ayuda` | muestra los comandos |
+| `/modelo [x]` | muestra el proveedor o cambia de modelo |
 | `/clave` | cambia la API key |
 | `/reiniciar` | empieza una conversación nueva |
 | `/actualizar` | igual que `tinyshell --update` |
 | `/salir` | termina |
 
 En el editor funcionan las teclas de siempre del CMD: flechas para mensajes anteriores, F7 para el historial, clic derecho para pegar. Límites para no ahogar una máquina vieja: cada comando corre sin entrada interactiva y se corta a los 180 s; la salida que ve el modelo se recorta a 24 KB; el historial a ~192 KB.
+
+## Proveedor y modelo
+
+Por defecto usa OpenCode Go. Para usar otro servicio compatible con OpenAI, editá `%LOCALAPPDATA%\TinyShell\config.ini` con el Bloc de notas (se crea con ejemplos la primera vez):
+
+```ini
+[provider]
+name = openrouter
+url = https://openrouter.ai/api/v1/chat/completions
+model = deepseek/deepseek-chat
+session_header =
+```
+
+- `name` identifica la API key guardada: cada proveedor tiene la suya.
+- `session_header` es solo para OpenCode Go (`x-opencode-session`); dejalo vacío para los demás.
+- Un servidor en tu red (LM Studio, Ollama en otra PC) funciona con `http://` y sin key; TinyShell avisa que esa conexión no va cifrada.
+- `/modelo otro-modelo` cambia el modelo sin salir y lo guarda.
 
 ## Actualizar y volver atrás
 

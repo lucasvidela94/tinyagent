@@ -7,6 +7,7 @@
 #include "config.h"
 #include "console.h"
 #include "http.h"
+#include "provider.h"
 #include "util.h"
 
 #ifdef _MSC_VER
@@ -15,7 +16,7 @@
 
 static const char *winhttp_hint(DWORD e) {
   switch (e) {
-  case ERROR_WINHTTP_NAME_NOT_RESOLVED: return "no se resolvió opencode.ai (DNS o sin red)";
+  case ERROR_WINHTTP_NAME_NOT_RESOLVED: return "no se resolvió el servidor (DNS o sin red)";
   case ERROR_WINHTTP_CANNOT_CONNECT: return "no se pudo conectar (red, proxy o firewall)";
   case ERROR_WINHTTP_TIMEOUT: return "tiempo de espera agotado";
   case ERROR_WINHTTP_CONNECTION_ERROR: return "conexión cortada; en Windows 7 suele ser TLS 1.2 no habilitado";
@@ -47,16 +48,21 @@ static void enable_tls12(HINTERNET ses) {
         (unsigned long)GetLastError());
 }
 
-static wchar_t *auth_headers(const char *api_key, const char *session_id, size_t *wbytes) {
+static wchar_t *auth_headers(const char *api_key, const char *session_header, const char *session_id,
+                             size_t *wbytes) {
   Buf h = {0};
   char *s;
   wchar_t *w;
   int n;
-  buf_str(&h, "Content-Type: application/json\r\nAuthorization: Bearer ");
-  buf_str(&h, api_key);
-  buf_str(&h, "\r\n");
-  if (session_id && *session_id) { /* OpenCode Go routes and caches per conversation */
-    buf_str(&h, "x-opencode-session: ");
+  buf_str(&h, "Content-Type: application/json\r\n");
+  if (*api_key) { /* local servers often need no key */
+    buf_str(&h, "Authorization: Bearer ");
+    buf_str(&h, api_key);
+    buf_str(&h, "\r\n");
+  }
+  if (session_header && *session_header && session_id && *session_id) { /* e.g. OpenCode Go routing */
+    buf_str(&h, session_header);
+    buf_str(&h, ": ");
     buf_str(&h, session_id);
     buf_str(&h, "\r\n");
   }
@@ -91,9 +97,37 @@ static unsigned long last_status; /* 0 when no HTTP response arrived */
 
 unsigned long http_last_status(void) { return last_status; }
 
-/* One HTTPS request. api_key and body may be NULL (plain GET). Redirects are followed. */
-static char *request(const char *label, const wchar_t *host, const wchar_t *path, const wchar_t *method,
-                     const char *api_key, const char *session_id, const char *body, size_t max,
+typedef struct {
+  wchar_t host[256], path[1024];
+  INTERNET_PORT port;
+  int secure;
+} Target;
+
+/* Splits an http(s) URL with WinHttpCrackUrl; the query string stays part of the path. */
+static int crack(const char *url, Target *t) {
+  wchar_t wurl[1024], extra[512];
+  URL_COMPONENTS u;
+  if (!MultiByteToWideChar(CP_UTF8, 0, url, -1, wurl, 1024)) return 0;
+  ZeroMemory(&u, sizeof u);
+  u.dwStructSize = sizeof u;
+  u.lpszHostName = t->host;
+  u.dwHostNameLength = 256;
+  u.lpszUrlPath = t->path;
+  u.dwUrlPathLength = 1024;
+  u.lpszExtraInfo = extra;
+  u.dwExtraInfoLength = 512;
+  if (!WinHttpCrackUrl(wurl, 0, 0, &u)) return 0;
+  if (u.nScheme != INTERNET_SCHEME_HTTPS && u.nScheme != INTERNET_SCHEME_HTTP) return 0;
+  if (!t->path[0]) lstrcpyW(t->path, L"/");
+  if (extra[0] && lstrlenW(t->path) + lstrlenW(extra) < 1024) lstrcatW(t->path, extra);
+  t->port = u.nPort;
+  t->secure = u.nScheme == INTERNET_SCHEME_HTTPS;
+  return 1;
+}
+
+/* One request. api_key and body may be NULL (plain GET). Redirects are followed. */
+static char *request(const char *label, const Target *t, const wchar_t *method, const char *api_key,
+                     const char *session_header, const char *session_id, const char *body, size_t max,
                      size_t *out_len) {
   HINTERNET ses = NULL, con = NULL, req = NULL;
   const char *stage = "abrir sesión";
@@ -110,11 +144,11 @@ static char *request(const char *label, const wchar_t *host, const wchar_t *path
   enable_tls12(ses);
   WinHttpSetTimeouts(ses, 15000, 15000, 30000, 120000);
   stage = "conectar";
-  if (!(con = WinHttpConnect(ses, host, INTERNET_DEFAULT_HTTPS_PORT, 0))) goto fail;
-  if (!(req = WinHttpOpenRequest(con, method, path, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
-                                 WINHTTP_FLAG_SECURE)))
+  if (!(con = WinHttpConnect(ses, t->host, t->port, 0))) goto fail;
+  if (!(req = WinHttpOpenRequest(con, method, t->path, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
+                                 t->secure ? WINHTTP_FLAG_SECURE : 0)))
     goto fail;
-  if (api_key) hdr = auth_headers(api_key, session_id, &hdr_bytes);
+  if (api_key) hdr = auth_headers(api_key, session_header, session_id, &hdr_bytes);
   stage = "enviar";
   if (!WinHttpSendRequest(req, hdr ? hdr : WINHTTP_NO_ADDITIONAL_HEADERS, hdr ? (DWORD)-1L : 0,
                           body ? (LPVOID)body : WINHTTP_NO_REQUEST_DATA, len, len, 0))
@@ -151,23 +185,22 @@ done:
   return out;
 }
 
-char *http_post(const char *body, const char *api_key, const char *session_id) {
-  return request("OpenCode Go", API_HOST, API_PATH, L"POST", api_key, session_id, body, MAX_HTTP, NULL);
+char *http_post(const Provider *p, const char *body, const char *api_key, const char *session_id) {
+  Target t;
+  last_status = 0;
+  if (!crack(p->url, &t)) {
+    say("\nURL del proveedor inválida: %s\n", p->url);
+    return NULL;
+  }
+  return request(p->name, &t, L"POST", api_key, p->session_header, session_id, body, MAX_HTTP, NULL);
 }
 
 char *http_get(const char *url, size_t max, size_t *len) {
-  wchar_t wurl[1024], host[256], path[1024];
-  URL_COMPONENTS u;
-  if (!MultiByteToWideChar(CP_UTF8, 0, url, -1, wurl, 1024)) return NULL;
-  ZeroMemory(&u, sizeof u);
-  u.dwStructSize = sizeof u;
-  u.lpszHostName = host;
-  u.dwHostNameLength = 256;
-  u.lpszUrlPath = path;
-  u.dwUrlPathLength = 1024;
-  if (!WinHttpCrackUrl(wurl, 0, 0, &u) || u.nScheme != INTERNET_SCHEME_HTTPS) {
+  Target t;
+  last_status = 0;
+  if (!crack(url, &t) || !t.secure) { /* releases are only fetched over TLS */
     say("\nURL inválida o no HTTPS: %s\n", url);
     return NULL;
   }
-  return request("GitHub", host, path, L"GET", NULL, NULL, NULL, max, len);
+  return request("GitHub", &t, L"GET", NULL, NULL, NULL, NULL, max, len);
 }
