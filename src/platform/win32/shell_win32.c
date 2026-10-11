@@ -5,6 +5,7 @@
 
 #include "cancel.h"
 #include "cancel_win32.h"
+#include "command.h"
 #include "config.h"
 #include "shell.h"
 #include "util.h"
@@ -61,23 +62,14 @@ static int collect(HANDLE rd, HANDLE proc, Buf *out, size_t *dropped) {
 }
 
 static char *finish(Buf *out, size_t dropped, int timed_out, DWORD code) {
-  char tail[96], *text;
+  char *text, *res;
   size_t k;
-  Buf res = {0};
   for (k = 0; k < out->len; k++)
     if (!out->p[k]) out->p[k] = ' '; /* NUL bytes would cut the text short */
   text = to_utf8(buf_take(out));
-  buf_str(&res, *text ? text : "(sin salida)");
+  res = command_result(text, dropped, timed_out, cancel_requested(), code);
   free(text);
-  if (dropped) {
-    snprintf(tail, sizeof tail, "\n[salida truncada: %lu bytes omitidos]", (unsigned long)dropped);
-    buf_str(&res, tail);
-  }
-  if (cancel_requested()) snprintf(tail, sizeof tail, "\n[cancelado por el usuario con Ctrl+C]");
-  else if (timed_out) snprintf(tail, sizeof tail, "\n[tiempo agotado: terminado tras %d s]", CMD_TIMEOUT_MS / 1000);
-  else snprintf(tail, sizeof tail, "\n[exit=%lu]", (unsigned long)code);
-  buf_str(&res, tail);
-  return buf_take(&res);
+  return res;
 }
 
 char *run_command(const char *cmd) {
