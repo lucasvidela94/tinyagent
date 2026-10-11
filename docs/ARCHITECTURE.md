@@ -30,7 +30,8 @@ src/config.h, release_key.h   constantes de build
 src/core/                     portable, testeado en el host (build/test-core.sh)
 src/app/                      el programa: sesión, TUI, login, reportes, main
 src/platform/                 el seam de plataforma: un .h por servicio del sistema
-src/platform/win32/           adaptadores Windows (después: platform/posix/)
+src/platform/win32/           adaptadores Windows
+src/platform/posix/           adaptadores Linux (en curso: sys, consola, shell y Ctrl+C listos)
 ```
 
 Regla de dependencias, verificada en cada commit por `build/checks/includes.sh`:
@@ -50,6 +51,8 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/core/report.c` | `errlog_*`, `redact`, `report_json`, `event_json` | errores recientes, limpieza de keys y datos personales, cuerpos para el relay | portable |
 | `src/core/stream.c` | `stream_feed`, `stream_response` | streaming SSE: texto en vivo, une los pedazos de tool calls, rearma la respuesta normal | portable |
 | `src/core/version.c` | `version_compare`, `version_from_output` | versiones X.Y.Z y salida de `--version` para el updater | portable |
+| `src/core/charset.c` | `charset_encode`, `charset_decode`, `charset_from_locale` | texto para terminales que no son UTF-8 (`LANG=C` o Latin-1 en distros viejas) | portable |
+| `src/core/command.c` | `command_result` | el texto con que vuelve al modelo el resultado de un comando, igual en todas las plataformas | portable |
 | `src/core/policy.c` | `command_problem`, `risk_reason`, `is_yes` | rechazo previo, heurística de riesgo, respuesta de aprobación | portable |
 | `src/platform/win32/console_win32.c` | `say`, `read_line`, `console_*` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas; colores, ancho, cursor, borrar filas, vaciar entrada | Win32 |
 | `src/platform/win32/settings_win32.c` | `settings_load`, `settings_save_model` | `%LOCALAPPDATA%\TinyShell\config.ini` (`GetPrivateProfileStringW`), plantilla comentada en el primer arranque | Win32 |
@@ -65,6 +68,10 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/platform/win32/sys_win32.c` | `sys_random`, `sys_ms`, `sys_data_path`, `sys_read_file`, `sys_rename`… | primitivas del sistema con rutas UTF-8: random, reloj, carpeta actual, carpeta de datos (`%LOCALAPPDATA%\TinyShell`), archivos, identidad, ruta propia y renombrar un binario en uso | Win32 |
 | `src/platform/win32/http_win32.c` | `http_post_stream`, `http_get`, `http_post_json` | WinHTTP sobre cualquier URL http(s) (`WinHttpCrackUrl`), TLS 1.2 explícito, errores legibles, cuerpo acotado; GET de releases solo por HTTPS | Win32 |
 | `src/platform/win32/shell_win32.c` | `run_command` | `cmd.exe /d /s /c` vía `CreateProcessW`, job + timeout, salida OEM → UTF-8 | Win32 |
+| `src/platform/posix/sys_posix.c` | igual que `sys_win32` | `/dev/urandom`, `CLOCK_MONOTONIC`, `~/.config/tinyshell` (0700), archivos 0600, `/proc/self/exe` | POSIX |
+| `src/platform/posix/console_posix.c`, `console_input_posix.c` | igual que `console_win32` | escapes ANSI, posición del cursor con `ESC[6n`, termios (modo canónico para líneas, carácter a carácter para claves y menús), charset del locale | POSIX |
+| `src/platform/posix/shell_posix.c` | `run_command` | `/bin/sh -c` en su propio grupo de procesos; timeout y Ctrl+C matan el grupo | POSIX |
+| `src/platform/posix/cancel_posix.c` | `cancel_*` | SIGINT sin `SA_RESTART` (corta la lectura pendiente), SIGPIPE ignorado | POSIX |
 | `src/platform/win32/prompt_win32.c` | `system_prompt` | instrucciones agnósticas de tarea + equipo detectado al arrancar (versión de Windows, arquitectura, RAM, CPUs, carpeta actual) | Win32 |
 | `src/platform/win32/verify_win32.c` | `signature_valid`, `sha256_hex` | firma RSA-3072/SHA-256 de releases con la CryptoAPI; clave pública en `src/release_key.h` | Win32 |
 | `src/app/update.c` | `update_run`, `update_rollback` | `--update`: version.txt → descarga → firma → self-test → swap con el hermano `.old` (`version_sibling`); `--rollback`. Usa `sys` para ruta propia, renombrar y el asset del release | portable |

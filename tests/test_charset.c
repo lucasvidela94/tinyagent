@@ -34,6 +34,7 @@ static void test_encode(void) {
   CHECK(encodes(s, CHARSET_LATIN1, "\xbfQu\xe9 a\xf1o? - v"));
   CHECK(encodes(s, CHARSET_ASCII, "?Que ano? - v"));
   CHECK(encodes("\xc3\x91 \xc3\x9c \xc2\xa1", CHARSET_ASCII, "N U !"));
+  CHECK(encodes("a \xc2\xb7 b", CHARSET_ASCII, "a - b")); /* footer separator */
   CHECK(encodes("\xe4\xb8\xad", CHARSET_LATIN1, "?")); /* CJK: no stand-in */
   CHECK(encodes("\xf0\x9f\x98\x80x", CHARSET_ASCII, "x")); /* emoji dropped */
   CHECK(encodes("a\xffz", CHARSET_ASCII, "a?z"));          /* invalid byte */

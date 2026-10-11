@@ -36,7 +36,8 @@
 - [x] Layered `src/` with the platform seam and an enforced include rule.
 - [x] Step 0: `sys` seam, portable `update`, `cancel` without Windows handles.
 - [ ] `http_last_error` without WinHTTP wording; shell dialect as data (with the POSIX shell).
-- [ ] POSIX adapters: sys, console, shell and cancel; HTTP with Mbed TLS; credentials; update.
+- [x] POSIX adapters: sys, console, shell and cancel (tested natively; TUI checked in a pty).
+- [ ] POSIX adapters: HTTP with Mbed TLS, settings, credentials, prompt, verify; then a Linux binary.
 - [ ] Static i386 musl build, `install.sh`, dual signed release, site section.
 - [ ] Decide API key storage on Linux and the hardware floor (open questions in the ADR).
 

@@ -37,6 +37,7 @@ static void ascii_for(unsigned long cp, Buf *out) {
   else if (cp == 0xAA) c[0] = 'a';
   else if (cp == 0xBA || cp == 0xB0) c[0] = 'o';
   else if (cp == 0xAB || cp == 0xBB) c[0] = '"';
+  else if (cp == 0xB7) c[0] = '-'; /* the TUI's separator between footer fields */
   else c[0] = '?';
   buf_str(out, c);
 }
