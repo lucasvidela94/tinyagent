@@ -51,23 +51,23 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/core/stream.c` | `stream_feed`, `stream_response` | streaming SSE: texto en vivo, une los pedazos de tool calls, rearma la respuesta normal | portable |
 | `src/core/version.c` | `version_compare`, `version_from_output` | versiones X.Y.Z y salida de `--version` para el updater | portable |
 | `src/core/policy.c` | `command_problem`, `risk_reason`, `is_yes` | rechazo previo, heurística de riesgo, respuesta de aprobación | portable |
-| `src/console_win32.c` | `say`, `read_line`, `console_*` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas; colores, ancho, cursor, borrar filas, vaciar entrada | Win32 |
-| `src/settings_win32.c` | `settings_load`, `settings_save_model` | `%LOCALAPPDATA%\TinyShell\config.ini` (`GetPrivateProfileStringW`), plantilla comentada en el primer arranque | Win32 |
+| `src/platform/win32/console_win32.c` | `say`, `read_line`, `console_*` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas; colores, ancho, cursor, borrar filas, vaciar entrada | Win32 |
+| `src/platform/win32/settings_win32.c` | `settings_load`, `settings_save_model` | `%LOCALAPPDATA%\TinyShell\config.ini` (`GetPrivateProfileStringW`), plantilla comentada en el primer arranque | Win32 |
 | `src/app/tui.c` | `tui_prompt`, `tui_user`, `tui_proposal`, `tui_output`… | TUI mínima en línea: bloque del usuario, propuesta, resumen de salida, editor entre reglas, footer; modo plano si no hay consola | portable |
-| `src/console_input_win32.c` | `read_line`, `read_secret`, `read_key` | entrada: líneas, keys con `*`, teclas para menús | Win32 |
+| `src/platform/win32/console_input_win32.c` | `read_line`, `read_secret`, `read_key` | entrada: líneas, keys con `*`, teclas para menús | Win32 |
 | `src/app/tui_select.c` | `tui_select` | menú con flechas, filtro tipeando y ventana de 10 filas | portable |
 | `src/app/login.c` | `login_run`, `login_pick_model` | `tinyshell login`: proveedor, key (validada con `/models`), modelo de la lista en vivo | portable |
 | `src/app/reporter.c` | `reporter_run` | `/reporte`: arma, guarda en `.txt`, muestra y envía el informe | portable |
 | `src/app/telemetry.c` | `telemetry_init/event/error` | telemetría de la beta: aviso, `telemetria on/off/--ver`, registro local de lo enviado | portable |
-| `src/cancel_win32.c` | `cancel_*` | Ctrl+C: cierra el pedido HTTP o mata el comando desde el hilo del handler, con handles protegidos; corta la lectura pendiente | Win32 |
-| `src/credential_win32.c` | `credential_load/save/delete` | API key opcional en el Administrador de credenciales (DPAPI por usuario) | Win32 |
+| `src/platform/win32/cancel_win32.c` | `cancel_*` | Ctrl+C: cierra el pedido HTTP o mata el comando desde el hilo del handler, con handles protegidos; corta la lectura pendiente | Win32 |
+| `src/platform/win32/credential_win32.c` | `credential_load/save/delete` | API key opcional en el Administrador de credenciales (DPAPI por usuario) | Win32 |
 | `src/app/session.c` | `session_send` | historial, gate de aprobación (`decide`), bucle de turnos, conteo de tokens | portable |
-| `src/sys_win32.c` | `sys_random`, `sys_ms`, `sys_data_path`, `sys_read_file`… | primitivas del sistema con rutas UTF-8: random, reloj, carpeta actual, carpeta de datos (`%LOCALAPPDATA%\TinyShell`), archivos, identidad | Win32 |
-| `src/http_win32.c` | `http_post_stream`, `http_get`, `http_post_json` | WinHTTP sobre cualquier URL http(s) (`WinHttpCrackUrl`), TLS 1.2 explícito, errores legibles, cuerpo acotado; GET de releases solo por HTTPS | Win32 |
-| `src/shell_win32.c` | `run_command` | `cmd.exe /d /s /c` vía `CreateProcessW`, job + timeout, salida OEM → UTF-8 | Win32 |
-| `src/prompt_win32.c` | `system_prompt` | instrucciones agnósticas de tarea + equipo detectado al arrancar (versión de Windows, arquitectura, RAM, CPUs, carpeta actual) | Win32 |
-| `src/verify_win32.c` | `signature_valid`, `sha256_hex` | firma RSA-3072/SHA-256 de releases con la CryptoAPI; clave pública en `src/release_key.h` | Win32 |
-| `src/update_win32.c` | `update_run`, `update_rollback` | `--update`: version.txt → descarga → firma → self-test → swap con `.old.exe`; `--rollback` | Win32 |
+| `src/platform/win32/sys_win32.c` | `sys_random`, `sys_ms`, `sys_data_path`, `sys_read_file`, `sys_rename`… | primitivas del sistema con rutas UTF-8: random, reloj, carpeta actual, carpeta de datos (`%LOCALAPPDATA%\TinyShell`), archivos, identidad, ruta propia y renombrar un binario en uso | Win32 |
+| `src/platform/win32/http_win32.c` | `http_post_stream`, `http_get`, `http_post_json` | WinHTTP sobre cualquier URL http(s) (`WinHttpCrackUrl`), TLS 1.2 explícito, errores legibles, cuerpo acotado; GET de releases solo por HTTPS | Win32 |
+| `src/platform/win32/shell_win32.c` | `run_command` | `cmd.exe /d /s /c` vía `CreateProcessW`, job + timeout, salida OEM → UTF-8 | Win32 |
+| `src/platform/win32/prompt_win32.c` | `system_prompt` | instrucciones agnósticas de tarea + equipo detectado al arrancar (versión de Windows, arquitectura, RAM, CPUs, carpeta actual) | Win32 |
+| `src/platform/win32/verify_win32.c` | `signature_valid`, `sha256_hex` | firma RSA-3072/SHA-256 de releases con la CryptoAPI; clave pública en `src/release_key.h` | Win32 |
+| `src/app/update.c` | `update_run`, `update_rollback` | `--update`: version.txt → descarga → firma → self-test → swap con el hermano `.old` (`version_sibling`); `--rollback`. Usa `sys` para ruta propia, renombrar y el asset del release | portable |
 | `src/app/main.c` | `main` | subcomandos (`login`, `logout`) y flags (`--version/--update/--rollback`), API key, bucle de chat y comandos `/` | Win32 |
 
 Los módulos portables no incluyen `<windows.h>` y se prueban en el host con `build/test-core.sh` (`tests/`). Los adapters Win32 tienen un solo adapter cada uno: el seam es el `.h`, no hay capa de abstracción extra.

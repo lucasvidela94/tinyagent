@@ -40,3 +40,13 @@ int version_from_output(const char *output, char *out, size_t cap) {
   out[n] = 0;
   return 1;
 }
+
+void version_sibling(const char *self, const char *tag, Buf *out) {
+  size_t n = strlen(self);
+  int exe = n > 4 && self[n - 4] == '.' && tolower((unsigned char)self[n - 3]) == 'e' &&
+            tolower((unsigned char)self[n - 2]) == 'x' && tolower((unsigned char)self[n - 1]) == 'e';
+  buf_add(out, self, exe ? n - 4 : n);
+  buf_str(out, ".");
+  buf_str(out, tag);
+  if (exe) buf_add(out, self + n - 4, 4); /* keeps the original case of ".exe" */
+}

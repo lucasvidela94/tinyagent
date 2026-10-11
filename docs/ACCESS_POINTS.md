@@ -18,7 +18,7 @@
 | `tinyshell telemetria on\|off\|--ver` | Telemetry | Turn beta telemetry on/off; show what was sent |
 | `/ayuda`, `/login`, `/modelo [x]` | Session commands | Show commands; run the login flow; pick a model from the live list or set one by name (saved to `config.ini`) |
 | `/reiniciar` | Session reset | Drops the conversation history, keeps the system prompt |
-| `run_command()` (`src/shell_win32.c`) | Local command boundary | `CreateProcessW` of `%SystemRoot%\System32\cmd.exe /d /s /c "<cmd>"`, stdin = NUL, 180 s limit, output capped at 24 KB |
+| `run_command()` (`src/platform/win32/shell_win32.c`) | Local command boundary | `CreateProcessW` of `%SystemRoot%\System32\cmd.exe /d /s /c "<cmd>"`, stdin = NUL, 180 s limit, output capped at 24 KB |
 
 ## Network access point
 

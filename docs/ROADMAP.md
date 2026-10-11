@@ -34,8 +34,8 @@
 ## P3: Linux (`docs/adr/0001-linux-port-platform-seam.md`)
 
 - [x] Layered `src/` with the platform seam and an enforced include rule.
-- [ ] Rest of step 0: clean the Windows-shaped interfaces (`cancel`, `http_last_error`),
-      portable `update`, shell dialect as data.
+- [x] Step 0: `sys` seam, portable `update`, `cancel` without Windows handles.
+- [ ] `http_last_error` without WinHTTP wording; shell dialect as data (with the POSIX shell).
 - [ ] POSIX adapters: sys, console, shell and cancel; HTTP with Mbed TLS; credentials; update.
 - [ ] Static i386 musl build, `install.sh`, dual signed release, site section.
 - [ ] Decide API key storage on Linux and the hardware floor (open questions in the ADR).

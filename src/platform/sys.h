@@ -9,6 +9,7 @@
 #include "util.h"
 
 extern const char SYS_EOL[]; /* line ending for text files the user may open ("\r\n" on Windows) */
+extern const char SYS_RELEASE_ASSET[]; /* this platform's binary in a release ("tinyshell.exe") */
 
 /* n bytes from the OS random generator; a weak time-based fill only if it is unavailable.
  * Good for IDs, not for keys. */
@@ -28,5 +29,12 @@ int sys_data_path(const char *name, Buf *out);
  * NULL if it cannot be read. Caller frees. */
 char *sys_read_file(const char *path, size_t max, size_t *len);
 int sys_write_file(const char *path, const char *data, size_t n, int append); /* 1 on success */
+
+/* For the updater. Each returns 1 on success; on failure sys_error() has the OS code. */
+int sys_self_path(Buf *out);                   /* appends the running executable's path */
+int sys_rename(const char *from, const char *to); /* replaces `to`; works on a running binary */
+int sys_remove(const char *path);
+int sys_exists(const char *path);
+unsigned long sys_error(void); /* OS error code of the last failed call, for messages */
 
 #endif

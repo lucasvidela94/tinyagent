@@ -8,6 +8,14 @@
 #include "sys.h"
 
 const char SYS_EOL[] = "\r\n";
+const char SYS_RELEASE_ASSET[] = "tinyshell.exe";
+
+static unsigned long last_error;
+
+static int kept(int ok) { /* records the error before free() can touch it */
+  if (!ok) last_error = GetLastError();
+  return ok;
+}
 
 static wchar_t *wide(const char *s) { /* UTF-8 -> UTF-16, NULL if invalid. Caller frees. */
   int n = MultiByteToWideChar(CP_UTF8, 0, s, -1, NULL, 0);
@@ -126,3 +134,36 @@ int sys_write_file(const char *path, const char *data, size_t n, int append) {
   ok = WriteFile(f, data, (DWORD)n, &done, NULL) && done == n;
   return CloseHandle(f) && ok;
 }
+
+int sys_self_path(Buf *out) {
+  wchar_t w[MAX_PATH];
+  DWORD n = GetModuleFileNameW(NULL, w, MAX_PATH);
+  if (!kept(n && n < MAX_PATH)) return 0;
+  add_utf8(out, w);
+  return 1;
+}
+
+/* A running .exe cannot be overwritten or deleted, but it can be renamed. */
+int sys_rename(const char *from, const char *to) {
+  wchar_t *f = wide(from), *t = wide(to);
+  int ok = kept(f && t && MoveFileExW(f, t, MOVEFILE_REPLACE_EXISTING));
+  free(f);
+  free(t);
+  return ok;
+}
+
+int sys_remove(const char *path) {
+  wchar_t *w = wide(path);
+  int ok = kept(w && DeleteFileW(w));
+  free(w);
+  return ok;
+}
+
+int sys_exists(const char *path) {
+  wchar_t *w = wide(path);
+  int ok = kept(w && GetFileAttributesW(w) != INVALID_FILE_ATTRIBUTES);
+  free(w);
+  return ok;
+}
+
+unsigned long sys_error(void) { return last_error; }
