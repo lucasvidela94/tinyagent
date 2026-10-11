@@ -50,6 +50,7 @@
 - [ ] A release whose `.sig` does not match is refused with nothing changed.
 - [ ] `--rollback` restores the previous binary; a second `--rollback` rolls forward.
 - [x] Signing pipeline (`build/release.sh --dry-run` with a throwaway key): OpenSSL verifies the signature; a one-byte change fails it.
+- [x] CryptoAPI verification with the real release key (wine): signed binary valid; one changed byte or another file's signature invalid; CryptoAPI SHA-256 matches `sha256sum`.
 
 ## API behavior
 
