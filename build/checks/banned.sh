@@ -7,8 +7,11 @@
 # provider.c:copy). Endurecerlos con marcador queda como paso futuro.
 set -euo pipefail
 fail=0
-# Quita strings "..." para no marcar texto (p.ej. el prompt que dice "the system (...").
-strip() { sed -e 's/"\(\\.\|[^"\\]\)*"//g' -e "s/'\(\\\\.\|[^'\\\\]\)*'//g" "$1"; }
+# Only code counts: strings, chars and comments are blanked in one pass (keeping line
+# numbers), so prose like "the system (...)" in a prompt or a comment is not a call.
+strip() {
+  perl -0777 -pe 's{("(?:\\.|[^"\\])*"|'"'"'(?:\\.|[^'"'"'\\])*'"'"'|/\*.*?\*/|//[^\n]*)}{ (my $t = $1) =~ tr/\n//cd; $t }gse' "$1"
+}
 HARD='\<(gets|sprintf|strtok|system|popen|wsprintf[A-Z]*|alloca)\s*\(|lstrcpyA|lstrcatA|\<(Create|Get|Set|Reg|Message|Shell|Copy|Move|Delete|Find)[A-Za-z]*A\s*\('
 for f in "$@"; do
   [ -f "$f" ] || continue
