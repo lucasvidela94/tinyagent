@@ -24,7 +24,7 @@ static int push(Json *j, int start, int end, const int *stack, int sp) {
   return j->n++;
 }
 
-int json_parse(Json *j, const char *s) {
+static int parse(Json *j, const char *s) {
   int stack[MAX_DEPTH], sp = 0, i = 0;
   j->src = s;
   j->n = 0;
@@ -60,6 +60,13 @@ int json_parse(Json *j, const char *s) {
     }
   }
   return sp == 0 && j->n > 0;
+}
+
+/* On failure the tokens are freed here, so callers that skip json_free do not leak. */
+int json_parse(Json *j, const char *s) {
+  if (parse(j, s)) return 1;
+  json_free(j);
+  return 0;
 }
 
 void json_free(Json *j) {

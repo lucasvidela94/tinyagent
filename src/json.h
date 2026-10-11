@@ -11,7 +11,7 @@
 typedef struct { int start, end, size; } Tok; /* size = number of direct children */
 typedef struct { const char *src; Tok *tok; int n, cap; } Json;
 
-int json_parse(Json *j, const char *s); /* 1 if well-formed; token 0 is the root */
+int json_parse(Json *j, const char *s); /* 1 if well-formed (token 0 is the root); 0 frees */
 void json_free(Json *j);
 
 char json_type(const Json *j, int i); /* '{' '[' '"' or first char of a primitive; 0 if none */

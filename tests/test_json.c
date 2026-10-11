@@ -43,6 +43,14 @@ static void test_json_structure(void) {
   CHECK(!parses(deep)); /* unclosed */
 }
 
+/* A failed parse frees its own tokens, so callers that skip json_free on failure do not
+ * leak (LeakSanitizer fails this test otherwise). Input found by build/fuzz.sh. */
+static void test_json_failure_frees(void) {
+  Json j = {0};
+  CHECK(!json_parse(&j, "{\"choices\":[{\"message\":{\"content\":\"hol\x16\"}$]}"));
+  CHECK(j.tok == NULL && j.n == 0);
+}
+
 static void test_json_too_many_tokens(void) {
   Buf b = {0};
   int i;
@@ -159,6 +167,7 @@ static void test_ascii_fallback(void) {
 
 int main(void) {
   test_json_structure();
+  test_json_failure_frees();
   test_json_too_many_tokens();
   test_json_lookup();
   test_json_unescape();
