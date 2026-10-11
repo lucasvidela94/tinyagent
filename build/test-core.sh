@@ -3,7 +3,8 @@ set -euo pipefail
 
 # Host-side regression tests for the portable core (src/core: util, json, conversation, policy, version, provider, report, stream).
 # Needs a host C compiler (gcc or clang); uses AddressSanitizer/UBSan when available.
-# The Win32 adapters (*_win32.c, main.c) must be checked on Windows: see docs/TEST_PLAN.md.
+# On Linux it also tests the POSIX adapters (tests/posix). The Win32 adapters must be
+# checked on Windows or under wine: see docs/TEST_PLAN.md.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 . build/sources.sh
@@ -20,4 +21,12 @@ for t in tests/test_*.c; do
   "$CC" "${FLAGS[@]}" "${INCLUDES[@]}" -o "$OUT/$name" "$t" "${CORE_SRC[@]}"
   "$OUT/$name" || status=1
 done
+# The POSIX adapters run natively on a Linux host, so they are tested here too.
+if [[ "$(uname -s)" == Linux ]]; then
+  for t in tests/posix/test_*.c; do
+    name="$(basename "$t" .c)"
+    "$CC" "${FLAGS[@]}" "${INCLUDES[@]}" -Isrc/platform/posix -o "$OUT/$name" "$t" "${CORE_SRC[@]}" "${POSIX_SRC[@]}"
+    "$OUT/$name" || status=1
+  done
+fi
 exit "$status"

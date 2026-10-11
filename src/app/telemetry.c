@@ -51,7 +51,7 @@ static void log_line(const char *json) {
   buf_str(&line, stamp);
   buf_str(&line, json);
   buf_str(&line, SYS_EOL);
-  if (sys_data_path("telemetria.log", &path)) sys_write_file(path.p, line.p, line.len, 1);
+  if (sys_data_path("telemetria.log", &path)) sys_write_file(path.p, line.p, line.len, SYS_APPEND);
   free(path.p);
   free(line.p);
 }

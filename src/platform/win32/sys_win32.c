@@ -122,7 +122,8 @@ char *sys_read_file(const char *path, size_t max, size_t *len) {
   return data;
 }
 
-int sys_write_file(const char *path, const char *data, size_t n, int append) {
+int sys_write_file(const char *path, const char *data, size_t n, int flags) {
+  int append = flags & SYS_APPEND; /* SYS_EXECUTABLE: any file can run on Windows */
   wchar_t *w = wide(path);
   DWORD done = 0;
   HANDLE f = w ? CreateFileW(w, append ? FILE_APPEND_DATA : GENERIC_WRITE, FILE_SHARE_READ, NULL,

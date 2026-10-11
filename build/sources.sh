@@ -7,4 +7,5 @@
 CORE_SRC=(src/core/*.c)
 APP_SRC=(src/app/*.c)
 WIN32_SRC=(src/platform/win32/*.c)
+POSIX_SRC=(src/platform/posix/*.c)
 INCLUDES=(-Isrc -Isrc/core -Isrc/app -Isrc/platform)

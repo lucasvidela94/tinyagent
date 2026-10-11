@@ -87,7 +87,7 @@ static int stage(const Paths *p, const char *latest) {
     goto done;
   }
   say("Firma verificada.\n");
-  if (!sys_write_file(p->fresh.p, exe, exe_len, 0)) {
+  if (!sys_write_file(p->fresh.p, exe, exe_len, SYS_EXECUTABLE)) {
     say("No se pudo escribir el binario nuevo (¿carpeta sin permiso de escritura?).\n");
     goto done;
   }

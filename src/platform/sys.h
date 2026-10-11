@@ -28,7 +28,10 @@ int sys_data_path(const char *name, Buf *out);
 /* The last `max` bytes of a file (all of it if smaller), NUL-terminated, length in *len.
  * NULL if it cannot be read. Caller frees. */
 char *sys_read_file(const char *path, size_t max, size_t *len);
-int sys_write_file(const char *path, const char *data, size_t n, int append); /* 1 on success */
+/* Creates or replaces the file (SYS_APPEND: adds to the end). New files are private to the
+ * user where the OS has permissions; SYS_EXECUTABLE also makes them runnable. 1 on success. */
+enum { SYS_APPEND = 1, SYS_EXECUTABLE = 2 };
+int sys_write_file(const char *path, const char *data, size_t n, int flags);
 
 /* For the updater. Each returns 1 on success; on failure sys_error() has the OS code. */
 int sys_self_path(Buf *out);                   /* appends the running executable's path */
