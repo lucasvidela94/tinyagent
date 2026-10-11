@@ -10,13 +10,66 @@
 
 static HANDLE con_in, con_out;
 static int in_is_console, out_is_console;
+static WORD base_attr = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
 
 void console_init(void) {
   DWORD mode;
+  CONSOLE_SCREEN_BUFFER_INFO bi;
   con_in = GetStdHandle(STD_INPUT_HANDLE);
   con_out = GetStdHandle(STD_OUTPUT_HANDLE);
   in_is_console = GetConsoleMode(con_in, &mode) != 0;
   out_is_console = GetConsoleMode(con_out, &mode) != 0;
+  if (out_is_console && GetConsoleScreenBufferInfo(con_out, &bi)) base_attr = bi.wAttributes;
+}
+
+/* 16-color console attributes; the user's background is kept except for the user block. */
+static WORD attr_for(int color) {
+  WORD bg = base_attr & 0xF0;
+  switch (color) {
+  case COLOR_DIM: return bg | FOREGROUND_INTENSITY;
+  case COLOR_ACCENT: return bg | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY;
+  case COLOR_DANGER: return bg | FOREGROUND_RED | FOREGROUND_INTENSITY;
+  case COLOR_USER: return BACKGROUND_INTENSITY | FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY;
+  default: return base_attr;
+  }
+}
+
+int console_is_tty(void) { return in_is_console && out_is_console; }
+
+static int buffer_info(CONSOLE_SCREEN_BUFFER_INFO *bi) {
+  return out_is_console && GetConsoleScreenBufferInfo(con_out, bi);
+}
+
+int console_width(void) {
+  CONSOLE_SCREEN_BUFFER_INFO bi;
+  return buffer_info(&bi) ? bi.dwSize.X : 80;
+}
+
+int console_row(void) {
+  CONSOLE_SCREEN_BUFFER_INFO bi;
+  return buffer_info(&bi) ? bi.dwCursorPosition.Y : 0;
+}
+
+void console_goto(int row, int col) {
+  COORD c;
+  c.X = (SHORT)col;
+  c.Y = (SHORT)(row < 0 ? 0 : row);
+  if (out_is_console) SetConsoleCursorPosition(con_out, c);
+}
+
+void console_clear(int from_row, int to_row) {
+  DWORD done, len;
+  COORD c;
+  if (!out_is_console || to_row < from_row) return;
+  c.X = 0;
+  c.Y = (SHORT)(from_row < 0 ? 0 : from_row);
+  len = (DWORD)(to_row - c.Y + 1) * (DWORD)console_width();
+  FillConsoleOutputCharacterW(con_out, L' ', len, c, &done);
+  FillConsoleOutputAttribute(con_out, base_attr, len, c, &done);
+}
+
+void console_flush_input(void) {
+  if (in_is_console) FlushConsoleInputBuffer(con_in);
 }
 
 static void write_utf8(const char *s) {
@@ -40,6 +93,13 @@ static void write_utf8(const char *s) {
     off += chunk;
   }
   free(w);
+}
+
+void console_write(const char *s, int color) {
+  int colored = out_is_console && color != COLOR_NORMAL;
+  if (colored) SetConsoleTextAttribute(con_out, attr_for(color));
+  write_utf8(s);
+  if (colored) SetConsoleTextAttribute(con_out, base_attr);
 }
 
 void say(const char *fmt, ...) {

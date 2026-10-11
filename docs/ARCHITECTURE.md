@@ -32,13 +32,16 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/conversation.c` | `History`, `build_request`, `ToolCall` | historial con recorte por intercambios completos, body de la request, extracción de tool calls | portable |
 | `src/version.c` | `version_compare`, `version_from_output` | versiones X.Y.Z y salida de `--version` para el updater | portable |
 | `src/policy.c` | `command_problem`, `risk_reason`, `is_yes` | rechazo previo, heurística de riesgo, respuesta de aprobación | portable |
-| `src/console_win32.c` | `say`, `read_line` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas | Win32 |
+| `src/console_win32.c` | `say`, `read_line`, `console_*` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas; colores, ancho, cursor, borrar filas, vaciar entrada | Win32 |
+| `src/tui_win32.c` | `tui_prompt`, `tui_user`, `tui_proposal`, `tui_output`… | TUI mínima en línea: bloque del usuario, propuesta, resumen de salida, editor entre reglas, footer; modo plano si no hay consola | Win32 |
+| `src/credential_win32.c` | `credential_load/save/delete` | API key opcional en el Administrador de credenciales (DPAPI por usuario) | Win32 |
+| `src/session_win32.c` | `session_send` | historial, gate de aprobación (`decide`), bucle de turnos, conteo de tokens | Win32 |
 | `src/http_win32.c` | `http_post`, `http_get` | WinHTTP, TLS 1.2 explícito, errores legibles, cuerpo acotado; GET para releases | Win32 |
 | `src/shell_win32.c` | `run_command` | `cmd.exe /d /s /c` vía `CreateProcessW`, job + timeout, salida OEM → UTF-8 | Win32 |
 | `src/prompt_win32.c` | `system_prompt` | instrucciones agnósticas de tarea + equipo detectado al arrancar (versión de Windows, arquitectura, RAM, CPUs, carpeta actual) | Win32 |
 | `src/verify_win32.c` | `signature_valid`, `sha256_hex` | firma RSA-3072/SHA-256 de releases con la CryptoAPI; clave pública en `src/release_key.h` | Win32 |
 | `src/update_win32.c` | `update_run`, `update_rollback` | `--update`: version.txt → descarga → firma → self-test → swap con `.old.exe`; `--rollback` | Win32 |
-| `src/main.c` | `main` | flags (`--version/--update/--rollback`), gate de aprobación (`decide`), bucle de turnos (`converse`) | Win32 |
+| `src/main.c` | `main` | flags (`--version/--update/--rollback/--logout`), API key, bucle de chat y comandos `/` | Win32 |
 
 Los módulos portables no incluyen `<windows.h>` y se prueban en el host con `build/test-core.sh` (`tests/`). Los adapters Win32 tienen un solo adapter cada uno: el seam es el `.h`, no hay capa de abstracción extra.
 
@@ -60,7 +63,7 @@ Otros archivos:
 3. El modelo puede devolver una respuesta normal o una llamada a `shell`.
 4. Si devuelve `shell`, el programa muestra comando y motivo.
 5. Si se rechaza, devuelve al modelo que el usuario lo rechazó; si se aprueba, ejecuta mediante `cmd.exe`.
-6. El resultado vuelve como mensaje de herramienta y el modelo puede continuar, dentro de un límite de 8 turnos por mensaje.
+6. El resultado vuelve como mensaje de herramienta y el modelo puede continuar, dentro de un límite de 25 pasos por mensaje.
 7. Antes de cada request se recorta el historial a ~192 KB descartando intercambios completos (nunca separa un `tool_calls` de sus resultados).
 
 ## Constraints / design choices

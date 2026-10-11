@@ -10,8 +10,9 @@ Maintain a small, auditable, low-resource, general-purpose terminal agent (in th
 - Prefer C and Windows system APIs. Do not add Node.js, Go, Python, Electron, Docker, a database, or a background service as runtime requirements.
 - Use WinHTTP for HTTPS unless a tested compatibility issue requires a documented alternative.
 - Keep the CLI synchronous and memory-bounded; the target machine is resource constrained.
+- UI: minimal inline TUI (Pi/OpenCode/Claude Code style) drawn with the console API, no ANSI escapes (the Windows 7 console has none), only glyphs in the default raster font (no arrows or ellipsis characters), plain mode when redirected. Approvals are typed (`s` + Enter), never a single key.
 - Keep all shell execution behind local approval. Never implement auto-approval.
-- Do not store API keys in source, config files, logs, or diagnostic bundles.
+- Do not store API keys in source, config files, logs, or diagnostic bundles. The only allowed store is the Windows Credential Manager (`src/credential_win32.c`), opt-in after the user is asked; `--logout` deletes it.
 - Updates stay manual, ask before installing, and must verify the release signature and self-test before replacing the binary. Never commit the private signing key; only `keys/release-public.pem` and `src/release_key.h`.
 
 ## Safety constraints
@@ -25,7 +26,7 @@ Maintain a small, auditable, low-resource, general-purpose terminal agent (in th
 
 ## Codebase map
 
-- `src/`: one module per file, small header interface each. Portable C (testable on any host): `util` (buffers, UTF-8, JSON escaping), `json` (tokenizer), `conversation` (history, request body, tool-call extraction), `policy` (pre-approval checks, risk heuristic, yes/no). Win32 adapters: `console_win32` (UTF-16 console I/O), `http_win32` (WinHTTP), `shell_win32` (CreateProcess + pipe). `prompt_win32` (task-agnostic system prompt + machine detected at startup). `verify_win32` (release signature, CryptoAPI) and `update_win32` (`--update`/`--rollback`). `version` (portable). `main.c`: CLI flags, approval gate and round-trip loop. `config.h`: endpoint, model and limits.
+- `src/`: one module per file, small header interface each. Portable C (testable on any host): `util` (buffers, UTF-8, JSON escaping), `json` (tokenizer), `conversation` (history, request body, tool-call extraction), `policy` (pre-approval checks, risk heuristic, yes/no). Win32 adapters: `console_win32` (UTF-16 console I/O), `http_win32` (WinHTTP), `shell_win32` (CreateProcess + pipe). `prompt_win32` (task-agnostic system prompt + machine detected at startup). `verify_win32` (release signature, CryptoAPI) and `update_win32` (`--update`/`--rollback`). `version` (portable). `console_win32` (I/O + screen primitives), `tui_win32` (minimal inline TUI: user block, proposal, output preview, editor between rules, footer), `credential_win32` (opt-in API key storage), `session_win32` (history, approval gate, round-trip loop). `main.c`: CLI flags, key setup, chat loop and slash commands. `config.h`: endpoint, model and limits.
 - `tests/`: host-side regression tests for the portable modules (`build/test-core.sh`).
 - `build/build-linux-mingw.sh`: Linux-to-Windows x86 cross-build (links `msvcrt.dll`, not the UCRT).
 - `build/build-windows-msvc.bat`: Windows/MSVC build.

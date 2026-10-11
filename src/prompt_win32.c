@@ -17,6 +17,8 @@ static const char *INSTRUCTIONS =
     "is cut.\n\n"
     "How to work:\n"
     "- Reply in the language the user writes in. Be concise and practical.\n"
+    "- Plain text only: the console cannot render Markdown (no **, #, tables or code fences).\n"
+    "- Work step by step until the task is done, then say briefly what changed and how you checked it.\n"
     "- Understand before acting: look first with read-only commands, then propose changes.\n"
     "- One command per call. Avoid chaining with & and redirecting with > unless the task needs it, and say why.\n"
     "- The machine is slow and short on memory: prefer targeted commands over whole-disk scans or huge dumps "

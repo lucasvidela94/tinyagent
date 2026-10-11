@@ -1,5 +1,5 @@
 /* Regression tests for src/json.c and src/util.c: malformed and oversized input,
- * missing fields, null content, \u escapes, invalid UTF-8. Run: ./build/test-core.sh */
+ * missing fields, null content, \u escapes, invalid UTF-8, text fitting for the TUI. Run: ./build/test-core.sh */
 #include <stdlib.h>
 #include <string.h>
 
@@ -134,6 +134,19 @@ static void test_utf8(void) {
   CHECK(!utf8_valid("\xf5\x80\x80\x80"));
 }
 
+static void test_text_fit(void) {
+  CHECK(utf8_cols("hola", 4) == 4);
+  CHECK(utf8_cols("versi\xc3\xb3n", 8) == 7); /* 8 bytes, 7 columns */
+  CHECK(text_fit("hola mundo", 20) == 10);
+  CHECK(text_fit("hola mundo", 7) == 4);       /* breaks at the space, not inside "mundo" */
+  CHECK(text_fit("holamundo", 4) == 4);        /* no space: hard cut */
+  CHECK(text_fit("ab\ncd", 10) == 2);          /* stops before a newline */
+  CHECK(text_fit("\ncd", 10) == 0);
+  CHECK(text_fit("", 10) == 0);
+  CHECK(text_fit("\xc3\xb3\xc3\xb3\xc3\xb3", 2) == 4); /* never splits a code point */
+  CHECK(text_fit("abc", 0) == 1);               /* always makes progress */
+}
+
 int main(void) {
   test_json_structure();
   test_json_too_many_tokens();
@@ -141,5 +154,6 @@ int main(void) {
   test_json_unescape();
   test_jesc();
   test_utf8();
+  test_text_fit();
   return CHECK_DONE("test_json");
 }

@@ -41,23 +41,35 @@ El instalador muestra el SHA-256 del ejecutable; comparalo con el que figura en 
 
 ## Usar
 
-Abrí una ventana **nueva** de CMD y escribí `tinyshell`. Te pide la API key (no se muestra ni se guarda en disco) y después:
+Abrí una ventana **nueva** de CMD y escribí `tinyshell`. La primera vez pide la API key (clic derecho para pegar; no se muestra) y ofrece guardarla en el Administrador de credenciales de Windows, cifrada con tu usuario. Después es una conversación: pedís algo, el agente va paso a paso proponiendo comandos que aprobás, hasta terminar.
 
 ```text
-vos> revisá cuánta RAM libre hay y qué procesos consumen más; no cambies nada
+TinyShell 0.5.0 · /ayuda
 
-[PROPUESTA] tasklist /fo table /nh
-Motivo: ver procesos y memoria en uso
-Ejecutar? [s/N]: s
+ qué programas arrancan con Windows?                    <- tu mensaje
+
+$ wmic startup get caption,command                      <- propuesta (amarillo; rojo si es riesgosa)
+  ver programas que inician con Windows
+  ejecutar? [s/N] s
+  Adobe ARM   "C:\Program Files\...\reader_sl.exe"
+  ... +18 líneas · exit=0
+
+Tenés 23 programas al inicio. Los que más pesan son...
+─────────────────────────────────────────────────────────
+> _
+─────────────────────────────────────────────────────────
+C:\Users\Samira · 7.2k in · 0.6k out · 12%    deepseek-v4.1-flash
 ```
 
 | Comando | Qué hace |
 |---|---|
-| `/salir` | termina |
-| `/reiniciar` | borra el historial de la conversación |
+| `/ayuda` | muestra los comandos |
+| `/clave` | cambia la API key |
+| `/reiniciar` | empieza una conversación nueva |
 | `/actualizar` | igual que `tinyshell --update` |
+| `/salir` | termina |
 
-Límites para no ahogar una máquina vieja: cada comando corre sin entrada interactiva y se corta a los 180 s; la salida que ve el modelo se recorta a 24 KB; el historial a ~192 KB.
+En el editor funcionan las teclas de siempre del CMD: flechas para mensajes anteriores, F7 para el historial, clic derecho para pegar. Límites para no ahogar una máquina vieja: cada comando corre sin entrada interactiva y se corta a los 180 s; la salida que ve el modelo se recorta a 24 KB; el historial a ~192 KB.
 
 ## Actualizar y volver atrás
 
@@ -65,6 +77,7 @@ Límites para no ahogar una máquina vieja: cada comando corre sin entrada inter
 tinyshell --update     :: busca, pregunta, verifica la firma e instala
 tinyshell --rollback   :: vuelve a la versión anterior
 tinyshell --version
+tinyshell --logout     :: borra la API key guardada
 ```
 
 Nunca se actualiza solo. `--update` funciona aunque el agente esté roto (no pide API key) y:
@@ -82,6 +95,7 @@ Si algo sale muy mal, volver a correr el instalador (o el USB) siempre deja una 
 - El modelo es un recomendador no confiable. Leé cada comando completo antes de aprobarlo.
 - La seguridad está en el código local, no en el prompt: herramienta desconocida, comando vacío, con saltos de línea o de más de 2000 bytes se rechazan antes de preguntarte.
 - La detección de comandos riesgosos es una heurística, no una barrera: tu aprobación es el control real.
+- La API key solo se guarda si decís que sí, en el Administrador de credenciales de Windows. `tinyshell --logout` la borra.
 - No lo ejecutes como administrador para tareas de rutina.
 - Lo que escribís y la salida de los comandos se envían al proveedor del modelo.
 

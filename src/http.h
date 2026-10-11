@@ -14,4 +14,7 @@ char *http_post(const char *body, const char *api_key);
  * after printing an error. Caller frees. */
 char *http_get(const char *url, size_t max, size_t *len);
 
+/* HTTP status of the last request (e.g. 401 for a rejected API key), 0 if none arrived. */
+unsigned long http_last_status(void);
+
 #endif

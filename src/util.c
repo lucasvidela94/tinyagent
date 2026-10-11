@@ -79,6 +79,29 @@ int utf8_valid(const char *s) {
   return 1;
 }
 
+int utf8_cols(const char *s, size_t n) {
+  int cols = 0;
+  size_t i;
+  for (i = 0; i < n && s[i]; i++)
+    if (((unsigned char)s[i] & 0xC0) != 0x80) cols++;
+  return cols;
+}
+
+size_t text_fit(const char *s, int cols) {
+  const unsigned char *p = (const unsigned char *)s;
+  size_t n = 0, last_space = 0;
+  int c = 0, len;
+  while (p[n] && p[n] != '\n' && c < cols) {
+    if (p[n] == ' ') last_space = n;
+    len = utf8_len(p + n);
+    n += len ? (size_t)len : 1;
+    c++;
+  }
+  if (p[n] && p[n] != '\n' && p[n] != ' ' && last_space > 0) return last_space;
+  if (n == 0 && p[0] && p[0] != '\n') return (len = utf8_len(p)) != 0 ? (size_t)len : 1;
+  return n;
+}
+
 char *jesc(const char *s) {
   Buf b = {0};
   const unsigned char *p = (const unsigned char *)s;

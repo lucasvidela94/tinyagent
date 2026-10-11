@@ -82,6 +82,10 @@ static int read_body(HINTERNET req, Buf *b, size_t max) {
   }
 }
 
+static unsigned long last_status; /* 0 when no HTTP response arrived */
+
+unsigned long http_last_status(void) { return last_status; }
+
 /* One HTTPS request. api_key and body may be NULL (plain GET). Redirects are followed. */
 static char *request(const char *label, const wchar_t *host, const wchar_t *path, const wchar_t *method,
                      const char *api_key, const char *body, size_t max, size_t *out_len) {
@@ -93,6 +97,7 @@ static char *request(const char *label, const wchar_t *host, const wchar_t *path
   Buf b = {0};
   char *out = NULL;
 
+  last_status = 0;
   ses = WinHttpOpen(L"TinyShell/" TINYSHELL_VERSION_W, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY, WINHTTP_NO_PROXY_NAME,
                     WINHTTP_NO_PROXY_BYPASS, 0);
   if (!ses) goto fail;
@@ -112,13 +117,16 @@ static char *request(const char *label, const wchar_t *host, const wchar_t *path
   if (!WinHttpReceiveResponse(req, NULL)) goto fail;
   WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX,
                       &status, &sz, WINHTTP_NO_HEADER_INDEX);
+  last_status = status;
   if (!read_body(req, &b, max)) goto fail;
   if (status >= 200 && status < 300) {
     if (out_len) *out_len = b.len;
     out = buf_take(&b);
   } else {
-    if (b.len > 600) b.p[600] = 0;
-    say("\n%s respondió HTTP %lu%s: %s\n", label, (unsigned long)status, status_hint(status), b.p ? b.p : "");
+    if (b.len > 300) b.p[300] = 0;
+    if (*status_hint(status) && status < 500) b.len = 0; /* the hint says it; skip the raw JSON */
+    say("\n%s respondió HTTP %lu%s%s%s\n", label, (unsigned long)status, status_hint(status),
+        b.len ? ": " : "", b.len ? b.p : "");
   }
   goto done;
 

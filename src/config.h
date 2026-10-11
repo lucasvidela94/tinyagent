@@ -2,7 +2,7 @@
 #ifndef TINYSHELL_CONFIG_H
 #define TINYSHELL_CONFIG_H
 
-#define TINYSHELL_VERSION "0.4.0"
+#define TINYSHELL_VERSION "0.5.0"
 #define TINYSHELL_WIDEN_(s) L##s
 #define TINYSHELL_WIDEN(s) TINYSHELL_WIDEN_(s)
 #define TINYSHELL_VERSION_W TINYSHELL_WIDEN(TINYSHELL_VERSION)
@@ -19,7 +19,7 @@
 #define MAX_OUTPUT 24000         /* command output kept, bytes */
 #define MAX_COMMAND 2000         /* proposed command, bytes */
 #define MAX_LINE 4096            /* typed line, bytes */
-#define MAX_TURNS 8              /* model round trips per user message */
+#define MAX_TURNS 25             /* model round trips per user message (each tool call is approved) */
 #define MAX_TOKENS 20000         /* JSON tokens per document */
 #define MAX_DEPTH 64             /* JSON nesting */
 #define CMD_TIMEOUT_MS 180000    /* command wall-clock limit */

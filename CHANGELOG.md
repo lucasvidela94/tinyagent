@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.0 — minimal TUI and saved API key
+
+- Minimal inline TUI in the style of Pi / OpenCode / Claude Code, drawn with the console API (no ANSI on Windows 7): shaded user block, `$ command` proposals (yellow, red when risky), dimmed output preview (`... +N líneas · exit 0`), `pensando...`, editor between two rules, footer with folder, tokens in/out, context % and model. Plain mode when redirected or narrower than 40 columns.
+- API key: optional save in the Windows Credential Manager (DPAPI, per user); `/clave` to change it, `tinyshell --logout` to delete it; rejected keys (401/403) explained without raw JSON.
+- Pending console input is flushed before every approval question (a multi-line paste can no longer answer it).
+- Up to 25 steps per message; prompt asks for plain text and step-by-step work.
+- Agent loop moved to `src/session_win32.c`; `/ayuda` lists commands.
+- Verified under wine: plain mode, Credential Manager, HTTPS 401 path, TUI layout in a pty, real `cmd.exe` commands.
+
 ## 0.4.0 — updates and installer
 
 - `tinyshell --update` / `/actualizar`: checks the latest GitHub release, asks, downloads, verifies an RSA-3072/SHA-256 signature with the Windows CryptoAPI, self-tests the new binary on this machine (`--version` must run and report the announced, newer version), then swaps it in keeping `tinyshell.old.exe`. Never automatic; works without the API key.

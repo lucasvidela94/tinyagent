@@ -21,7 +21,13 @@ void trim_line(char *s); /* strips trailing CR, LF, spaces and tabs */
 int utf8_len(const unsigned char *s); /* length of the valid sequence at s, 0 if invalid */
 int utf8_valid(const char *s);
 
-/* Escapes s for a JSON string body. Invalid UTF-8 becomes �, so output is always valid. */
+/* Display columns of the first n bytes (one per code point; no East Asian wide forms). */
+int utf8_cols(const char *s, size_t n);
+/* Bytes of s that fit in cols columns, stopping before '\n' and, when a word would be cut,
+ * at the last space. Always at least one code point unless s is empty or starts with '\n'. */
+size_t text_fit(const char *s, int cols);
+
+/* Escapes s for a JSON string body. Invalid UTF-8 becomes \\ufffd, so output is always valid. */
 char *jesc(const char *s);
 
 #endif

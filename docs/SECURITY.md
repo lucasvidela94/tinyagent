@@ -15,13 +15,13 @@
 4. Do not disable antivirus, firewall, certificate checks or Windows security features to make the tool work.
 5. Back up important files before any repair that writes to disk, changes registry/services/drivers, or alters partitions.
 6. Treat any command that uses `&`, `&&`, `|`, redirection, `for`, `call`, PowerShell, scripts, or encoded content as a compound command and inspect every part.
-7. Keep the API key private. The current program asks at runtime and does not intentionally persist it; still, do not run a binary from an untrusted source.
+7. Keep the API key private. It is saved only if you say yes, in the Windows Credential Manager (encrypted with your Windows account via DPAPI; other accounts cannot read it, but any program running as you can). `tinyshell --logout` removes it. Do not run a binary from an untrusted source.
 
 ## Important implementation caveats
 
 - `risk_reason()` (`src/policy.c`) is only a keyword heuristic; it can miss destructive commands and can flag harmless commands. It is not a security boundary. It flags `^`, `>`, `&`, delete/format/partition tools, `chkdsk /f /r /x /b`, registry/service/firewall/boot changes, process killing, permission changes, installers and script hosts.
 - Checks enforced in local code before the user is even asked (`command_problem()`): only the `shell` tool, non-empty command, at most 2000 bytes, no control characters or line breaks. What is displayed for approval is exactly what runs.
-- Over-long typed lines are consumed and refused, so leftover input can never answer the approval prompt.
+- Over-long typed lines are consumed and refused, and pending console input is flushed before every approval question, so leftover or multi-line pasted input can never answer it.
 - Since all commands already ask for confirmation, that confirmation is the primary safeguard. Read the full command before answering yes.
 - Commands still run through `cmd.exe /d /s /c` (now via `CreateProcessW`, stdin = NUL, 180 s limit). Quoting and shell metacharacters can change what runs.
 - The process has broad access to the files available to its Windows account; no filesystem sandbox exists.
