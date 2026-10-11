@@ -23,7 +23,7 @@ void tui_stream_end(void);         /* ends the streamed paragraph, if any */
 void tui_note(const char *text);  /* secondary information, dimmed */
 void tui_error(const char *text); /* problems, in red */
 
-/* Menu (tui_select_win32.c): arrows move, typing filters, Enter picks, Esc cancels; shows
+/* Menu (tui_select.c): arrows move, typing filters, Enter picks, Esc cancels; shows
  * at most 10 rows at a time. Returns the chosen index or -1. Without a console it prints a
  * numbered list and reads a number or a name (Enter = initial). */
 int tui_select(const char *title, const char *const *items, int n, int initial);
