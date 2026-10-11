@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "cancel.h"
+#include "cancel_win32.h"
 #include "config.h"
 #include "console.h"
 #include "http.h"

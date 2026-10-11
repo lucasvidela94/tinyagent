@@ -3,6 +3,7 @@
 #include <winhttp.h>
 
 #include "cancel.h"
+#include "cancel_win32.h"
 
 static CRITICAL_SECTION lock;
 static volatile LONG requested, input_interrupted;
@@ -51,26 +52,26 @@ int cancel_requested(void) { return requested != 0; }
 int cancel_take_input_interrupt(void) { return InterlockedExchange(&input_interrupted, 0) != 0; }
 void cancel_reset(void) { InterlockedExchange(&requested, 0); }
 
-void cancel_watch_http(void *request) {
+void cancel_watch_http(HINTERNET request) {
   EnterCriticalSection(&lock);
-  http = (HINTERNET)request;
+  http = request;
   LeaveCriticalSection(&lock);
   if (requested) on_ctrl(CTRL_C_EVENT); /* Ctrl+C arrived just before registering */
 }
 
-int cancel_release_http(void *request) {
+int cancel_release_http(HINTERNET request) {
   int owned;
   EnterCriticalSection(&lock);
-  owned = http == (HINTERNET)request;
+  owned = http == request;
   if (owned) http = NULL;
   LeaveCriticalSection(&lock);
   return owned;
 }
 
-void cancel_watch_process(void *j, void *p) {
+void cancel_watch_process(HANDLE j, HANDLE p) {
   EnterCriticalSection(&lock);
-  job = (HANDLE)j;
-  process = (HANDLE)p;
+  job = j;
+  process = p;
   LeaveCriticalSection(&lock);
 }
 

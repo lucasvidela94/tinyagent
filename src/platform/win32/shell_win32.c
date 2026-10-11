@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "cancel.h"
+#include "cancel_win32.h"
 #include "config.h"
 #include "shell.h"
 #include "util.h"
