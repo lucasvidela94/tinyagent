@@ -10,7 +10,7 @@ typedef struct {
   History history;
   Provider provider;
   long tokens_in, tokens_out; /* summed from the API "usage" field */
-  char session_id[48];        /* random per conversation, sent as x-opencode-session */
+  char session_id[48];        /* random per conversation, sent in the provider's session header */
   char api_key[1024];
 } Session;
 
