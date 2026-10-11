@@ -1,99 +1,123 @@
-# TinyShell Agent
+# TinyShell
 
-Agente de terminal de propósito general (en la línea de OpenCode o Pi) para **PCs viejas con Windows y pocos recursos**: diagnosticar, inspeccionar archivos, escribir scripts, mantenimiento o simples preguntas. Equipo de prueba principal: **Noblex NT1013E / Windows 7 SP1 de 32 bits**. Está escrito en C y consulta un modelo remoto de OpenCode Go; los comandos se ejecutan localmente en `cmd.exe` y cada comando requiere aprobación en la consola.
+Agente de terminal de propósito general (en la línea de OpenCode o Pi) para **PCs viejas con Windows y pocos recursos**: diagnosticar problemas, inspeccionar archivos, escribir scripts, hacer mantenimiento o responder preguntas sobre la máquina.
 
-> **Estado:** prototipo de código fuente. No se incluye un `.exe` precompilado ni se afirma que esté probado en el equipo destino. La compilación correcta no demuestra que TLS, autenticación, formato de herramientas y ejecución funcionen en Windows 7: hay que hacer pruebas reales.
+- Un solo `.exe` de 32 bits en C (~70 KB). Sin Node, Python, .NET, servicios ni base de datos.
+- El modelo corre remoto (OpenCode Go, `deepseek-v4.1-flash`); la PC solo mantiene la consola, habla HTTPS y ejecuta comandos.
+- **Cada comando lo aprobás vos** antes de que se ejecute. Los riesgosos piden además escribir `EJECUTAR`.
+- Equipo de prueba principal: Noblex NT1013E, Windows 7 SP1 32 bits, Atom N2600, 2 GB RAM.
 
-## Perfil del equipo objetivo
+> **Estado:** prototipo. Compila y pasa los tests en Linux, pero todavía **no se probó en el equipo Windows 7 real**. Ver [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md).
 
-- Equipo: Noblex NT1013E (nombre de host observado: `SAMIRA`).
-- Sistema: Windows 7 Professional SP1, build 7601, arquitectura x86 / 32 bits.
-- CPU: Intel Atom N2600 @ 1.60 GHz; 2 núcleos / 4 procesadores lógicos reportados.
-- RAM informada: 2 GB.
-- Restricciones de diseño: consumo local bajo, sin runtime de Go/Node/Python, sin base de datos, sin servicios residentes, sin descarga de modelos al equipo.
-- Inferencia: remota. El consumo principal local es el proceso C y `cmd.exe`; la calidad/latencia dependen de Internet y del servicio API.
+## Instalar
 
-## Compilar desde Linux
+Abrí **CMD** (no como administrador) y pegá la línea que corresponda. Instala en `%LOCALAPPDATA%\TinyShell` y lo agrega a tu `PATH`.
 
-En Linux Mint, Ubuntu o Debian:
-
-```bash
-sudo apt update
-sudo apt install mingw-w64 file
-```
-
-Desde la raíz de esta carpeta:
-
-```bash
-chmod +x build/build-linux-mingw.sh
-./build/build-linux-mingw.sh
-```
-
-El resultado esperado es `tinyshell.exe`, Windows x86. Alternativa manual:
-
-```bash
-i686-w64-mingw32-gcc -std=c99 -Os -s -Wall -Wextra -mcrtdll=msvcrt-os -o tinyshell.exe src/*.c -lwinhttp
-```
-
-`-mcrtdll=msvcrt-os` enlaza contra el `msvcrt.dll` del sistema. Sin eso, algunos toolchains (p. ej. Arch) generan un binario que depende de la UCRT (`api-ms-win-crt-*.dll`), que Windows 7 no trae salvo con KB2999226. El script lo detecta y avisa.
-
-Tests del núcleo portable (JSON, historial, política de comandos), en el host:
-
-```bash
-./build/test-core.sh
-```
-
-## Compilar desde Windows
-
-Con Visual Studio C++ Build Tools y un Windows SDK compatible, abrir **x86 Native Tools / Developer Command Prompt** y ejecutar:
+**Windows 10 / 11** (traen `curl`):
 
 ```bat
-cl /nologo /O1 /MT /W3 src\*.c winhttp.lib /Fe:tinyshell.exe
+curl -fsSLo "%TEMP%\tinyshell-install.bat" https://github.com/lucasvidela94/tinyagent/releases/latest/download/install.bat && "%TEMP%\tinyshell-install.bat"
 ```
 
-También está `build/build-windows-msvc.bat`. Si el compilador instalado no soporta como objetivo Windows 7, el ejecutable puede compilar y aun así no funcionar en ese sistema antiguo.
+**Windows 7** (no trae `curl`; usa `bitsadmin`):
 
-## Ejecutar
+```bat
+bitsadmin /transfer tinyshell /download /priority foreground https://github.com/lucasvidela94/tinyagent/releases/latest/download/install.bat "%TEMP%\tinyshell-install.bat" && "%TEMP%\tinyshell-install.bat"
+```
 
-1. Copiar `tinyshell.exe` a una carpeta local de la Noblex.
-2. Abrir CMD normal (no como administrador para la primera prueba) y ejecutar `tinyshell.exe`.
-3. Introducir la API key de OpenCode Go cuando la solicite (no se muestra al tipear). No se guarda en un archivo.
-4. Escribir una tarea en cualquier idioma (el agente responde en el mismo), por ejemplo: `Revisá la versión de Windows, memoria disponible y procesos con mayor consumo; no cambies nada`.
-5. Leer la propuesta de comando. Solo se ejecuta si se responde `s` o `si`; los comandos marcados como riesgosos piden además escribir `EJECUTAR`.
-6. `/reiniciar` borra el historial de la conversación; `/salir` termina.
+`bitsadmin` necesita TLS 1.2 habilitado para todo el sistema (GitHub lo exige), algo que muchos Windows 7 no tienen. Si falla, **instalá por USB**:
 
-## Modelo y API
+1. En otra PC, bajá `tinyshell.exe` e `install.bat` de la [página de releases](https://github.com/lucasvidela94/tinyagent/releases/latest).
+2. Copialos **juntos** a un pendrive.
+3. En la PC vieja, ejecutá `install.bat` desde el pendrive: instala la copia local sin descargar nada.
 
-- Proveedor: OpenCode Go.
-- Modelo configurado en el código: `deepseek-v4.1-flash`.
-- Endpoint configurado: `https://opencode.ai/zen/go/v1/chat/completions`.
-- Referencia: <https://docs.opencode.ai/docs/go/>
+El instalador muestra el SHA-256 del ejecutable; comparalo con el que figura en el release.
 
-La cuenta debe tener acceso al servicio/modelo y una API key válida. No se incluye ninguna clave en este repositorio.
+### Requisitos en Windows 7
 
-## Límites actuales
+- Service Pack 1 y la actualización **KB3140245** (TinyShell pide TLS 1.2 por su cuenta; sin ella no puede conectarse).
+- Certificados raíz actualizados y fecha/hora correctas.
+- Una API key de [OpenCode Go](https://docs.opencode.ai/docs/go/).
 
-- Una herramienta: ejecución de comandos CMD con salida devuelta al modelo.
-- No tiene editor de archivos propio, explorador de proyecto, control de procesos interactivo, sandbox, rollback ni verificador formal de comandos.
-- Cada comando corre sin entrada interactiva, con límite de 180 s y salida acotada a 24 KB; el historial enviado se recorta a ~192 KB.
-- El filtro de comandos potencialmente peligrosos es heurístico y **no reemplaza el criterio del usuario**. Revisar cada comando completo antes de aprobarlo.
-- El prototipo no debe tratarse como un agente autónomo con permisos irrestrictos.
-- WinHTTP/TLS 1.2 y certificados raíz actualizados son requisitos prácticos para HTTPS en Windows 7. El programa pide TLS 1.2 explícitamente, lo que requiere KB3140245. Si falla la conexión, comprobar primero fecha/hora, actualizaciones de certificados y compatibilidad TLS.
-- La API puede cambiar o rechazar el formato de tool calling. Debe verificarse con una petición real y una tarea inocua antes de usarlo para reparar.
+## Usar
 
-## Documentación del proyecto
+Abrí una ventana **nueva** de CMD y escribí `tinyshell`. Te pide la API key (no se muestra ni se guarda en disco) y después:
+
+```text
+vos> revisá cuánta RAM libre hay y qué procesos consumen más; no cambies nada
+
+[PROPUESTA] tasklist /fo table /nh
+Motivo: ver procesos y memoria en uso
+Ejecutar? [s/N]: s
+```
+
+| Comando | Qué hace |
+|---|---|
+| `/salir` | termina |
+| `/reiniciar` | borra el historial de la conversación |
+| `/actualizar` | igual que `tinyshell --update` |
+
+Límites para no ahogar una máquina vieja: cada comando corre sin entrada interactiva y se corta a los 180 s; la salida que ve el modelo se recorta a 24 KB; el historial a ~192 KB.
+
+## Actualizar y volver atrás
+
+```bat
+tinyshell --update     :: busca, pregunta, verifica la firma e instala
+tinyshell --rollback   :: vuelve a la versión anterior
+tinyshell --version
+```
+
+Nunca se actualiza solo. `--update` funciona aunque el agente esté roto (no pide API key) y:
+
+1. compara tu versión con la del último release;
+2. pregunta antes de bajar nada;
+3. verifica la **firma RSA** del ejecutable con la clave pública que trae el binario: un release que no esté firmado con la clave del proyecto se rechaza, aunque venga de GitHub;
+4. corre el binario nuevo con `--version` en **tu** equipo: si no arranca en ese Windows, no se instala;
+5. guarda el anterior como `tinyshell.old.exe` para `--rollback`.
+
+Si algo sale muy mal, volver a correr el instalador (o el USB) siempre deja una instalación limpia.
+
+## Seguridad, en corto
+
+- El modelo es un recomendador no confiable. Leé cada comando completo antes de aprobarlo.
+- La seguridad está en el código local, no en el prompt: herramienta desconocida, comando vacío, con saltos de línea o de más de 2000 bytes se rechazan antes de preguntarte.
+- La detección de comandos riesgosos es una heurística, no una barrera: tu aprobación es el control real.
+- No lo ejecutes como administrador para tareas de rutina.
+- Lo que escribís y la salida de los comandos se envían al proveedor del modelo.
+
+Detalle completo en [`docs/SECURITY.md`](docs/SECURITY.md).
+
+## Compilar desde el código
+
+En Linux con MinGW-w64 (`sudo apt install mingw-w64` / `sudo pacman -S mingw-w64-gcc`):
+
+```bash
+./build/test-core.sh          # tests del núcleo portable (JSON, historial, política, versiones)
+./build/build-linux-mingw.sh  # genera tinyshell.exe (PE32, enlaza msvcrt.dll, no la UCRT)
+```
+
+En Windows, desde el **x86 Native Tools Command Prompt** de Visual Studio: `build\build-windows-msvc.bat`.
+
+Un binario compilado por vos no trae la clave de releases salvo que generes la tuya, así que `--update` no va a funcionar con él; el resto sí.
+
+## Publicar un release (mantenedor)
+
+Una sola vez: `./build/gen-signing-key.sh` crea la clave privada en `~/.config/tinyshell/` (hacé un backup offline; nunca va al repo) y escribe la pública en `keys/` y `src/release_key.h` (esas sí se commitean).
+
+Cada release, desde `main` limpio:
+
+1. Subí `TINYSHELL_VERSION` en `src/config.h` y agregá `## X.Y.Z` al `CHANGELOG.md`; commit.
+2. `./build/release.sh X.Y.Z --dry-run` para revisar los artefactos en `dist/`.
+3. `./build/release.sh X.Y.Z`: corre los tests, compila, firma, crea el tag y publica con `gh`.
+
+## Documentación
 
 - [`docs/GOALS.md`](docs/GOALS.md): objetivo y criterios de éxito.
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): arquitectura y mapa del código.
-- [`docs/ACCESS_POINTS.md`](docs/ACCESS_POINTS.md): puntos de entrada locales, red y configuración.
-- [`docs/PC_PROFILE.md`](docs/PC_PROFILE.md): restricciones derivadas del hardware/sistema.
-- [`docs/OPERATIONS.md`](docs/OPERATIONS.md): flujo de uso y diagnóstico inicial.
-- [`docs/SECURITY.md`](docs/SECURITY.md): permisos, secretos y límites de seguridad.
-- [`docs/API.md`](docs/API.md): contrato de integración remoto.
-- [`docs/ROADMAP.md`](docs/ROADMAP.md): mejoras priorizadas.
-- [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md): pruebas mínimas antes de confiar en el programa.
-- [`scripts/collect-diagnostics.bat`](scripts/collect-diagnostics.bat): recopilación local básica sin instalar herramientas.
-
-## Licencia / estado
-
-Prototipo experimental. No usar para cambios críticos, datos únicos o reparaciones automáticas sin supervisión. Revisar y adaptar antes de distribuir.
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md): módulos y flujo.
+- [`docs/ACCESS_POINTS.md`](docs/ACCESS_POINTS.md): entradas locales, red y comandos.
+- [`docs/SECURITY.md`](docs/SECURITY.md): modelo de confianza y límites.
+- [`docs/OPERATIONS.md`](docs/OPERATIONS.md): instalación, problemas de TLS, diagnóstico.
+- [`docs/API.md`](docs/API.md): contrato con el proveedor del modelo.
+- [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) y [`docs/ROADMAP.md`](docs/ROADMAP.md).
+- [`docs/PC_PROFILE.md`](docs/PC_PROFILE.md): el equipo de prueba.
+- [`scripts/collect-diagnostics.bat`](scripts/collect-diagnostics.bat): informe local sin API.

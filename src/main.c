@@ -14,6 +14,7 @@
 #include "policy.h"
 #include "prompt.h"
 #include "shell.h"
+#include "update.h"
 #include "util.h"
 
 /* The approval gate. Returns the text sent back to the model as the tool result. */
@@ -100,14 +101,37 @@ static void converse(History *h, const char *api_key) {
   say("\nLímite de %d pasos por mensaje. Escribí \"seguí\" para continuar.\n", MAX_TURNS);
 }
 
-int main(void) {
+static int usage(void) {
+  say("Uso: tinyshell [--version | --update | --rollback | --help]\n"
+      "  sin argumentos  inicia el agente (pide la API key de OpenCode Go)\n"
+      "  --version       muestra la versión\n"
+      "  --update        busca, verifica e instala la última versión\n"
+      "  --rollback      vuelve a la versión anterior (tinyshell.old.exe)\n");
+  return 0;
+}
+
+static int run_flag(const char *flag) {
+  if (!strcmp(flag, "--version") || !strcmp(flag, "-v")) {
+    say("tinyshell %s\n", TINYSHELL_VERSION);
+    return 0;
+  }
+  if (!strcmp(flag, "--update")) return update_run();
+  if (!strcmp(flag, "--rollback")) return update_rollback();
+  if (!strcmp(flag, "--help") || !strcmp(flag, "-h") || !strcmp(flag, "/?")) return usage();
+  say("Opción desconocida: %s\n", flag);
+  usage();
+  return 2;
+}
+
+int main(int argc, char **argv) {
   char api[1024], input[MAX_LINE];
   History h = {0};
   int r;
   console_init();
-  say("TinyShell Agent | OpenCode Go / %s\n", MODEL);
+  if (argc > 1) return run_flag(argv[1]);
+  say("TinyShell %s | OpenCode Go / %s\n", TINYSHELL_VERSION, MODEL);
   say("El modelo es remoto; esta PC solo ejecuta comandos que vos aprobás.\n");
-  say("Comandos: /salir, /reiniciar (borra el historial).\n\nAPI key de OpenCode Go (no se muestra): ");
+  say("Comandos: /salir, /reiniciar (borra el historial), /actualizar.\n\nAPI key de OpenCode Go (no se muestra): ");
   if (read_line(api, sizeof api, 0) != LINE_OK || !*api) {
     say("Falta API key.\n");
     return 1;
@@ -126,6 +150,10 @@ int main(void) {
       continue;
     }
     if (!strcmp(input, "/salir") || !strcmp(input, "/exit")) break;
+    if (!strcmp(input, "/actualizar")) {
+      update_run();
+      continue;
+    }
     if (!strcmp(input, "/reiniciar")) {
       history_reset(&h);
       say("Historial borrado.\n");

@@ -26,7 +26,7 @@
 - [ ] Carefully scoped file edits using before/after diff and backup.
 - [ ] Small local project/context file describing the machine and allowed actions.
 - [ ] Configuration for endpoint/model, with secrets kept outside config.
-- [ ] Repeatable CI cross-build and artifact checksum.
+- [ ] Repeatable CI cross-build and artifact checksum. (Partial: local `build/release.sh` with SHA256SUMS and signature.)
 
 ## Explicitly out of scope for the low-spec target
 

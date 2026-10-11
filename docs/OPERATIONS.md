@@ -2,13 +2,21 @@
 
 ## First launch
 
-1. Build the x86 executable on a trusted development machine.
-2. Scan the executable and copy it to a folder such as `C:\Tools\TinyShell`.
-3. Open CMD as the normal user, not administrator.
-4. Run `tinyshell.exe`; provide the OpenCode Go API key interactively.
+1. Install with the one-liner from the README (curl on Windows 10+, bitsadmin on Windows 7) or copy `tinyshell.exe` + `install.bat` from a USB stick and run `install.bat`.
+2. Compare the SHA-256 printed by the installer with the release page.
+3. Open a **new** CMD window as the normal user, not administrator.
+4. Run `tinyshell`; provide the OpenCode Go API key interactively.
 5. Begin with a read-only task: `Decime versión de Windows, RAM disponible y espacio libre en C:. No cambies nada.`
 6. Inspect every proposed command, including pipes, redirection, quoted arguments and nested commands.
 7. Use `/salir` to finish.
+
+## Updating
+
+- `tinyshell --update` (or `/actualizar` inside a session). Close and reopen TinyShell afterwards.
+- "FIRMA INVÁLIDA": do not work around it; the release was not signed with the project key.
+- "no pasó la prueba de arranque": the new build does not start on this Windows; nothing was changed. Report it.
+- `tinyshell --rollback` restores `tinyshell.old.exe`; running it again rolls forward.
+- If the updater itself is broken, rerun the installer (USB works offline).
 
 ## Troubleshooting sequence
 

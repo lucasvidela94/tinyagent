@@ -30,12 +30,15 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/util.c` | `Buf`, `utf8_valid`, `jesc` | buffers, validación UTF-8, escape JSON (bytes inválidos → `\ufffd`) | portable |
 | `src/json.c` | `json_parse/key/index/str` | tokenizer acotado (profundidad, tokens), `\uXXXX` → UTF-8 | portable |
 | `src/conversation.c` | `History`, `build_request`, `ToolCall` | historial con recorte por intercambios completos, body de la request, extracción de tool calls | portable |
+| `src/version.c` | `version_compare`, `version_from_output` | versiones X.Y.Z y salida de `--version` para el updater | portable |
 | `src/policy.c` | `command_problem`, `risk_reason`, `is_yes` | rechazo previo, heurística de riesgo, respuesta de aprobación | portable |
 | `src/console_win32.c` | `say`, `read_line` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas | Win32 |
-| `src/http_win32.c` | `http_post` | WinHTTP, TLS 1.2 explícito, errores legibles, cuerpo acotado | Win32 |
+| `src/http_win32.c` | `http_post`, `http_get` | WinHTTP, TLS 1.2 explícito, errores legibles, cuerpo acotado; GET para releases | Win32 |
 | `src/shell_win32.c` | `run_command` | `cmd.exe /d /s /c` vía `CreateProcessW`, job + timeout, salida OEM → UTF-8 | Win32 |
 | `src/prompt_win32.c` | `system_prompt` | instrucciones agnósticas de tarea + equipo detectado al arrancar (versión de Windows, arquitectura, RAM, CPUs, carpeta actual) | Win32 |
-| `src/main.c` | `main` | gate de aprobación (`decide`), bucle de turnos (`converse`) | Win32 |
+| `src/verify_win32.c` | `signature_valid`, `sha256_hex` | firma RSA-3072/SHA-256 de releases con la CryptoAPI; clave pública en `src/release_key.h` | Win32 |
+| `src/update_win32.c` | `update_run`, `update_rollback` | `--update`: version.txt → descarga → firma → self-test → swap con `.old.exe`; `--rollback` | Win32 |
+| `src/main.c` | `main` | flags (`--version/--update/--rollback`), gate de aprobación (`decide`), bucle de turnos (`converse`) | Win32 |
 
 Los módulos portables no incluyen `<windows.h>` y se prueban en el host con `build/test-core.sh` (`tests/`). Los adapters Win32 tienen un solo adapter cada uno: el seam es el `.h`, no hay capa de abstracción extra.
 
@@ -44,6 +47,9 @@ Otros archivos:
 - `build/build-linux-mingw.sh`: cross-compile Linux → Windows x86, enlaza `msvcrt.dll` (no UCRT).
 - `build/build-windows-msvc.bat`: build desde Developer Command Prompt de MSVC.
 - `build/test-core.sh`: tests de los módulos portables (ASan/UBSan si están disponibles).
+- `build/gen-signing-key.sh`: crea una vez el par de claves de releases (privada fuera del repo).
+- `build/release.sh`: tests, build, firma, tag y `gh release create` (`--dry-run` disponible).
+- `scripts/install.bat`: instalador publicado en cada release (curl/bitsadmin o copia local por USB).
 - `scripts/collect-diagnostics.bat`: diagnóstico local separado; no necesita API.
 - `docs/`: decisiones, operación, seguridad, pruebas y hoja de ruta.
 

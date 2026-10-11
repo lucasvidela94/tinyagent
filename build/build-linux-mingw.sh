@@ -18,7 +18,7 @@ trap 'rm -rf "$PROBE"' EXIT
 if "$CC" -mcrtdll=msvcrt-os -x c -o "$PROBE/probe.exe" - <<<'int main(void){return 0;}' 2>/dev/null; then
   CRT=(-mcrtdll=msvcrt-os)
 fi
-"$CC" -std=c99 -Os -s -Wall -Wextra -Werror "${CRT[@]}" -o tinyshell.exe src/*.c -lwinhttp
+"$CC" -std=c99 -Os -s -Wall -Wextra -Werror "${CRT[@]}" -o tinyshell.exe src/*.c -lwinhttp -lcrypt32 -ladvapi32
 file tinyshell.exe 2>/dev/null || true
 if command -v "${CC%gcc}objdump" >/dev/null 2>&1; then
   DLLS="$("${CC%gcc}objdump" -p tinyshell.exe | awk '/DLL Name/{print $3}' | tr '\n' ' ')"

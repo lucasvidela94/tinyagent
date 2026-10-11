@@ -12,6 +12,7 @@ Maintain a small, auditable, low-resource, general-purpose terminal agent (in th
 - Keep the CLI synchronous and memory-bounded; the target machine is resource constrained.
 - Keep all shell execution behind local approval. Never implement auto-approval.
 - Do not store API keys in source, config files, logs, or diagnostic bundles.
+- Updates stay manual, ask before installing, and must verify the release signature and self-test before replacing the binary. Never commit the private signing key; only `keys/release-public.pem` and `src/release_key.h`.
 
 ## Safety constraints
 
@@ -24,7 +25,7 @@ Maintain a small, auditable, low-resource, general-purpose terminal agent (in th
 
 ## Codebase map
 
-- `src/`: one module per file, small header interface each. Portable C (testable on any host): `util` (buffers, UTF-8, JSON escaping), `json` (tokenizer), `conversation` (history, request body, tool-call extraction), `policy` (pre-approval checks, risk heuristic, yes/no). Win32 adapters: `console_win32` (UTF-16 console I/O), `http_win32` (WinHTTP), `shell_win32` (CreateProcess + pipe). `prompt_win32` (task-agnostic system prompt + machine detected at startup). `main.c`: approval gate and round-trip loop. `config.h`: endpoint, model and limits.
+- `src/`: one module per file, small header interface each. Portable C (testable on any host): `util` (buffers, UTF-8, JSON escaping), `json` (tokenizer), `conversation` (history, request body, tool-call extraction), `policy` (pre-approval checks, risk heuristic, yes/no). Win32 adapters: `console_win32` (UTF-16 console I/O), `http_win32` (WinHTTP), `shell_win32` (CreateProcess + pipe). `prompt_win32` (task-agnostic system prompt + machine detected at startup). `verify_win32` (release signature, CryptoAPI) and `update_win32` (`--update`/`--rollback`). `version` (portable). `main.c`: CLI flags, approval gate and round-trip loop. `config.h`: endpoint, model and limits.
 - `tests/`: host-side regression tests for the portable modules (`build/test-core.sh`).
 - `build/build-linux-mingw.sh`: Linux-to-Windows x86 cross-build (links `msvcrt.dll`, not the UCRT).
 - `build/build-windows-msvc.bat`: Windows/MSVC build.

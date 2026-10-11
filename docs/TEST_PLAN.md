@@ -24,6 +24,17 @@
 - [ ] A command waiting for input (`pause`) returns immediately; `ping -n 300 127.0.0.1` is killed at 180 s.
 - [ ] `/reiniciar` clears the history; a long session keeps working (history trimmed).
 
+## Install and update (Windows 7 x86)
+
+- [ ] `install.bat` from a USB folder installs the local copy, prints SHA-256, adds the user PATH; a new CMD finds `tinyshell`.
+- [ ] The bitsadmin one-liner works (or fails with the USB hint) on the target.
+- [ ] `tinyshell --version` prints `tinyshell X.Y.Z`.
+- [ ] `--update` with no newer release says it is up to date.
+- [ ] `--update` to a newer signed release: signature verified, self-test passes, binary swapped, `.old.exe` kept.
+- [ ] A release whose `.sig` does not match is refused with nothing changed.
+- [ ] `--rollback` restores the previous binary; a second `--rollback` rolls forward.
+- [x] Signing pipeline (`build/release.sh --dry-run` with a throwaway key): OpenSSL verifies the signature; a one-byte change fails it.
+
 ## API behavior
 
 - [ ] Simple text response appears.

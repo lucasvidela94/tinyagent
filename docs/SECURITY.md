@@ -27,6 +27,16 @@
 - The process has broad access to the files available to its Windows account; no filesystem sandbox exists.
 - A compromised or malicious API response must never be granted automatic execution.
 
+## Updates and installation
+
+- Updates are never automatic and always ask. They do not need the API key.
+- Authenticity: each release binary carries an RSA-3072 / SHA-256 signature made with a private key that lives only on the maintainer's machine (`build/gen-signing-key.sh`). The binary embeds the public key (`src/release_key.h`) and verifies with the Windows CryptoAPI before writing anything. A compromised GitHub account alone cannot ship an update.
+- Downgrade protection: the version that must be newer is the one the *signed* binary reports when self-tested (`--version`), not only `version.txt`.
+- Self-test: the new binary must start on this Windows before it replaces the old one; the old one is kept for `--rollback`.
+- First install is trust-on-first-use (HTTPS from GitHub, like `curl | sh`). Compare the SHA-256 the installer prints with the release page.
+- If the private key leaks, installed copies would accept updates signed with it: rotate by shipping a release with a new public key while the old key is still trusted, and treat the old key as burned.
+- `install.bat` only touches `%LOCALAPPDATA%\TinyShell`, the user `PATH` under HKCU and `TINYSHELL_HOME`; never the system PATH and never as administrator.
+
 ## Future hardening priorities
 
 - Add a strict default-deny allowlist for diagnostic commands.

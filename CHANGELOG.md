@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.4.0 — updates and installer
+
+- `tinyshell --update` / `/actualizar`: checks the latest GitHub release, asks, downloads, verifies an RSA-3072/SHA-256 signature with the Windows CryptoAPI, self-tests the new binary on this machine (`--version` must run and report the announced, newer version), then swaps it in keeping `tinyshell.old.exe`. Never automatic; works without the API key.
+- `tinyshell --rollback` restores the previous binary; `--version`, `--help`.
+- `scripts/install.bat` (published with each release): installs into `%LOCALAPPDATA%\TinyShell`, adds it to the user PATH, uses a local `tinyshell.exe` next to it (USB) or downloads with curl/bitsadmin.
+- `build/gen-signing-key.sh` (one-time key pair) and `build/release.sh` (test, build, sign, tag, `gh release create`; `--dry-run`).
+- `http_get` for release downloads, sharing the WinHTTP/TLS 1.2 code with the API client.
+
 ## 0.3.0 — general-purpose prompt
 
 - System prompt moved to `src/prompt_win32.c`, rewritten in English and task-agnostic: a general terminal agent for old Windows PCs (OpenCode/Pi-like) instead of a repair-only bot. Replies in the user's language.

@@ -6,3 +6,4 @@ tinyshell.exe
 *.lib
 diagnostics-*/
 *.log
+dist/
