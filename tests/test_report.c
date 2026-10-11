@@ -1,11 +1,11 @@
-/* Regression tests for src/report.c: error log ring, redaction of keys and identifying
+/* Regression tests for src/core/report.c: error log ring, redaction of keys and identifying
  * data before reports leave the PC, and payload JSON. Run: ./build/test-core.sh */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
-#include "../src/json.h"
-#include "../src/report.h"
+#include "json.h"
+#include "report.h"
 #include "check.h"
 
 static void test_errlog(void) {
@@ -30,10 +30,10 @@ static void test_errlog(void) {
 }
 
 static void test_redact(void) {
-  const char *names[] = {"C:\\Users\\Samira", "SAMIRA", "samira", ""};
+  const char *names[] = {"C:\\Users\\Pepa", "PC-PEPA", "pepa", ""};
   const char *labels[] = {"%USERPROFILE%", "<pc>", "<usuario>", "<vacio>"};
-  char *r = redact("key sk-abcdefgh12345 y Authorization: Bearer abc.def-ghi_123 en C:\\users\\samira\\x "
-                   "equipo SAMIRA sk-no",
+  char *r = redact("key sk-abcdefgh12345 y Authorization: Bearer abc.def-ghi_123 en C:\\users\\pepa\\x "
+                   "equipo PC-PEPA sk-no",
                    names, labels, 4);
   CHECK(strstr(r, "abcdefgh12345") == NULL && strstr(r, "sk-<redactado>") != NULL);
   CHECK(strstr(r, "abc.def-ghi_123") == NULL && strstr(r, "Bearer <redactado>") != NULL);

@@ -3,7 +3,6 @@
 ## Observed baseline
 
 - Model: Noblex NT1013E.
-- Hostname seen in diagnostics: `SAMIRA`.
 - OS: Windows 7 Professional SP1, build 7601, x86 / 32-bit.
 - CPU: Intel Atom N2600 @ 1.60 GHz; 2 cores and 4 logical processors reported.
 - RAM: 2 GB (user-reported).
