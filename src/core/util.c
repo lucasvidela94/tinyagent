@@ -114,6 +114,7 @@ static const struct { unsigned short cp; const char *ascii; } FALLBACK[] = {
     {0x21D2, "=>"},  {0x2212, "-"},  {0x2248, "~"},  {0x2260, "!="}, {0x2264, "<="},  {0x2265, ">="},
     {0x2705, "v"},   {0x2713, "v"},  {0x2714, "v"},  {0x2717, "x"},  {0x2718, "x"},   {0x274C, "x"},
     {0x26A0, "!"},   {0x2139, "i"},  {0x200B, ""},   {0x200C, ""},   {0x200D, ""},    {0xFE0F, ""},
+    {0x2500, "-"},   {0x2502, "|"},  {0x250C, "+"},  {0x2510, "+"},  {0x2514, "+"},   {0x2518, "+"},
 };
 
 const char *ascii_fallback(unsigned long cp) {
