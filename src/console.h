@@ -27,4 +27,13 @@ void console_flush_input(void);               /* drop pending keystrokes (e.g. a
  * echo = 0 hides typing (API key). */
 int read_line(char *out, size_t cap, int echo);
 
+/* Like read_line without echo, but prints one '*' per character so a paste is visible;
+ * Backspace works. Falls back to read_line when stdin is not a console. */
+int read_secret(char *out, size_t cap);
+
+enum { KEY_EOF, KEY_UP, KEY_DOWN, KEY_ENTER, KEY_ESC, KEY_BACK, KEY_CHAR, KEY_OTHER };
+/* Waits for an arrow, Enter, Esc, Backspace or a printable ASCII key (stored in *ch).
+ * KEY_OTHER when stdin is not a console. */
+int read_key(char *ch);
+
 #endif

@@ -36,6 +36,9 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/console_win32.c` | `say`, `read_line`, `console_*` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas; colores, ancho, cursor, borrar filas, vaciar entrada | Win32 |
 | `src/settings_win32.c` | `settings_load`, `settings_save_model` | `%LOCALAPPDATA%\TinyShell\config.ini` (`GetPrivateProfileStringW`), plantilla comentada en el primer arranque | Win32 |
 | `src/tui_win32.c` | `tui_prompt`, `tui_user`, `tui_proposal`, `tui_output`… | TUI mínima en línea: bloque del usuario, propuesta, resumen de salida, editor entre reglas, footer; modo plano si no hay consola | Win32 |
+| `src/console_input_win32.c` | `read_line`, `read_secret`, `read_key` | entrada: líneas, keys con `*`, teclas para menús | Win32 |
+| `src/tui_select_win32.c` | `tui_select` | menú con flechas, filtro tipeando y ventana de 10 filas | Win32 |
+| `src/login_win32.c` | `login_run`, `login_pick_model` | `tinyshell login`: proveedor, key (validada con `/models`), modelo de la lista en vivo | Win32 |
 | `src/credential_win32.c` | `credential_load/save/delete` | API key opcional en el Administrador de credenciales (DPAPI por usuario) | Win32 |
 | `src/session_win32.c` | `session_send` | historial, gate de aprobación (`decide`), bucle de turnos, conteo de tokens | Win32 |
 | `src/http_win32.c` | `http_post`, `http_get` | WinHTTP sobre cualquier URL http(s) (`WinHttpCrackUrl`), TLS 1.2 explícito, errores legibles, cuerpo acotado; GET de releases solo por HTTPS | Win32 |

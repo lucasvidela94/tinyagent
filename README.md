@@ -41,10 +41,28 @@ El instalador muestra el SHA-256 del ejecutable; comparalo con el que figura en 
 
 ## Usar
 
-Abrí una ventana **nueva** de CMD y escribí `tinyshell`. La primera vez pide la API key (clic derecho para pegar; no se muestra) y ofrece guardarla en el Administrador de credenciales de Windows, cifrada con tu usuario. Después es una conversación: pedís algo, el agente va paso a paso proponiendo comandos que aprobás, hasta terminar.
+Primero iniciá sesión (una sola vez):
 
 ```text
-TinyShell 0.5.0 · /ayuda
+C:\> tinyshell login
+Elegí un proveedor (flechas y Enter):
+> opencode-go    OpenCode Go (el modelo se elige después)
+
+API key de opencode-go (clic derecho para pegar): ****************************
+
+Elegí un modelo de opencode-go (38; escribí para filtrar, Enter):
+  filtro: kimi_
+> kimi-k2.6
+  kimi-k2.7-code
+  kimi-k3
+```
+
+La key se verifica contra el proveedor antes de guardarla (si la rechaza, no se guarda nada) y queda cifrada en el Administrador de credenciales de Windows. La lista de modelos se pide en vivo, así que aparece cualquier modelo nuevo del proveedor. `tinyshell logout` borra la key.
+
+Después abrí una ventana **nueva** de CMD y escribí `tinyshell`. Es una conversación: pedís algo, el agente va paso a paso proponiendo comandos que aprobás, hasta terminar.
+
+```text
+TinyShell 0.6.0 · opencode-go · /ayuda
 
  qué programas arrancan con Windows?                    <- tu mensaje
 
@@ -64,8 +82,8 @@ C:\Users\Samira · 7.2k in · 0.6k out · 12%    deepseek-v4.1-flash
 | Comando | Qué hace |
 |---|---|
 | `/ayuda` | muestra los comandos |
-| `/modelo [x]` | muestra el proveedor o cambia de modelo |
-| `/clave` | cambia la API key |
+| `/modelo [x]` | elegir modelo de la lista (o escribir el nombre) |
+| `/login` | cambiar de proveedor, key o modelo |
 | `/reiniciar` | empieza una conversación nueva |
 | `/actualizar` | igual que `tinyshell --update` |
 | `/salir` | termina |
@@ -87,7 +105,7 @@ session_header =
 - `name` identifica la API key guardada: cada proveedor tiene la suya.
 - `session_header` es solo para OpenCode Go (`x-opencode-session`); dejalo vacío para los demás.
 - Un servidor en tu red (LM Studio, Ollama en otra PC) funciona con `http://` y sin key; TinyShell avisa que esa conexión no va cifrada.
-- `/modelo otro-modelo` cambia el modelo sin salir y lo guarda.
+- `/modelo` muestra la lista de modelos del proveedor para elegir; `/modelo otro-modelo` lo cambia directo. Se guarda en `config.ini`.
 
 ## Actualizar y volver atrás
 
@@ -95,7 +113,7 @@ session_header =
 tinyshell --update     :: busca, pregunta, verifica la firma e instala
 tinyshell --rollback   :: vuelve a la versión anterior
 tinyshell --version
-tinyshell --logout     :: borra la API key guardada
+tinyshell logout       :: borra la API key guardada
 ```
 
 Nunca se actualiza solo. `--update` funciona aunque el agente esté roto (no pide API key) y:
@@ -113,7 +131,7 @@ Si algo sale muy mal, volver a correr el instalador (o el USB) siempre deja una 
 - El modelo es un recomendador no confiable. Leé cada comando completo antes de aprobarlo.
 - La seguridad está en el código local, no en el prompt: herramienta desconocida, comando vacío, con saltos de línea o de más de 2000 bytes se rechazan antes de preguntarte.
 - La detección de comandos riesgosos es una heurística, no una barrera: tu aprobación es el control real.
-- La API key solo se guarda si decís que sí, en el Administrador de credenciales de Windows. `tinyshell --logout` la borra.
+- La API key solo se guarda si decís que sí, en el Administrador de credenciales de Windows. `tinyshell logout` la borra.
 - No lo ejecutes como administrador para tareas de rutina.
 - Lo que escribís y la salida de los comandos se envían al proveedor del modelo.
 

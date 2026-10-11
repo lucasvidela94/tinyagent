@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0 — login and any model
+
+- `tinyshell login`: pick a provider (arrows + Enter), paste the API key (one `*` per character, Backspace works), pick a model from the provider's live list, done. The model list request doubles as a key check: a rejected key (401/403) is never saved. `tinyshell logout` deletes it; `/login` does the same flow inside a session.
+- Any model of the provider: the list comes from `<base>/models` (38 for OpenCode Go today), so new models show up without a new release. `/modelo` opens the same list; `/modelo <nombre>` still sets one directly. `deepseek-v4.1-flash` stays only as the default.
+- Menu with filtering: type to narrow the list (e.g. `glm`), 10 rows at a time, Esc cancels; numbered fallback when not in a console.
+- API keys are typed with asterisks everywhere (first run too), so a right-click paste is visible on Windows 7.
+- Console input split into `console_input_win32.c`; menu in `tui_select_win32.c`; login in `login_win32.c`.
+
 ## 0.5.0 — minimal TUI, saved API key, any provider
 
 - Provider-agnostic: `%LOCALAPPDATA%\TinyShell\config.ini` (`[provider]` name, url, model, session_header; created with examples on first run) points TinyShell at any OpenAI-compatible endpoint: OpenCode Go (default), OpenAI, OpenRouter, DeepSeek, or an LM Studio/Ollama server on the LAN over `http://` (warned at startup; no key needed). Values validated locally; one saved API key per provider; `/modelo` shows or switches the model.

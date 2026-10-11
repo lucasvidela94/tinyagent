@@ -195,12 +195,13 @@ char *http_post(const Provider *p, const char *body, const char *api_key, const 
   return request(p->name, &t, L"POST", api_key, p->session_header, session_id, body, MAX_HTTP, NULL);
 }
 
-char *http_get(const char *url, size_t max, size_t *len) {
+char *http_get(const char *url, const char *api_key, size_t max, size_t *len) {
   Target t;
   last_status = 0;
-  if (!crack(url, &t) || !t.secure) { /* releases are only fetched over TLS */
-    say("\nURL inválida o no HTTPS: %s\n", url);
+  if (!crack(url, &t)) {
+    say("\nURL inválida: %s\n", url);
     return NULL;
   }
-  return request("GitHub", &t, L"GET", NULL, NULL, NULL, NULL, max, len);
+  return request(t.secure ? "el servidor" : "el servidor (http)", &t, L"GET", api_key && *api_key ? api_key : NULL,
+                 NULL, NULL, NULL, max, len);
 }

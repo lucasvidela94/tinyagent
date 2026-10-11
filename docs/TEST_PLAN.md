@@ -32,12 +32,16 @@
 - [x] Glyph fitting: `→ … “” — ✅ 😀` render as `-> ... "" - v` (emoji dropped), accents intact.
 - [x] Real commands through `cmd.exe`: output preview (`... +851 líneas · exit=0`), `pause` returns at once (stdin = NUL), risky command asks `EJECUTAR`.
 
+- [x] `tinyshell login` in a pty (wine): provider menu with arrows; key shown as `*` (Backspace removes them); fake key rejected by `/models` (401) and not saved; real key (via hush): 38 models listed, typing `kimi` filters, arrow + Enter picks, key and `[provider]` saved; the key never appears in the terminal capture.
+- [x] `/modelo` opens the same filtered menu (`glm` shows the four glm models).
+
 ## TUI (Windows 7 x86)
 
 - [ ] Rules (`─`) and `·` render in the default raster font; colors readable on the default black background.
 - [ ] With the raster font, model text with arrows/quotes/emoji shows ASCII stand-ins (`->`, `"`), accents intact; with Consolas/Lucida the original glyphs show.
 - [ ] Editor: arrows/F7 history and right-click paste work; text appears inside the editor.
 - [ ] Pasting several lines does not answer `ejecutar?` (input flushed).
+- [ ] `tinyshell login`: arrows move in the menus, right-click paste fills the key with `*`.
 - [ ] After ~300 lines (buffer full) the editor still lands in the right place.
 
 ## Install and update (Windows 7 x86)

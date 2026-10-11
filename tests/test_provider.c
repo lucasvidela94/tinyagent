@@ -3,6 +3,7 @@
  * Run: ./build/test-core.sh */
 #include <string.h>
 
+#include "../src/json.h"
 #include "../src/provider.h"
 #include "check.h"
 
@@ -48,9 +49,29 @@ static void test_lengths(void) {
   CHECK(!strcmp(p.model, "deepseek-v4.1-flash"));
 }
 
+static void test_models(void) {
+  Provider p;
+  char url[600], ids[4][128];
+  provider_defaults(&p);
+  CHECK(provider_models_url(&p, url, sizeof url) && !strcmp(url, "https://opencode.ai/zen/go/v1/models"));
+  provider_set(&p, "url", "http://10.0.0.5:1234/v1/chat/completions?api-version=1");
+  CHECK(provider_models_url(&p, url, sizeof url) && !strcmp(url, "http://10.0.0.5:1234/v1/models?api-version=1"));
+  provider_set(&p, "url", "https://example.com/api/generate");
+  CHECK(!provider_models_url(&p, url, sizeof url)); /* other shapes: no list, type the name */
+  CHECK(provider_parse_models("{\"object\":\"list\",\"data\":[{\"id\":\"glm-5.1\"},{\"id\":\"kimi-k3\"},"
+                              "{\"id\":\"con espacio\"},{\"x\":1},{\"id\":\"qwen3.8-max\"},{\"id\":\"extra\"}]}",
+                              ids, 3) == 3);
+  CHECK(!strcmp(ids[0], "glm-5.1") && !strcmp(ids[1], "kimi-k3") && !strcmp(ids[2], "qwen3.8-max"));
+  CHECK(provider_parse_models("<html>", ids, 4) == 0);
+  CHECK(provider_parse_models("{\"data\":[]}", ids, 4) == 0);
+  CHECK(provider_preset_count() >= 1);
+  CHECK(strstr(provider_preset_label(0), "OpenCode Go") != NULL);
+}
+
 int main(void) {
   test_defaults();
   test_set();
   test_lengths();
+  test_models();
   return CHECK_DONE("test_provider");
 }

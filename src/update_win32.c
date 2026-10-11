@@ -62,7 +62,7 @@ static int self_test(const wchar_t *fresh, char *ver, size_t cap) {
 
 static int fetch_latest(char *latest, size_t cap) {
   size_t len = 0;
-  char *v = http_get(UPDATE_BASE_URL "version.txt", 64, &len);
+  char *v = http_get(UPDATE_BASE_URL "version.txt", NULL, 64, &len);
   if (!v) return 0;
   trim_line(v);
   if (strlen(v) + 1 > cap || version_compare(v, TINYSHELL_VERSION) == VERSION_INVALID) {
@@ -78,8 +78,8 @@ static int fetch_latest(char *latest, size_t cap) {
 /* Downloads, verifies and stages the new binary at p->fresh. 1 if ready to swap. */
 static int stage(const Paths *p, const char *latest) {
   size_t exe_len = 0, sig_len = 0;
-  char *exe = http_get(UPDATE_BASE_URL "tinyshell.exe", MAX_UPDATE, &exe_len);
-  char *sig = exe ? http_get(UPDATE_BASE_URL "tinyshell.exe.sig", 2048, &sig_len) : NULL;
+  char *exe = http_get(UPDATE_BASE_URL "tinyshell.exe", NULL, MAX_UPDATE, &exe_len);
+  char *sig = exe ? http_get(UPDATE_BASE_URL "tinyshell.exe.sig", NULL, 2048, &sig_len) : NULL;
   char hex[65], tested[32];
   int ok = 0;
   if (!exe || !sig) goto done;

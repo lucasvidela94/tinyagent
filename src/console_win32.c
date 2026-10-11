@@ -87,10 +87,6 @@ void console_clear(int from_row, int to_row) {
   FillConsoleOutputAttribute(con_out, base_attr, len, c, &done);
 }
 
-void console_flush_input(void) {
-  if (in_is_console) FlushConsoleInputBuffer(con_in);
-}
-
 static int in_codepage(wchar_t c, UINT cp) {
   char tmp[8];
   BOOL used = FALSE;
@@ -171,53 +167,4 @@ void say(const char *fmt, ...) {
     free(s);
   }
   va_end(ap2);
-}
-
-static int read_redirected(char *out, size_t cap) {
-  size_t len;
-  int c, status = LINE_OK;
-  if (!fgets(out, (int)cap, stdin)) return LINE_EOF;
-  len = strlen(out);
-  if (len && out[len - 1] != '\n' && !feof(stdin)) {
-    while ((c = getchar()) != EOF && c != '\n') {}
-    status = LINE_TOO_LONG;
-  }
-  trim_line(out);
-  return status;
-}
-
-int read_line(char *out, size_t cap, int echo) {
-  int status = LINE_OK, got_any = 0, eol = 0, n;
-  size_t wn = 0;
-  DWORD mode = 0;
-  wchar_t *w;
-  out[0] = 0;
-  if (!in_is_console) return read_redirected(out, cap);
-  GetConsoleMode(con_in, &mode);
-  if (!echo) SetConsoleMode(con_in, mode & ~(DWORD)ENABLE_ECHO_INPUT);
-  w = (wchar_t *)xrealloc(NULL, cap * sizeof(wchar_t));
-  while (!eol) {
-    wchar_t chunk[256];
-    DWORD r = 0, k;
-    if (!ReadConsoleW(con_in, chunk, 256, &r, NULL) || r == 0) break;
-    if (!got_any && chunk[0] == 0x1A) break; /* Ctrl+Z */
-    got_any = 1;
-    for (k = 0; k < r; k++) {
-      if (chunk[k] == L'\n') { eol = 1; break; }
-      if (chunk[k] == L'\r') continue;
-      if (wn < cap - 1) w[wn++] = chunk[k];
-      else status = LINE_TOO_LONG;
-    }
-  }
-  if (!echo) {
-    SetConsoleMode(con_in, mode);
-    write_utf8("\n");
-  }
-  n = wn ? WideCharToMultiByte(CP_UTF8, 0, w, (int)wn, out, (int)cap - 1, NULL, NULL) : 0;
-  if (wn && n == 0) status = LINE_TOO_LONG; /* UTF-8 form does not fit */
-  out[n] = 0;
-  SecureZeroMemory(w, cap * sizeof(wchar_t)); /* may hold the API key */
-  free(w);
-  trim_line(out);
-  return got_any ? status : LINE_EOF;
 }

@@ -9,6 +9,7 @@
 #include "config.h"
 #include "console.h"
 #include "credential.h"
+#include "login.h"
 #include "policy.h"
 #include "session.h"
 #include "settings.h"
@@ -17,12 +18,13 @@
 #include "util.h"
 
 static int usage(void) {
-  say("Uso: tinyshell [--version | --update | --rollback | --logout | --help]\n"
+  say("Uso: tinyshell [login | logout | --version | --update | --rollback | --help]\n"
       "  sin argumentos  abre una sesión\n"
+      "  login           elegir proveedor, guardar la API key y elegir modelo\n"
+      "  logout          borrar la API key guardada del proveedor actual\n"
       "  --version       muestra la versión\n"
       "  --update        busca, verifica e instala la última versión\n"
       "  --rollback      vuelve a la versión anterior (tinyshell.old.exe)\n"
-      "  --logout        borra la API key guardada del proveedor actual\n"
       "Proveedor y modelo: %s\n", settings_path());
   return 0;
 }
@@ -36,7 +38,8 @@ static int run_flag(const char *flag) {
   }
   if (!strcmp(flag, "--update")) return update_run();
   if (!strcmp(flag, "--rollback")) return update_rollback();
-  if (!strcmp(flag, "--logout")) {
+  if (!strcmp(flag, "login") || !strcmp(flag, "--login")) return login_run(NULL, NULL, 0) ? 0 : 1;
+  if (!strcmp(flag, "logout") || !strcmp(flag, "--logout")) {
     say(credential_delete(p.name) ? "API key de %s borrada.\n" : "No se pudo borrar la API key de %s.\n", p.name);
     return 0;
   }
@@ -50,8 +53,8 @@ static int run_flag(const char *flag) {
  * usually need none). 0 only on EOF. */
 static int ask_key(const Provider *p, char *key, size_t cap) {
   char answer[16], msg[96];
-  say("API key de %s (no se muestra; clic derecho para pegar; Enter si no usa): ", p->name);
-  if (read_line(key, cap, 0) != LINE_OK) return 0;
+  say("API key de %s (clic derecho para pegar; Enter si no usa): ", p->name);
+  if (read_secret(key, cap) != LINE_OK) return 0;
   if (!*key) {
     tui_note("sin API key");
     return 1;
@@ -60,22 +63,22 @@ static int ask_key(const Provider *p, char *key, size_t cap) {
   tui_note(msg);
   say("¿Guardarla para este usuario de Windows? [s/N] ");
   if (read_line(answer, sizeof answer, 1) == LINE_OK && is_yes(answer))
-    tui_note(credential_save(p->name, key) ? "guardada · tinyshell --logout la borra" : "no se pudo guardar");
+    tui_note(credential_save(p->name, key) ? "guardada · tinyshell logout la borra" : "no se pudo guardar");
   return 1;
 }
 
-/* "/modelo" shows the provider; "/modelo X" switches model and saves it to config.ini. */
+/* "/modelo" lists the provider's models to pick from; "/modelo X" sets one directly.
+ * Either way the choice is saved to config.ini. */
 static void model_command(Session *s, const char *arg) {
   Buf msg = {0};
   const char *err;
   while (*arg == ' ') arg++;
-  if (*arg) {
-    if ((err = provider_set(&s->provider, "model", arg)) != NULL) {
-      tui_error(err);
-      return;
-    }
-    if (!settings_save_model(arg)) tui_error("no se pudo guardar en config.ini (vale para esta sesión)");
+  if (*arg && (err = provider_set(&s->provider, "model", arg)) != NULL) {
+    tui_error(err);
+    return;
   }
+  if ((*arg || login_pick_model(&s->provider, s->api_key)) && !settings_save_model(s->provider.model))
+    tui_error("no se pudo guardar en config.ini (vale para esta sesión)");
   buf_str(&msg, s->provider.name);
   buf_str(&msg, " · ");
   buf_str(&msg, s->provider.model);
@@ -88,8 +91,8 @@ static void model_command(Session *s, const char *arg) {
 }
 
 static void help(void) {
-  tui_note("/modelo [x]  ver el proveedor o cambiar de modelo\n"
-           "/clave       cambiar la API key\n"
+  tui_note("/modelo [x]  elegir modelo de la lista (o escribir el nombre)\n"
+           "/login       cambiar de proveedor o de API key\n"
            "/reiniciar   empezar una conversación nueva\n"
            "/actualizar  buscar e instalar la última versión\n"
            "/salir       terminar");
@@ -126,11 +129,11 @@ static void chat(Session *s) {
       session_reset(s);
       tui_note("conversación nueva");
     } else if (!strcmp(input, "/actualizar")) update_run();
-    else if (!strcmp(input, "/clave")) ask_key(&s->provider, s->api_key, sizeof s->api_key);
+    else if (!strcmp(input, "/login") || !strcmp(input, "/clave")) login_run(&s->provider, s->api_key, sizeof s->api_key);
     else if (!strncmp(input, "/modelo", 7) && (!input[7] || input[7] == ' ')) model_command(s, input + 7);
     else if (input[0] == '/') tui_error("Comando desconocido. /ayuda muestra los comandos.");
     else if ((status = session_send(s, input)) == 401 || status == 403)
-      tui_error("La API key fue rechazada. /clave para cambiarla.");
+      tui_error("La API key fue rechazada. /login para cambiarla.");
   }
 }
 
@@ -138,14 +141,14 @@ int main(int argc, char **argv) {
   Session s;
   char banner[160];
   console_init();
-  if (argc > 1) return run_flag(argv[1]);
   tui_init();
+  if (argc > 1) return run_flag(argv[1]);
   settings_load(&s.provider);
   snprintf(banner, sizeof banner, "TinyShell %s · %s · /ayuda", TINYSHELL_VERSION, s.provider.name);
   tui_note(banner);
   if (provider_insecure(&s.provider)) tui_error("aviso: la URL es http://, la API key y la conversación viajan sin cifrar");
   if (credential_load(s.provider.name, s.api_key, sizeof s.api_key))
-    tui_note("usando la API key guardada · /clave para cambiarla");
+    tui_note("usando la API key guardada · /login para cambiarla");
   else if (!ask_key(&s.provider, s.api_key, sizeof s.api_key)) {
     tui_error("Falta la API key.");
     SecureZeroMemory(s.api_key, sizeof s.api_key);

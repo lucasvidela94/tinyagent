@@ -9,7 +9,8 @@
  * on first run. Invalid values are reported and ignored (the default stays). */
 void settings_load(Provider *p);
 
-int settings_save_model(const char *model); /* writes [provider] model=, 1 on success */
+int settings_save_model(const char *model);  /* writes [provider] model=, 1 on success */
+int settings_save_provider(const Provider *p); /* writes the whole [provider] section */
 const char *settings_path(void);            /* UTF-8, for messages */
 
 #endif

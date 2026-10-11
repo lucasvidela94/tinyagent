@@ -2,11 +2,12 @@
 #ifndef TINYSHELL_CONFIG_H
 #define TINYSHELL_CONFIG_H
 
-#define TINYSHELL_VERSION "0.5.0"
+#define TINYSHELL_VERSION "0.6.0"
 #define TINYSHELL_WIDEN_(s) L##s
 #define TINYSHELL_WIDEN(s) TINYSHELL_WIDEN_(s)
 #define TINYSHELL_VERSION_W TINYSHELL_WIDEN(TINYSHELL_VERSION)
-/* Release assets: version.txt, tinyshell.exe, tinyshell.exe.sig, install.bat, SHA256SUMS. */
+/* Release assets: version.txt, tinyshell.exe, tinyshell.exe.sig, install.bat, SHA256SUMS.
+ * Must stay https://: downloads are authenticated by signature, but version.txt is not. */
 #define UPDATE_BASE_URL "https://github.com/lucasvidela94/tinyagent/releases/latest/download/"
 
 #define MAX_HTTP (1024 * 1024)   /* API response body, bytes */

@@ -13,6 +13,8 @@ static int fancy, thinking_row = -1;
 
 void tui_init(void) { fancy = console_is_tty() && console_width() >= 40; }
 
+int tui_is_fancy(void) { return fancy; }
+
 static void rule(void) {
   Buf b = {0};
   int i, w = console_width();
@@ -107,20 +109,20 @@ void tui_thinking(int on) {
 
 void tui_text(const char *text) { say("\n%s\n", text); }
 
-static void line(const char *indent, const char *text, int color) {
+void tui_line(const char *indent, const char *text, int color) {
   console_write(indent, color);
   console_write(text, color);
   say("\n");
 }
 
-void tui_note(const char *text) { line("", text, COLOR_DIM); }
-void tui_error(const char *text) { line("", text, COLOR_DANGER); }
+void tui_note(const char *text) { tui_line("", text, COLOR_DIM); }
+void tui_error(const char *text) { tui_line("", text, COLOR_DANGER); }
 
 void tui_proposal(const char *cmd, const char *reason, const char *risk) {
   say("\n");
-  line("$ ", cmd, risk ? COLOR_DANGER : COLOR_ACCENT);
-  line("  ", *reason ? reason : "(sin motivo)", COLOR_DIM);
-  if (risk) line("  riesgo: ", risk, COLOR_DANGER);
+  tui_line("$ ", cmd, risk ? COLOR_DANGER : COLOR_ACCENT);
+  tui_line("  ", *reason ? reason : "(sin motivo)", COLOR_DIM);
+  if (risk) tui_line("  riesgo: ", risk, COLOR_DANGER);
 }
 
 static int is_meta(const char *l) { /* footer lines added by run_command */
@@ -143,7 +145,7 @@ void tui_output(const char *output) {
       buf_add(&meta, l + 1, n > 1 ? n - 2 : 0); /* without the brackets */
     } else if (shown < PREVIEW_LINES) {
       l[text_fit(l, w)] = 0;
-      line("  ", l, COLOR_DIM);
+      tui_line("  ", l, COLOR_DIM);
       shown++;
     } else {
       hidden++;
@@ -160,7 +162,7 @@ void tui_output(const char *output) {
       buf_str(&b, hidden ? " · " : "");
       buf_str(&b, meta.p);
     }
-    line("  ", b.p, COLOR_DIM);
+    tui_line("  ", b.p, COLOR_DIM);
     free(b.p);
   }
   free(meta.p);

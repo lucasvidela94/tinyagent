@@ -78,10 +78,18 @@ void settings_load(Provider *p) {
   apply(p, "session_header");
 }
 
-int settings_save_model(const char *model) {
-  wchar_t w[128];
-  if (!path_w[0] || !MultiByteToWideChar(CP_UTF8, 0, model, -1, w, 128)) return 0;
-  return WritePrivateProfileStringW(L"provider", L"model", w, path_w) != 0;
+static int save(const wchar_t *key, const char *value) {
+  wchar_t w[600];
+  if (!path_w[0] || !MultiByteToWideChar(CP_UTF8, 0, value, -1, w, 600)) return 0;
+  return WritePrivateProfileStringW(L"provider", key, w, path_w) != 0;
+}
+
+int settings_save_model(const char *model) { return save(L"model", model); }
+
+int settings_save_provider(const Provider *p) {
+  if (!path_w[0] && !resolve_path()) return 0;
+  return save(L"name", p->name) && save(L"url", p->url) && save(L"model", p->model) &&
+         save(L"session_header", p->session_header);
 }
 
 const char *settings_path(void) { return path_utf8[0] ? path_utf8 : "(sin ruta)"; }

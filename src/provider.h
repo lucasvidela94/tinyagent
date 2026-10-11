@@ -5,6 +5,8 @@
 #ifndef TINYSHELL_PROVIDER_H
 #define TINYSHELL_PROVIDER_H
 
+#include <stddef.h>
+
 typedef struct {
   char name[64];           /* also names the saved API key */
   char url[512];           /* full chat-completions URL, http:// or https:// */
@@ -19,5 +21,17 @@ void provider_defaults(Provider *p); /* OpenCode Go with deepseek-v4.1-flash */
 const char *provider_set(Provider *p, const char *key, const char *value);
 
 int provider_insecure(const Provider *p); /* 1 if the API key would travel unencrypted */
+
+/* Providers offered by `tinyshell login`. Adding one is adding a row in provider.c. */
+int provider_preset_count(void);
+const char *provider_preset_label(int i); /* e.g. "OpenCode Go (el modelo se elige después)" */
+void provider_preset(int i, Provider *p);
+
+/* <base>/models for a ".../chat/completions" URL (query string kept). 0 if the URL has
+ * another shape, so the model list cannot be fetched. */
+int provider_models_url(const Provider *p, char *out, size_t cap);
+/* Model ids from an OpenAI-style {"data":[{"id":...}]} list, in server order. Invalid or
+ * oversized ids are skipped. Returns how many were stored (0 on malformed JSON). */
+int provider_parse_models(const char *json, char (*ids)[128], int max);
 
 #endif

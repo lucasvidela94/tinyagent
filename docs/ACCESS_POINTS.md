@@ -12,8 +12,9 @@
 | `tinyshell --version` / `--help` | CLI flags | Print version / usage and exit |
 | `tinyshell --update` or `/actualizar` | Self-update | Manual only; asks; verifies RSA signature; self-tests the new binary; keeps `tinyshell.old.exe` |
 | `tinyshell --rollback` | Undo update | Swaps `tinyshell.exe` and `tinyshell.old.exe` |
-| `tinyshell --logout` | Forget key | Deletes the saved API key from the Credential Manager |
-| `/ayuda`, `/clave`, `/modelo [x]` | Session commands | Show commands; enter a new API key (and optionally save it); show the provider or switch model (saved to `config.ini`) |
+| `tinyshell login` | Sign in | Provider menu, API key with asterisks (checked against `<base>/models`; rejected keys are not saved), model menu with filtering; saves key + `[provider]` |
+| `tinyshell logout` (`--logout`) | Forget key | Deletes the saved API key of the current provider |
+| `/ayuda`, `/login`, `/modelo [x]` | Session commands | Show commands; run the login flow; pick a model from the live list or set one by name (saved to `config.ini`) |
 | `/reiniciar` | Session reset | Drops the conversation history, keeps the system prompt |
 | `run_command()` (`src/shell_win32.c`) | Local command boundary | `CreateProcessW` of `%SystemRoot%\System32\cmd.exe /d /s /c "<cmd>"`, stdin = NUL, 180 s limit, output capped at 24 KB |
 

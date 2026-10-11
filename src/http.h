@@ -14,10 +14,11 @@
  * used for the Authorization header and is never printed. */
 char *http_post(const Provider *p, const char *body, const char *api_key, const char *session_id);
 
-/* GETs an https:// URL (redirects followed), refusing bodies over max bytes. Returns the
- * body (binary-safe, NUL-terminated for convenience) and its length in *len, or NULL
- * after printing an error. Caller frees. */
-char *http_get(const char *url, size_t max, size_t *len);
+/* GETs an http(s) URL (redirects followed), with "Authorization: Bearer <api_key>" when
+ * api_key is non-empty. Refuses bodies over max bytes. Returns the body (binary-safe,
+ * NUL-terminated for convenience) and its length in *len, or NULL after printing an
+ * error. Caller frees. Callers that need TLS must pass an https:// URL. */
+char *http_get(const char *url, const char *api_key, size_t max, size_t *len);
 
 /* HTTP status of the last request (e.g. 401 for a rejected API key), 0 if none arrived. */
 unsigned long http_last_status(void);
