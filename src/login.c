@@ -1,5 +1,3 @@
-#include "win32.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -11,6 +9,7 @@
 #include "login.h"
 #include "settings.h"
 #include "tui.h"
+#include "util.h"
 
 #define MAX_PRESETS 16
 #define MAX_MODELS 300
@@ -66,7 +65,7 @@ int login_run(Provider *p, char *key, size_t cap) {
   say("\nAPI key de %s (clic derecho para pegar): ", chosen.name);
   if (read_secret(secret, sizeof secret) != LINE_OK || !*secret) {
     tui_note("cancelado: no se ingresó ninguna clave");
-    SecureZeroMemory(secret, sizeof secret);
+    wipe(secret, sizeof secret);
     return 0;
   }
   /* Fetching the model list doubles as a key check: a rejected key is never saved. */
@@ -75,7 +74,7 @@ int login_run(Provider *p, char *key, size_t cap) {
     unsigned long status = http_last_status();
     if (status == 401 || status == 403) {
       tui_error("la API key fue rechazada; no se guardó nada");
-      SecureZeroMemory(secret, sizeof secret);
+      wipe(secret, sizeof secret);
       return 0;
     }
     tui_note("se mantiene el modelo por defecto (/modelo para cambiarlo)");
@@ -92,6 +91,6 @@ int login_run(Provider *p, char *key, size_t cap) {
   } else {
     tui_error("no se pudo guardar la clave en el Administrador de credenciales");
   }
-  SecureZeroMemory(secret, sizeof secret);
+  wipe(secret, sizeof secret);
   return ok;
 }

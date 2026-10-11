@@ -37,15 +37,16 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/policy.c` | `command_problem`, `risk_reason`, `is_yes` | rechazo previo, heurística de riesgo, respuesta de aprobación | portable |
 | `src/console_win32.c` | `say`, `read_line`, `console_*` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas; colores, ancho, cursor, borrar filas, vaciar entrada | Win32 |
 | `src/settings_win32.c` | `settings_load`, `settings_save_model` | `%LOCALAPPDATA%\TinyShell\config.ini` (`GetPrivateProfileStringW`), plantilla comentada en el primer arranque | Win32 |
-| `src/tui.c` | `tui_prompt`, `tui_user`, `tui_proposal`, `tui_output`… | TUI mínima en línea: bloque del usuario, propuesta, resumen de salida, editor entre reglas, footer; modo plano si no hay consola | Win32 |
+| `src/tui.c` | `tui_prompt`, `tui_user`, `tui_proposal`, `tui_output`… | TUI mínima en línea: bloque del usuario, propuesta, resumen de salida, editor entre reglas, footer; modo plano si no hay consola | portable |
 | `src/console_input_win32.c` | `read_line`, `read_secret`, `read_key` | entrada: líneas, keys con `*`, teclas para menús | Win32 |
-| `src/tui_select.c` | `tui_select` | menú con flechas, filtro tipeando y ventana de 10 filas | Win32 |
-| `src/login.c` | `login_run`, `login_pick_model` | `tinyshell login`: proveedor, key (validada con `/models`), modelo de la lista en vivo | Win32 |
-| `src/reporter_win32.c` | `reporter_run` | `/reporte`: arma, guarda en `.txt`, muestra y envía el informe | Win32 |
-| `src/telemetry_win32.c` | `telemetry_init/event/error` | telemetría de la beta: aviso, `telemetria on/off/--ver`, registro local de lo enviado | Win32 |
+| `src/tui_select.c` | `tui_select` | menú con flechas, filtro tipeando y ventana de 10 filas | portable |
+| `src/login.c` | `login_run`, `login_pick_model` | `tinyshell login`: proveedor, key (validada con `/models`), modelo de la lista en vivo | portable |
+| `src/reporter.c` | `reporter_run` | `/reporte`: arma, guarda en `.txt`, muestra y envía el informe | portable |
+| `src/telemetry.c` | `telemetry_init/event/error` | telemetría de la beta: aviso, `telemetria on/off/--ver`, registro local de lo enviado | portable |
 | `src/cancel_win32.c` | `cancel_*` | Ctrl+C: cierra el pedido HTTP o mata el comando desde el hilo del handler, con handles protegidos; corta la lectura pendiente | Win32 |
 | `src/credential_win32.c` | `credential_load/save/delete` | API key opcional en el Administrador de credenciales (DPAPI por usuario) | Win32 |
-| `src/session_win32.c` | `session_send` | historial, gate de aprobación (`decide`), bucle de turnos, conteo de tokens | Win32 |
+| `src/session.c` | `session_send` | historial, gate de aprobación (`decide`), bucle de turnos, conteo de tokens | portable |
+| `src/sys_win32.c` | `sys_random`, `sys_ms`, `sys_data_path`, `sys_read_file`… | primitivas del sistema con rutas UTF-8: random, reloj, carpeta actual, carpeta de datos (`%LOCALAPPDATA%\TinyShell`), archivos, identidad | Win32 |
 | `src/http_win32.c` | `http_post_stream`, `http_get`, `http_post_json` | WinHTTP sobre cualquier URL http(s) (`WinHttpCrackUrl`), TLS 1.2 explícito, errores legibles, cuerpo acotado; GET de releases solo por HTTPS | Win32 |
 | `src/shell_win32.c` | `run_command` | `cmd.exe /d /s /c` vía `CreateProcessW`, job + timeout, salida OEM → UTF-8 | Win32 |
 | `src/prompt_win32.c` | `system_prompt` | instrucciones agnósticas de tarea + equipo detectado al arrancar (versión de Windows, arquitectura, RAM, CPUs, carpeta actual) | Win32 |

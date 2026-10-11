@@ -46,6 +46,11 @@ void buf_add_capped(Buf *b, const char *s, size_t n, size_t limit, size_t *dropp
   *dropped += n - take;
 }
 
+void wipe(void *p, size_t n) {
+  volatile unsigned char *v = (volatile unsigned char *)p;
+  while (n--) *v++ = 0;
+}
+
 void trim_line(char *s) {
   size_t n = strlen(s);
   while (n && (s[n - 1] == '\n' || s[n - 1] == '\r' || s[n - 1] == ' ' || s[n - 1] == '\t')) s[--n] = 0;

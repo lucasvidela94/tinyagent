@@ -1,7 +1,5 @@
 /* TinyShell: general-purpose terminal agent for old Windows PCs. Entry point: CLI flags,
  * API key setup and the chat loop with its slash commands. */
-#include "win32.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +13,7 @@
 #include "policy.h"
 #include "session.h"
 #include "settings.h"
+#include "sys.h"
 #include "telemetry.h"
 #include "tui.h"
 #include "update.h"
@@ -115,17 +114,18 @@ static void fmt_tokens(char *out, size_t cap, long n) {
 }
 
 static void status_left(const Session *s, char *out, size_t cap) {
-  wchar_t wcwd[MAX_PATH];
-  char cwd[MAX_PATH * 3] = "", in[16], o[16];
+  Buf cwd = {0};
+  char in[16], o[16];
   int pct = (int)(s->history.bytes * 100 / MAX_HISTORY);
-  if (GetCurrentDirectoryW(MAX_PATH, wcwd)) WideCharToMultiByte(CP_UTF8, 0, wcwd, -1, cwd, sizeof cwd, NULL, NULL);
+  sys_cwd(&cwd);
   fmt_tokens(in, sizeof in, s->tokens_in);
   fmt_tokens(o, sizeof o, s->tokens_out);
-  snprintf(out, cap, "%s · %s in · %s out · %d%%", cwd, in, o, pct > 100 ? 100 : pct);
+  snprintf(out, cap, "%s · %s in · %s out · %d%%", cwd.p ? cwd.p : "", in, o, pct > 100 ? 100 : pct);
+  free(cwd.p);
 }
 
 static void chat(Session *s) {
-  char input[MAX_LINE], left[MAX_PATH * 3 + 64];
+  char input[MAX_LINE], left[1024];
   for (;;) {
     int r;
     unsigned long status;
@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
     tui_note("usando la API key guardada · /login para cambiarla");
   else if (!ask_key(&s.provider, s.api_key, sizeof s.api_key)) {
     tui_error("Falta la API key.");
-    SecureZeroMemory(s.api_key, sizeof s.api_key);
+    wipe(s.api_key, sizeof s.api_key);
     return 1;
   }
   telemetry_init();
@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
              "{\"turns\":%d,\"proposed\":%d,\"approved\":%d,\"rejected\":%d,\"tokens_in\":%ld,"
              "\"tokens_out\":%ld,\"seconds\":%lu}",
              s.turns, s.proposed, s.approved, s.rejected, s.tokens_in, s.tokens_out,
-             (GetTickCount() - s.started_ms) / 1000);
+             (sys_ms() - s.started_ms) / 1000);
     telemetry_event("session_end", data);
   }
   session_free(&s);

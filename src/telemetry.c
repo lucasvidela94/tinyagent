@@ -1,9 +1,7 @@
-#include "win32.h"
-
-#include <wincrypt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "config.h"
 #include "console.h"
@@ -11,6 +9,7 @@
 #include "prompt.h"
 #include "report.h"
 #include "settings.h"
+#include "sys.h"
 #include "telemetry.h"
 #include "tui.h"
 #include "util.h"
@@ -19,13 +18,9 @@ static int enabled;
 static char install_id[48];
 
 static void new_install_id(void) {
-  HCRYPTPROV prov = 0;
-  BYTE r[12];
-  int i, ok = CryptAcquireContextW(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT) &&
-              CryptGenRandom(prov, sizeof r, r);
-  if (prov) CryptReleaseContext(prov, 0);
-  if (!ok)
-    for (i = 0; i < 12; i++) r[i] = (BYTE)(GetTickCount() >> (i % 4 * 8)) ^ (BYTE)(i * 53);
+  unsigned char r[12];
+  int i;
+  sys_random(r, sizeof r);
   for (i = 0; i < 12; i++) snprintf(install_id + 2 * i, 3, "%02x", r[i]);
   settings_set("telemetry", "install_id", install_id);
 }
@@ -48,21 +43,17 @@ int telemetry_enabled(void) { return enabled; }
 const char *telemetry_install_id(void) { return install_id; }
 
 static void log_line(const char *json) {
-  wchar_t path[MAX_PATH];
-  HANDLE f;
-  DWORD done;
-  SYSTEMTIME t;
-  char stamp[48];
-  if (!settings_file("telemetria.log", path, MAX_PATH)) return;
-  f = CreateFileW(path, FILE_APPEND_DATA, FILE_SHARE_READ, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-  if (f == INVALID_HANDLE_VALUE) return;
-  GetLocalTime(&t);
-  snprintf(stamp, sizeof stamp, "%04d-%02d-%02d %02d:%02d:%02d ", t.wYear, t.wMonth, t.wDay, t.wHour, t.wMinute,
-           t.wSecond);
-  WriteFile(f, stamp, (DWORD)strlen(stamp), &done, NULL);
-  WriteFile(f, json, (DWORD)strlen(json), &done, NULL);
-  WriteFile(f, "\r\n", 2, &done, NULL);
-  CloseHandle(f);
+  Buf path = {0}, line = {0};
+  time_t now = time(NULL);
+  struct tm *t = localtime(&now);
+  char stamp[48] = "";
+  if (t) strftime(stamp, sizeof stamp, "%Y-%m-%d %H:%M:%S ", t);
+  buf_str(&line, stamp);
+  buf_str(&line, json);
+  buf_str(&line, SYS_EOL);
+  if (sys_data_path("telemetria.log", &path)) sys_write_file(path.p, line.p, line.len, 1);
+  free(path.p);
+  free(line.p);
 }
 
 void telemetry_event(const char *name, const char *data_json) {
@@ -98,22 +89,12 @@ void telemetry_error(const char *kind, const char *code, const char *stage) {
 }
 
 static void show_log(void) {
-  wchar_t path[MAX_PATH];
-  char buf[4096];
-  DWORD got = 0, size;
-  HANDLE f;
-  if (!settings_file("telemetria.log", path, MAX_PATH) ||
-      (f = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL)) ==
-          INVALID_HANDLE_VALUE) {
-    say("Todavía no se envió nada.\n");
-    return;
-  }
-  size = GetFileSize(f, NULL);
-  if (size > sizeof buf - 1) SetFilePointer(f, -(LONG)(sizeof buf - 1), NULL, FILE_END); /* last part */
-  ReadFile(f, buf, sizeof buf - 1, &got, NULL);
-  buf[got] = 0;
-  CloseHandle(f);
-  say("Últimos eventos enviados (completo en %%LOCALAPPDATA%%\\TinyShell\\telemetria.log):\n%s", buf);
+  Buf path = {0};
+  char *tail = sys_data_path("telemetria.log", &path) ? sys_read_file(path.p, 4095, NULL) : NULL;
+  if (tail) say("Últimos eventos enviados (completo en %s):\n%s", path.p, tail);
+  else say("Todavía no se envió nada.\n");
+  free(tail);
+  free(path.p);
 }
 
 int telemetry_command(const char *arg) {

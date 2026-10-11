@@ -16,6 +16,9 @@ char *buf_take(Buf *b); /* hands ownership to the caller ("" if empty) and reset
 /* Keeps at most `limit` bytes in b; whatever does not fit is counted in *dropped. */
 void buf_add_capped(Buf *b, const char *s, size_t n, size_t limit, size_t *dropped);
 
+/* Clears secrets (API keys) in a way the compiler cannot drop as a dead store. */
+void wipe(void *p, size_t n);
+
 void trim_line(char *s); /* strips trailing CR, LF, spaces and tabs */
 
 int utf8_len(const unsigned char *s); /* length of the valid sequence at s, 0 if invalid */

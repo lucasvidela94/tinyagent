@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Allowlist de headers: "sin dependencias" verificable, no promesa del README.
-# Sistema: assert ctype errno limits stdarg stddef stdint stdio stdlib string wchar
+# Sistema: assert ctype errno limits stdarg stddef stdint stdio stdlib string time wchar
 #   windows.h wincred wincrypt winhttp | Proyecto: *.h (mismo repo).
 set -euo pipefail
-SYS='^(assert|ctype|errno|limits|stdarg|stddef|stdint|stdio|stdlib|string|wchar|windows|wincred|wincrypt|winhttp)\.h$'
+SYS='^(assert|ctype|errno|limits|stdarg|stddef|stdint|stdio|stdlib|string|time|wchar|windows|wincred|wincrypt|winhttp)\.h$'
 fail=0
 for f in "$@"; do
   [ -f "$f" ] || continue

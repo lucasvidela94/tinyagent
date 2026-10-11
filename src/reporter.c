@@ -1,8 +1,7 @@
-#include "win32.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "config.h"
 #include "console.h"
@@ -12,23 +11,11 @@
 #include "prompt.h"
 #include "report.h"
 #include "reporter.h"
-#include "settings.h"
+#include "sys.h"
 #include "telemetry.h"
 #include "tui.h"
 
 #define MAX_FULL (200 * 1024)
-
-/* Hostname, user name and home folder, to keep them out of the public summary. */
-static void identity(char host[64], char user[64], char home[MAX_PATH * 3]) {
-  wchar_t w[MAX_PATH];
-  DWORD n = 64;
-  host[0] = user[0] = home[0] = 0;
-  if (GetComputerNameW(w, &n)) WideCharToMultiByte(CP_UTF8, 0, w, -1, host, 64, NULL, NULL);
-  n = 64;
-  if (GetUserNameW(w, &n)) WideCharToMultiByte(CP_UTF8, 0, w, -1, user, 64, NULL, NULL);
-  if (GetEnvironmentVariableW(L"USERPROFILE", w, MAX_PATH))
-    WideCharToMultiByte(CP_UTF8, 0, w, -1, home, MAX_PATH * 3, NULL, NULL);
-}
 
 static void summary(Buf *b, const Session *s, const char *what) {
   buf_str(b, "Versión: " TINYSHELL_VERSION "\nSistema: ");
@@ -55,23 +42,13 @@ static void conversation(Buf *b, const Session *s) {
   }
 }
 
-static int save_file(const char *text, wchar_t *path, size_t cap) {
-  SYSTEMTIME t;
+/* Saves the report under <data dir>/reportes/ and appends its path to `path`. */
+static int save_file(const char *text, Buf *path) {
+  time_t now = time(NULL);
+  struct tm *t = localtime(&now);
   char name[64];
-  wchar_t dir[MAX_PATH];
-  HANDLE f;
-  DWORD done;
-  GetLocalTime(&t);
-  if (!settings_file("reportes", dir, MAX_PATH)) return 0;
-  CreateDirectoryW(dir, NULL);
-  snprintf(name, sizeof name, "reportes\\reporte-%04d%02d%02d-%02d%02d%02d.txt", t.wYear, t.wMonth, t.wDay, t.wHour,
-           t.wMinute, t.wSecond);
-  if (!settings_file(name, path, cap)) return 0;
-  f = CreateFileW(path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-  if (f == INVALID_HANDLE_VALUE) return 0;
-  WriteFile(f, text, (DWORD)strlen(text), &done, NULL);
-  CloseHandle(f);
-  return 1;
+  if (!t || !strftime(name, sizeof name, "reportes/reporte-%Y%m%d-%H%M%S.txt", t)) return 0;
+  return sys_data_path(name, path) && sys_write_file(path->p, text, strlen(text), 0);
 }
 
 static void show_result(const char *resp) {
@@ -91,21 +68,20 @@ static void show_result(const char *resp) {
 }
 
 int reporter_run(const Session *s) {
-  char what[1024], answer[16], host[64], user[64], home[MAX_PATH * 3], fname[MAX_PATH * 3], msg[MAX_PATH * 3 + 128];
+  char what[1024], answer[16], msg[256];
   const char *names[3], *labels[3] = {"%USERPROFILE%", "<pc>", "<usuario>"};
-  Buf pub = {0}, full = {0}, both = {0}, os = {0};
+  Buf pub = {0}, full = {0}, both = {0}, os = {0}, host = {0}, user = {0}, home = {0}, path = {0};
   char *public_text, *full_text, *json, *resp;
-  wchar_t path[MAX_PATH];
   int saved;
   say("\nContá qué pasó en una línea (qué hiciste, qué esperabas, qué salió): ");
   if (read_line(what, sizeof what, 1) != LINE_OK || !*what) {
     tui_note("cancelado");
     return 1;
   }
-  identity(host, user, home);
-  names[0] = home;
-  names[1] = host;
-  names[2] = user;
+  sys_identity(&host, &user, &home);
+  names[0] = home.p;
+  names[1] = host.p;
+  names[2] = user.p;
   summary(&pub, s, what);
   public_text = redact(pub.p, names, labels, 3);
   summary(&full, s, what);
@@ -119,15 +95,21 @@ int reporter_run(const Session *s) {
   buf_str(&both, public_text);
   buf_str(&both, "\n=== informe completo (privado, solo para el desarrollador) ===\n");
   buf_str(&both, full_text);
-  saved = save_file(both.p, path, MAX_PATH);
-  fname[0] = 0;
-  if (saved) WideCharToMultiByte(CP_UTF8, 0, path, -1, fname, sizeof fname, NULL, NULL);
+  saved = save_file(both.p, &path);
   say("\n");
   tui_note("Resumen público (se publica como issue en GitHub):");
   tui_line("", public_text, COLOR_NORMAL);
-  snprintf(msg, sizeof msg, "Además se envía el informe completo, privado (%lu KB)%s%s", (unsigned long)(strlen(full_text) / 1024 + 1),
-           saved ? ". Todo lo que se envía está en:\n" : "", fname);
-  tui_note(msg);
+  snprintf(msg, sizeof msg, "Además se envía el informe completo, privado (%lu KB)%s",
+           (unsigned long)(strlen(full_text) / 1024 + 1), saved ? ". Todo lo que se envía está en:\n" : "");
+  if (saved) {
+    Buf note = {0};
+    buf_str(&note, msg);
+    buf_str(&note, path.p);
+    tui_note(note.p);
+    free(note.p);
+  } else {
+    tui_note(msg);
+  }
   console_flush_input();
   say("¿Enviar a los desarrolladores? [s/N] ");
   if (read_line(answer, sizeof answer, 1) == LINE_OK && is_yes(answer)) {
@@ -144,6 +126,10 @@ int reporter_run(const Session *s) {
     tui_note(saved ? "no se envió nada; el informe quedó guardado en el archivo de arriba" : "no se envió nada");
   }
   free(os.p);
+  free(host.p);
+  free(user.p);
+  free(home.p);
+  free(path.p);
   free(pub.p);
   free(full.p);
   free(both.p);

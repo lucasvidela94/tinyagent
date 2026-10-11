@@ -1,7 +1,3 @@
-#include "win32.h"
-
-#include <wincrypt.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -16,19 +12,16 @@
 #include "session.h"
 #include "shell.h"
 #include "stream.h"
+#include "sys.h"
 #include "telemetry.h"
 #include "tui.h"
 #include "util.h"
 
-/* "tinyshell-" + 32 random hex digits from the CryptoAPI; tick count as a last resort. */
+/* "tinyshell-" + 32 random hex digits. */
 static void new_session_id(Session *s) {
-  HCRYPTPROV prov = 0;
-  BYTE r[16];
-  int i, ok = CryptAcquireContextW(&prov, NULL, NULL, PROV_RSA_FULL, CRYPT_VERIFYCONTEXT) &&
-              CryptGenRandom(prov, sizeof r, r);
-  if (prov) CryptReleaseContext(prov, 0);
-  if (!ok)
-    for (i = 0; i < 16; i++) r[i] = (BYTE)(GetTickCount() >> (i % 4 * 8)) ^ (BYTE)(i * 37);
+  unsigned char r[16];
+  int i;
+  sys_random(r, sizeof r);
   strcpy(s->session_id, "tinyshell-");
   for (i = 0; i < 16; i++) snprintf(s->session_id + 10 + 2 * i, 3, "%02x", r[i]);
 }
@@ -38,7 +31,7 @@ void session_init(Session *s) {
   new_session_id(s);
   memset(&s->history, 0, sizeof s->history);
   s->turns = s->proposed = s->approved = s->rejected = 0;
-  s->started_ms = GetTickCount();
+  s->started_ms = sys_ms();
   s->tokens_in = s->tokens_out = 0;
   history_add(&s->history, message_json("system", sys), 0);
   free(sys);
@@ -52,7 +45,7 @@ void session_reset(Session *s) {
 
 void session_free(Session *s) {
   history_free(&s->history);
-  SecureZeroMemory(s->api_key, sizeof s->api_key);
+  wipe(s->api_key, sizeof s->api_key);
 }
 
 /* The approval gate. Returns the text sent back to the model as the tool result. */

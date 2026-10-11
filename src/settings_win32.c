@@ -1,10 +1,12 @@
 #include "win32.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "console.h"
 #include "settings.h"
+#include "sys.h"
 
 static wchar_t path_w[MAX_PATH];
 static char path_utf8[MAX_PATH * 3];
@@ -26,22 +28,15 @@ static const char *TEMPLATE =
     "model = deepseek-v4.1-flash\r\n"
     "session_header = x-opencode-session\r\n";
 
-/* %LOCALAPPDATA%\TinyShell\config.ini (XP: %USERPROFILE%\Local Settings\Application Data). */
+/* <data dir>/config.ini (see sys_data_path), kept wide for the profile API. */
 static int resolve_path(void) {
-  wchar_t base[MAX_PATH];
-  DWORD n = GetEnvironmentVariableW(L"LOCALAPPDATA", base, MAX_PATH);
-  if (!n || n >= MAX_PATH) {
-    n = GetEnvironmentVariableW(L"USERPROFILE", base, MAX_PATH);
-    if (!n || n + 40 >= MAX_PATH) return 0;
-    lstrcatW(base, L"\\Local Settings\\Application Data");
-  }
-  if (lstrlenW(base) + 24 >= MAX_PATH) return 0;
-  lstrcpyW(path_w, base);
-  lstrcatW(path_w, L"\\TinyShell");
-  CreateDirectoryW(path_w, NULL); /* fine if it already exists */
-  lstrcatW(path_w, L"\\config.ini");
-  WideCharToMultiByte(CP_UTF8, 0, path_w, -1, path_utf8, sizeof path_utf8, NULL, NULL);
-  return 1;
+  Buf b = {0};
+  int ok = sys_data_path("config.ini", &b) && b.len < sizeof path_utf8 &&
+           MultiByteToWideChar(CP_UTF8, 0, b.p, -1, path_w, MAX_PATH) != 0;
+  if (ok) strcpy(path_utf8, b.p); /* length checked above */
+  else path_w[0] = 0;
+  free(b.p);
+  return ok;
 }
 
 static void write_template(void) {
@@ -95,17 +90,6 @@ int settings_get(const char *section, const char *key, char *out, size_t cap) {
   GetPrivateProfileStringW(ws, wk, L"\x01", wv, 600, path_w);
   if (wv[0] == 1) return 0;
   return WideCharToMultiByte(CP_UTF8, 0, wv, -1, out, (int)cap, NULL, NULL) != 0;
-}
-
-int settings_file(const char *name, wchar_t *out, size_t cap) {
-  wchar_t wn[64];
-  int dir;
-  if (!path_w[0] && !resolve_path()) return 0;
-  dir = lstrlenW(path_w) - lstrlenW(L"config.ini");
-  if (!widen(name, wn, 64) || (size_t)(dir + lstrlenW(wn) + 1) > cap) return 0;
-  lstrcpynW(out, path_w, dir + 1);
-  lstrcatW(out, wn);
-  return 1;
 }
 
 static int save(const wchar_t *key, const char *value) {
