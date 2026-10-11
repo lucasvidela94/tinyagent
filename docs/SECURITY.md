@@ -15,7 +15,7 @@
 4. Do not disable antivirus, firewall, certificate checks or Windows security features to make the tool work.
 5. Back up important files before any repair that writes to disk, changes registry/services/drivers, or alters partitions.
 6. Treat any command that uses `&`, `&&`, `|`, redirection, `for`, `call`, PowerShell, scripts, or encoded content as a compound command and inspect every part.
-7. Keep the API key private. It is saved only if you say yes, in the Windows Credential Manager (encrypted with your Windows account via DPAPI; other accounts cannot read it, but any program running as you can). `tinyshell --logout` removes it. Do not run a binary from an untrusted source.
+7. Keep the API key private. It is saved only if you say yes, in the Windows Credential Manager (encrypted with your Windows account via DPAPI; other accounts cannot read it, but any program running as you can). `tinyshell logout` removes it; `tinyshell login` saves it (after checking it against the provider). Do not run a binary from an untrusted source.
 
 ## Important implementation caveats
 
