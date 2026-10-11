@@ -22,6 +22,8 @@
 #define MAX_TURNS 25             /* model round trips per user message (each tool call is approved) */
 #define MAX_TOKENS 20000         /* JSON tokens per document */
 #define MAX_DEPTH 64             /* JSON nesting */
-#define CMD_TIMEOUT_MS 180000    /* command wall-clock limit */
+#ifndef CMD_TIMEOUT_MS
+#define CMD_TIMEOUT_MS 180000    /* command wall-clock limit (tests may lower it) */
+#endif
 
 #endif

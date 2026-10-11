@@ -21,11 +21,12 @@ for t in tests/test_*.c; do
   "$CC" "${FLAGS[@]}" "${INCLUDES[@]}" -o "$OUT/$name" "$t" "${CORE_SRC[@]}"
   "$OUT/$name" || status=1
 done
-# The POSIX adapters run natively on a Linux host, so they are tested here too.
+# The POSIX adapters run natively on a Linux host, so they are tested here too (with a
+# 2 s command timeout, so the timeout path is exercised quickly).
 if [[ "$(uname -s)" == Linux ]]; then
   for t in tests/posix/test_*.c; do
     name="$(basename "$t" .c)"
-    "$CC" "${FLAGS[@]}" "${INCLUDES[@]}" -Isrc/platform/posix -o "$OUT/$name" "$t" "${CORE_SRC[@]}" "${POSIX_SRC[@]}"
+    "$CC" "${FLAGS[@]}" "${INCLUDES[@]}" -Isrc/platform/posix -DCMD_TIMEOUT_MS=2000 -o "$OUT/$name" "$t" "${CORE_SRC[@]}" "${POSIX_SRC[@]}"
     "$OUT/$name" || status=1
   done
 fi
