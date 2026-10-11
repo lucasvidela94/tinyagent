@@ -48,8 +48,10 @@ La regla de dependencias entre capas la verifica `build/checks/includes.sh`.
 
 Linux:
 
-- Binario **estático de 32 bits** con musl, compilado en Docker (`i386/alpine`), CPU base
-  i586. No depende de la glibc ni del OpenSSL de la distro.
+- Binario **estático de 32 bits** con musl, CPU base **i586 sin SSE2** (Pentium, Pentium
+  II/III, Athlon XP, K6-2 y posteriores). No depende de la glibc ni del OpenSSL de la distro.
+  La musl de Alpine x86 está compilada para Pentium M con SSE2, así que no sirve: el
+  toolchain sale de musl-cross-make con versiones fijas (`build/linux/Dockerfile`).
 - **TLS empaquetado: Mbed TLS 4.1 LTS** (soporte hasta 2029-03). Trae RSA y SHA-256, así que
   también verifica la firma de los updates. Certificados: primero el bundle del sistema,
   después uno de Mozilla embebido que se renueva en cada release (las distros viejas
@@ -75,9 +77,14 @@ Linux:
 - **`#ifdef _WIN32` dentro de cada módulo**: mezcla las dos plataformas en cada archivo y
   rompe la locality.
 
-## Preguntas abiertas
+## Decisiones posteriores (2026-10-11)
 
-- Dónde guardar la API key en Linux (no hay llavero común en distros viejas): archivo
-  `0600` con opt-in, o no guardarla. Cualquiera cambia la regla de `AGENTS.md`.
-- Piso de hardware (¿i586 alcanza?) y distros concretas para probar. Docker prueba
-  userlands viejos, no kernels viejos: eso pide QEMU o la PC real.
+- **API key en Linux:** archivo `~/.config/tinyshell/credentials`, permisos `0600`, con el
+  mismo opt-in que en Windows; `tinyshell logout` lo borra. Las distros viejas no tienen un
+  llavero común (libsecret necesita DBus y un escritorio).
+- **Piso de hardware:** i586 sin SSE2 (ver arriba).
+
+## Pendiente
+
+- Distros concretas para probar. Docker prueba userlands viejos, no kernels viejos: eso pide
+  QEMU o la PC real.
