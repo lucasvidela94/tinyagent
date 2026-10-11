@@ -50,6 +50,8 @@
 - [ ] A release whose `.sig` does not match is refused with nothing changed.
 - [ ] `--rollback` restores the previous binary; a second `--rollback` rolls forward.
 - [x] Signing pipeline (`build/release.sh --dry-run` with a throwaway key): OpenSSL verifies the signature; a one-byte change fails it.
+- [x] Real update against the published v0.5.0 release (wine): a 0.4.9 build found 0.5.0, asked, downloaded 90 KB (SHA-256 matches the release), verified the signature, self-tested, swapped and kept `tinyshell.old.exe`; `--rollback` twice went back and forward; then "Ya tenés la última versión".
+- [x] `install.bat` USB mode (wine `cmd`): copies the local exe, self-tests, installs into `%LOCALAPPDATA%\TinyShell`, adds the user PATH. Not testable under wine (tools missing): `certutil` hash line and `setx TINYSHELL_HOME`; check both on Windows 7.
 - [x] CryptoAPI verification with the real release key (wine): signed binary valid; one changed byte or another file's signature invalid; CryptoAPI SHA-256 matches `sha256sum`.
 
 ## API behavior
