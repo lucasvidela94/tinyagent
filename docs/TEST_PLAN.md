@@ -36,7 +36,7 @@
 - [x] `/modelo` opens the same filtered menu (`glm` shows the four glm models).
 
 - [x] Reports and telemetry end to end (wine → deployed relay → D1): first-run notice; `session_start`, `error` (`http 401`) and `session_end` events stored with metadata only; `/reporte` with conversation stored privately (#1), public summary with the user name redacted, local `.txt` written; `telemetria --ver` shows the same events. Relay rejects unknown events, bodies over the limit and wrong methods.
-- [ ] Public GitHub issue created by the relay once `GITHUB_TOKEN` is set.
+- [x] Public GitHub issue created by the relay (`[reporte]` title, `reporte` label, redacted summary in a code block, private ID; no user name in the body). Test issue #1 closed and D1 cleared afterwards.
 
 ## TUI (Windows 7 x86)
 
