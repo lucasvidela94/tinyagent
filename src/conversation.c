@@ -75,8 +75,9 @@ char *tool_result_json(const char *id, const char *output) {
 
 static const char *TOOLS =
     "\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"shell\","
-    "\"description\":\"Run one Windows CMD command on the local machine after the user approves it. Use for "
-    "diagnostics, inspecting files, and approved repairs. No interactive input; time-limited.\","
+    "\"description\":\"Run one cmd.exe command on the local Windows machine after the user approves it. "
+    "Use it to inspect the system and files and to make changes the user agreed to. No interactive input; "
+    "time-limited; long output is cut.\","
     "\"parameters\":{\"type\":\"object\",\"properties\":{"
     "\"command\":{\"type\":\"string\",\"description\":\"Exact command to run in cmd.exe\"},"
     "\"reason\":{\"type\":\"string\",\"description\":\"Why this command is needed\"}},"

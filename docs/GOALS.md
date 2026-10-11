@@ -2,7 +2,7 @@
 
 ## Goal
 
-Proveer una interfaz de terminal pequeña para que una persona pueda pedir en español diagnósticos y reparaciones puntuales de Windows 7 x86. El modelo razona remotamente; la máquina vieja solo mantiene la consola, realiza HTTPS y ejecuta comandos que el usuario aprueba.
+Proveer un agente de terminal pequeño y de propósito general (idea similar a OpenCode o Pi) para PCs viejas con Windows: diagnosticar, inspeccionar archivos, escribir scripts, mantenimiento o responder preguntas sobre la máquina. El modelo razona remotamente; la máquina vieja solo mantiene la consola, realiza HTTPS y ejecuta comandos que el usuario aprueba. El equipo de prueba principal es Windows 7 x86.
 
 ## Goals
 
@@ -10,9 +10,10 @@ Proveer una interfaz de terminal pequeña para que una persona pueda pedir en es
 2. No depender de Node.js, Go, Python, una base de datos ni un servicio en segundo plano al ejecutar el binario.
 3. Usar el API remoto de OpenCode Go y el modelo configurado `deepseek-v4.1-flash`.
 4. Mostrar comando exacto y motivo antes de ejecutarlo.
-5. Hacer diagnóstico primero; cambios solo después de una aprobación consciente.
+5. Inspeccionar primero; cambios solo después de una aprobación consciente.
 6. Entregar salida y código de retorno al modelo para iterar sobre evidencia real.
 7. Mantener el proyecto fácil de compilar, inspeccionar y modificar.
+8. Mantener el system prompt agnóstico de tarea y de equipo: la máquina se detecta al arrancar.
 
 ## Non-goals (por ahora)
 

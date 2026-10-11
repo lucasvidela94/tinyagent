@@ -1,6 +1,6 @@
 # TinyShell Agent
 
-Agente de diagnóstico y reparación asistida para **Noblex NT1013E / Windows 7 SP1 de 32 bits**, con recursos limitados. Está escrito en C y consulta un modelo remoto de OpenCode Go; los comandos se ejecutan localmente en `cmd.exe` y cada comando requiere aprobación en la consola.
+Agente de terminal de propósito general (en la línea de OpenCode o Pi) para **PCs viejas con Windows y pocos recursos**: diagnosticar, inspeccionar archivos, escribir scripts, mantenimiento o simples preguntas. Equipo de prueba principal: **Noblex NT1013E / Windows 7 SP1 de 32 bits**. Está escrito en C y consulta un modelo remoto de OpenCode Go; los comandos se ejecutan localmente en `cmd.exe` y cada comando requiere aprobación en la consola.
 
 > **Estado:** prototipo de código fuente. No se incluye un `.exe` precompilado ni se afirma que esté probado en el equipo destino. La compilación correcta no demuestra que TLS, autenticación, formato de herramientas y ejecución funcionen en Windows 7: hay que hacer pruebas reales.
 
@@ -58,7 +58,7 @@ También está `build/build-windows-msvc.bat`. Si el compilador instalado no sop
 1. Copiar `tinyshell.exe` a una carpeta local de la Noblex.
 2. Abrir CMD normal (no como administrador para la primera prueba) y ejecutar `tinyshell.exe`.
 3. Introducir la API key de OpenCode Go cuando la solicite (no se muestra al tipear). No se guarda en un archivo.
-4. Escribir una tarea en español, por ejemplo: `Revisá la versión de Windows, memoria disponible y procesos con mayor consumo; no cambies nada`.
+4. Escribir una tarea en cualquier idioma (el agente responde en el mismo), por ejemplo: `Revisá la versión de Windows, memoria disponible y procesos con mayor consumo; no cambies nada`.
 5. Leer la propuesta de comando. Solo se ejecuta si se responde `s` o `si`; los comandos marcados como riesgosos piden además escribir `EJECUTAR`.
 6. `/reiniciar` borra el historial de la conversación; `/salir` termina.
 

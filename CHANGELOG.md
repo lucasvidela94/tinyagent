@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 — general-purpose prompt
+
+- System prompt moved to `src/prompt_win32.c`, rewritten in English and task-agnostic: a general terminal agent for old Windows PCs (OpenCode/Pi-like) instead of a repair-only bot. Replies in the user's language.
+- The prompt describes the machine detected at startup (Windows version, 32/64-bit, RAM, CPUs, current directory) instead of a hardcoded profile.
+- Banner and `shell` tool description no longer assume Windows 7 or repairs.
+
 ## 0.2.0 — hardening and module split
 
 - Split `agent.c` into `src/` modules (≤ ~200 lines each); portable core separated from Win32 adapters.

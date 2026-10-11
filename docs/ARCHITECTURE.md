@@ -34,7 +34,8 @@ Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de man
 | `src/console_win32.c` | `say`, `read_line` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas | Win32 |
 | `src/http_win32.c` | `http_post` | WinHTTP, TLS 1.2 explícito, errores legibles, cuerpo acotado | Win32 |
 | `src/shell_win32.c` | `run_command` | `cmd.exe /d /s /c` vía `CreateProcessW`, job + timeout, salida OEM → UTF-8 | Win32 |
-| `src/main.c` | `main` | gate de aprobación (`decide`), bucle de turnos (`converse`), system prompt | Win32 |
+| `src/prompt_win32.c` | `system_prompt` | instrucciones agnósticas de tarea + equipo detectado al arrancar (versión de Windows, arquitectura, RAM, CPUs, carpeta actual) | Win32 |
+| `src/main.c` | `main` | gate de aprobación (`decide`), bucle de turnos (`converse`) | Win32 |
 
 Los módulos portables no incluyen `<windows.h>` y se prueban en el host con `build/test-core.sh` (`tests/`). Los adapters Win32 tienen un solo adapter cada uno: el seam es el `.h`, no hay capa de abstracción extra.
 

@@ -1,4 +1,5 @@
-/* TinyShell Agent for Windows 7 x86: CLI, approval gate and the model round-trip loop.
+/* TinyShell: general-purpose terminal agent for old Windows PCs. CLI, approval gate and
+ * the model round-trip loop.
  * The remote model only proposes commands; every command needs local approval. */
 #include "win32.h"
 
@@ -11,19 +12,9 @@
 #include "http.h"
 #include "json.h"
 #include "policy.h"
+#include "prompt.h"
 #include "shell.h"
 #include "util.h"
-
-static const char *SYSTEM_PROMPT =
-    "Sos un agente técnico para diagnosticar y reparar Windows 7 de 32 bits, Atom N2600 y 2 GB RAM. "
-    "Respondé en español, breve y práctico. Tenés la herramienta shell para ejecutar comandos CMD en la máquina real; "
-    "cada comando lo aprueba una persona. Primero inspeccioná y diagnosticá; preferí comandos de lectura como "
-    "systeminfo, tasklist, wmic, ipconfig, sc query, dir, type, chkdsk sin /f. Ejecutá una sola acción por vez y evitá "
-    "encadenar con & o redirigir con >. Los comandos corren sin entrada interactiva y con límite de tiempo: no uses "
-    "comandos que esperen respuesta. Para modificar, instalar, borrar, cambiar registro, servicios o configuración, "
-    "explicá el riesgo, recomendá hacer copia de seguridad de los archivos importantes y pedí aprobación en el chat "
-    "antes de llamar shell. Nunca borres datos, formatees discos ni desactives antivirus/firewall. No supongas que una "
-    "reparación funcionó: verificá el resultado.";
 
 /* The approval gate. Returns the text sent back to the model as the tool result. */
 static char *decide(const ToolCall *tc) {
@@ -114,14 +105,18 @@ int main(void) {
   History h = {0};
   int r;
   console_init();
-  say("TinyShell Agent | Windows 7 x86 | OpenCode Go / %s\n", MODEL);
+  say("TinyShell Agent | OpenCode Go / %s\n", MODEL);
   say("El modelo es remoto; esta PC solo ejecuta comandos que vos aprobás.\n");
   say("Comandos: /salir, /reiniciar (borra el historial).\n\nAPI key de OpenCode Go (no se muestra): ");
   if (read_line(api, sizeof api, 0) != LINE_OK || !*api) {
     say("Falta API key.\n");
     return 1;
   }
-  history_add(&h, message_json("system", SYSTEM_PROMPT), 0);
+  {
+    char *sys = system_prompt();
+    history_add(&h, message_json("system", sys), 0);
+    free(sys);
+  }
   for (;;) {
     say("\nvos> ");
     r = read_line(input, sizeof input, 1);
