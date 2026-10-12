@@ -9,7 +9,7 @@
 
 A general-purpose terminal agent (in the spirit of OpenCode or Pi) for **old, low-resource PCs**: diagnosing problems, inspecting files, writing scripts, maintenance, or answering questions about the machine.
 
-- One 32-bit binary in C: `tinyshell.exe` for Windows 7 and later (~130 KB, system DLLs only), and `tinyshell-linux-i386` for any x86 Linux from a Pentium up (static, ~1 MB with its own TLS). No Node, Python, .NET, services or database.
+- One 32-bit binary per platform, in C: `tinyshell.exe` for Windows 7 and later (~130 KB, system DLLs only) and `tinyshell-linux-i386` for any x86 Linux from a Pentium up (static, ~1 MB with its own TLS). No Node, Python, .NET, services or database.
 - The model runs remotely, on any OpenAI-compatible API (default: OpenCode Go); the PC only keeps the console, speaks HTTPS and runs commands.
 - **You approve every command** before it runs. Risky ones also ask you to type `RUN`.
 - The interface speaks English or Spanish, following the system's language.
@@ -17,7 +17,7 @@ A general-purpose terminal agent (in the spirit of OpenCode or Pi) for **old, lo
 
 Site and downloads (English and Spanish): **https://tinyshell.lucasan-videla.workers.dev**
 
-> **Status:** prototype. It builds and passes its tests, but it has **not yet run on the real Windows 7 machine**. See [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md).
+> **Status:** prototype. It builds and passes its tests, and it was checked under wine and in old Linux userlands (Docker), but it has **not yet run on the real Windows 7 machine or on old Linux hardware**. See [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md).
 
 ## Contents
 
@@ -54,7 +54,6 @@ Prefer no installer? `tinyshell.exe` from the release also runs on its own (port
 
 - Service Pack 1 and update **KB3140245** (TinyShell requests TLS 1.2 itself; without the update it cannot connect).
 - Up-to-date root certificates and a correct date and time.
-- An API key from [OpenCode Go](https://docs.opencode.ai/docs/go/) or another provider (see "Provider and model").
 
 ## Install (Linux)
 
@@ -72,7 +71,7 @@ Settings and the saved API key (mode 0600, only if you agree) live in `~/.config
 
 ## Use
 
-Log in first (once):
+You need an API key from [OpenCode Go](https://docs.opencode.ai/docs/go/) or another provider (see "Provider and model"). Log in first (once), in CMD on Windows or a terminal on Linux:
 
 ```text
 C:\> tinyshell login
@@ -88,12 +87,12 @@ Pick a model from opencode-go (38; type to filter, Enter):
   kimi-k3
 ```
 
-The key is checked against the provider before it is saved (if rejected, nothing is saved) and is stored encrypted in the Windows Credential Manager. The model list is fetched live, so new models show up. `tinyshell logout` deletes the key.
+The key is checked against the provider before it is saved (if rejected, nothing is saved). It is stored encrypted in the Windows Credential Manager, or on Linux in `~/.config/tinyshell/credentials`, readable only by your user. The model list is fetched live, so new models show up. `tinyshell logout` deletes the key.
 
-Then open a **new** CMD window and type `tinyshell`. It is a conversation: you ask, the agent proposes commands one step at a time and you approve them, until the task is done. The answer streams in as the model writes it.
+Then start TinyShell: from the Start menu or by typing `tinyshell` in a **new** CMD window on Windows, or `tinyshell` in a terminal on Linux. It is a conversation: you ask, the agent proposes commands one step at a time and you approve them, until the task is done. The answer streams in as the model writes it.
 
 ```text
-TinyShell 0.8.0 · opencode-go · /help
+TinyShell 0.9.0 · opencode-go · /help
 
  which programs start with Windows?                     <- your message
 
@@ -122,9 +121,7 @@ The footer shows the current folder, the tokens sent and received, how full the 
 | `/update` | same as `tinyshell --update` |
 | `/quit` | quit |
 
-The earlier Spanish names (`/ayuda`, `/modelo`, `/reporte`, `/reiniciar`, `/actualizar`, `/salir`, `/clave`) still work.
-
-**Ctrl+C** cancels whatever is running (the model's answer or the command) without closing TinyShell; at an empty prompt it quits. On Windows the editor has the usual CMD keys: arrows for earlier messages, F7 for history, right-click to paste. Limits that keep an old machine responsive: each command runs without interactive input and is stopped after 180 s; the output the model sees is cut to 24 KB; the history to ~192 KB.
+**Ctrl+C** cancels whatever is running (the model's answer or the command) without closing TinyShell; at an empty prompt it quits. On Windows the editor has the usual CMD keys: arrows for earlier messages, F7 for history, right-click to paste; on Linux, the terminal's own line editing. Commands run in `cmd.exe` on Windows and `/bin/sh` on Linux. Limits that keep an old machine responsive: each command runs without interactive input and is stopped after 180 s; the output the model sees is cut to 24 KB; the history to ~192 KB.
 
 ## Language
 
@@ -132,7 +129,7 @@ The interface is English or Spanish, following the system's language (Windows' d
 
 ## Provider and model
 
-OpenCode Go is the default. For another OpenAI-compatible service, edit `%LOCALAPPDATA%\TinyShell\config.ini` with Notepad (it is created with examples on first run):
+OpenCode Go is the default. For another OpenAI-compatible service, edit `config.ini` (created with examples on first run): `%LOCALAPPDATA%\TinyShell\config.ini` on Windows (Notepad is fine), `~/.config/tinyshell/config.ini` on Linux.
 
 ```ini
 [provider]
@@ -152,10 +149,10 @@ language = auto
 
 ## Reporting a problem
 
-If something fails, type `/report` inside TinyShell (or `tinyshell report` in CMD):
+If something fails, type `/report` inside TinyShell (or `tinyshell report` in a terminal):
 
 1. describe in one line what happened;
-2. TinyShell builds the report (version, OS, model, recent errors and, if you agree, the conversation), saves it under `%LOCALAPPDATA%\TinyShell\reports\` and **shows everything that would be sent**;
+2. TinyShell builds the report (version, OS, model, recent errors and, if you agree, the conversation), saves it in the `reports` folder next to `config.ini` and **shows everything that would be sent**;
 3. only if you answer yes is it sent: a public GitHub issue gets a summary without personal data, and the full report stays private for the developer.
 
 Without internet, email the saved file to lucasan.videla@gmail.com.
@@ -164,18 +161,18 @@ Without internet, email the saved file to lucasan.videla@gmail.com.
 
 While TinyShell is in beta (0.x versions) it sends technical data to find bugs before they are reported: version, OS, model, number of steps and approvals, duration and error codes. **Never** what you type, the commands or their output. It is announced on first run.
 
-```bat
-tinyshell telemetry --show   :: what was sent
-tinyshell telemetry off      :: turn it off
+```text
+tinyshell telemetry --show    what was sent
+tinyshell telemetry off       turn it off
 ```
 
 ## Update and roll back
 
-```bat
-tinyshell --update     :: checks, asks, verifies the signature and installs
-tinyshell --rollback   :: goes back to the previous version
-tinyshell --version
-tinyshell logout       :: deletes the saved API key
+```text
+tinyshell --update      checks, asks, verifies the signature and installs
+tinyshell --rollback    goes back to the previous version
+tinyshell --version     shows the version
+tinyshell logout        deletes the saved API key
 ```
 
 It never updates by itself. `--update` works even if the agent is broken (it needs no API key) and:
@@ -184,9 +181,9 @@ It never updates by itself. `--update` works even if the agent is broken (it nee
 2. asks before downloading anything;
 3. verifies the executable's **RSA signature** with the public key built into the binary: a release not signed with the project's key is refused, even if it comes from GitHub;
 4. runs the new binary with `--version` on **your** machine: if it does not start on that system, it is not installed;
-5. keeps the previous one next to it (`tinyshell.old.exe`) for `--rollback`.
+5. keeps the previous one next to it (`tinyshell.old.exe` on Windows, `tinyshell.old` on Linux) for `--rollback`.
 
-If something goes badly wrong, running the installer again (or from a USB copy) always leaves a clean install.
+If something goes badly wrong, installing again (the Windows installer or `install.sh`, also from a USB copy) always leaves a clean install.
 
 ## Security, in short
 
@@ -194,7 +191,7 @@ If something goes badly wrong, running the installer again (or from a USB copy) 
 - Safety lives in local code, not in the prompt: an unknown tool, an empty command, line breaks or more than 2000 bytes are refused before you are asked.
 - Risky-command detection is a heuristic, not a barrier: your approval is the real control.
 - The API key is saved only if you say yes, in the Windows Credential Manager (on Linux, a file only your user can read). `tinyshell logout` deletes it.
-- Do not run it as administrator for routine tasks.
+- Do not run it as administrator (or root) for routine tasks: commands run with TinyShell's permissions.
 - What you type and the commands' output are sent to the model provider.
 
 Vulnerabilities: email lucasan.videla@gmail.com; do not open a public issue. Details in [`SECURITY.md`](SECURITY.md) and [`docs/SECURITY.md`](docs/SECURITY.md).
@@ -225,7 +222,7 @@ For each release, from a clean `main`:
 
 1. Bump `TINYSHELL_VERSION` in `src/config.h` and add `## X.Y.Z` to `CHANGELOG.md`; commit.
 2. `./build/release.sh X.Y.Z --dry-run` to review the artifacts in `dist/`.
-3. `./build/release.sh X.Y.Z`: runs the tests, builds, signs, tags and publishes with `gh`.
+3. `./build/release.sh X.Y.Z`: runs the tests, builds `tinyshell.exe`, `TinyShell-Setup.exe` and `tinyshell-linux-i386` (needs mingw-w64 and Docker), signs both binaries, tags and publishes with `gh`.
 
 See [`CHANGELOG.md`](CHANGELOG.md) for the history.
 
@@ -241,7 +238,7 @@ Every contribution counts. There is no formal code of conduct: if you contribute
 
 - Usage question? [Discussions](https://github.com/lucasvidela94/tinyagent/discussions).
 - Bug? [Bug report](https://github.com/lucasvidela94/tinyagent/issues/new/choose).
-- No internet: run `scripts/collect-diagnostics.bat` and email the result to lucasan.videla@gmail.com.
+- No internet: email the report TinyShell saved (see "Reporting a problem") to lucasan.videla@gmail.com. On Windows, `scripts/collect-diagnostics.bat` also gathers system details without the API.
 - Details in [`SUPPORT.md`](SUPPORT.md).
 
 ## Documentation
@@ -256,8 +253,8 @@ Every contribution counts. There is no formal code of conduct: if you contribute
 - [`docs/OPERATIONS.md`](docs/OPERATIONS.md): installation, TLS problems, diagnostics.
 - [`docs/API.md`](docs/API.md): the contract with the model provider.
 - [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md) and [`docs/ROADMAP.md`](docs/ROADMAP.md).
-- [`docs/PC_PROFILE.md`](docs/PC_PROFILE.md): the test machine.
-- [`scripts/collect-diagnostics.bat`](scripts/collect-diagnostics.bat): local report without the API.
+- [`docs/PC_PROFILE.md`](docs/PC_PROFILE.md): the Windows test machine.
+- [`scripts/collect-diagnostics.bat`](scripts/collect-diagnostics.bat): local Windows report without the API.
 
 ## License
 
