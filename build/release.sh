@@ -4,7 +4,8 @@ set -euo pipefail
 # Builds, signs and publishes a GitHub release from a clean main.
 #   build/release.sh 0.4.1            publish
 #   build/release.sh 0.4.1 --dry-run  build and sign into dist/ only
-# Needs: mingw-w64, openssl, gh (authenticated), the private key from gen-signing-key.sh.
+# Needs: mingw-w64, Docker (for the NSIS installer), openssl, gh (authenticated), the private
+# key from gen-signing-key.sh.
 # Before running: set TINYSHELL_VERSION in src/config.h and add a "## X.Y.Z" CHANGELOG entry.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -31,10 +32,11 @@ fi
 DIST="dist/v$VERSION"
 rm -rf "$DIST" && mkdir -p "$DIST"
 cp tinyshell.exe scripts/install.bat "$DIST/"
+./build/build-installer.sh tinyshell.exe "$DIST/TinyShell-Setup.exe"
 printf '%s\r\n' "$VERSION" >"$DIST/version.txt"
 openssl dgst -sha256 -sign "$KEY" -out "$DIST/tinyshell.exe.sig" "$DIST/tinyshell.exe"
 openssl dgst -sha256 -verify keys/release-public.pem -signature "$DIST/tinyshell.exe.sig" "$DIST/tinyshell.exe"
-(cd "$DIST" && sha256sum tinyshell.exe tinyshell.exe.sig install.bat version.txt >SHA256SUMS)
+(cd "$DIST" && sha256sum tinyshell.exe TinyShell-Setup.exe tinyshell.exe.sig install.bat version.txt >SHA256SUMS)
 cat "$DIST/SHA256SUMS"
 if [[ "$DRY" == --dry-run ]]; then
   echo "Dry run: artifacts in $DIST (nothing was published)."
@@ -45,5 +47,5 @@ NOTES="$(awk -v v="## $VERSION" 'index($0, v) == 1 {on = 1; next} /^## / {on = 0
 git tag -a "v$VERSION" -m "TinyShell $VERSION"
 git push origin main "v$VERSION"
 gh release create "v$VERSION" "$DIST"/* --title "TinyShell $VERSION" \
-  --notes "$NOTES"$'\n\n'"SHA-256 of tinyshell.exe: \`$(cut -d' ' -f1 <"$DIST/SHA256SUMS" | head -1)\`"
+  --notes "$NOTES"$'\n\n'"SHA-256 of TinyShell-Setup.exe: \`$(grep ' TinyShell-Setup.exe$' "$DIST/SHA256SUMS" | cut -d' ' -f1)\`"$'\n'"SHA-256 of tinyshell.exe: \`$(grep ' tinyshell.exe$' "$DIST/SHA256SUMS" | cut -d' ' -f1)\`"
 echo "Published v$VERSION."
