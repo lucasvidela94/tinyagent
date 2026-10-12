@@ -7,7 +7,7 @@ TinyShell speaks the OpenAI-compatible chat-completions format to whatever `url`
 - `POST <url>` (default `https://opencode.ai/zen/go/v1/chat/completions`)
 - Header: `Authorization: Bearer <API key>` (omitted when no key is set, e.g. a local server)
 - Header: `Content-Type: application/json`
-- Header `<session_header>: tinyshell-<32 hex>`: one random ID per conversation (new on `/reiniciar`), only if `session_header` is set. Default `x-opencode-session`, **required by OpenCode Go** (HTTP 400 `MissingSessionID` without it); leave it empty for other providers.
+- Header `<session_header>: tinyshell-<32 hex>`: one random ID per conversation (new on `/reset`), only if `session_header` is set. Default `x-opencode-session`, **required by OpenCode Go** (HTTP 400 `MissingSessionID` without it); leave it empty for other providers.
 - User-Agent: `TinyShell/<version>` (OpenCode asks clients to identify themselves).
 - Model field: `model` from `config.ini` (default `deepseek-v4.1-flash`)
 - Chat messages include a Spanish system instruction and session history.

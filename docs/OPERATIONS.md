@@ -6,13 +6,13 @@
 2. Compare the SHA-256 printed by the installer with the release page.
 3. Open a **new** CMD window as the normal user, not administrator.
 4. Run `tinyshell`; provide the OpenCode Go API key interactively.
-5. Begin with a read-only task: `Decime versión de Windows, RAM disponible y espacio libre en C:. No cambies nada.`
+5. Begin with a read-only task: `Tell me the Windows version, the free RAM and the free space on C:. Do not change anything.`
 6. Inspect every proposed command, including pipes, redirection, quoted arguments and nested commands.
-7. Use `/salir` to finish.
+7. Use `/quit` to finish.
 
 ## Updating
 
-- `tinyshell --update` (or `/actualizar` inside a session). Close and reopen TinyShell afterwards.
+- `tinyshell --update` (or `/update` inside a session). Close and reopen TinyShell afterwards.
 - "FIRMA INVÁLIDA": do not work around it; the release was not signed with the project key.
 - "no pasó la prueba de arranque": the new build does not start on this Windows; nothing was changed. Report it.
 - `tinyshell --rollback` restores `tinyshell.old.exe`; running it again rolls forward.

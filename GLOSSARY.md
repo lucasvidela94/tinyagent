@@ -9,8 +9,8 @@ TinyShell's domain terms. Code and docs use these names.
 - **Turn**: one round trip with the model. A user message may take up to `MAX_TURNS` turns.
 - **Proposal**: a command the model asks to run through the `shell` tool, with its reason.
   The model only proposes.
-- **Approval**: the typed local confirmation (`s` + Enter, plus `EJECUTAR` when risky)
-  without which nothing runs.
+- **Approval**: the typed local confirmation (`y` or `s` + Enter, plus `RUN` / `EJECUTAR` when
+  risky) without which nothing runs.
 - **Risk**: the local reason (`risk_reason`) a command needs the strong confirmation. Code
   decides it, not the prompt.
 - **Shell dialect** (`Dialect`): what depends on the platform's shell: risk rules, prompt

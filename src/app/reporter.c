@@ -43,12 +43,12 @@ static void conversation(Buf *b, const Session *s) {
   }
 }
 
-/* Saves the report under <data dir>/reportes/ and appends its path to `path`. */
+/* Saves the report under <data dir>/reports/ and appends its path to `path`. */
 static int save_file(const char *text, Buf *path) {
   time_t now = time(NULL);
   struct tm *t = localtime(&now);
   char name[64];
-  if (!t || !strftime(name, sizeof name, "reportes/reporte-%Y%m%d-%H%M%S.txt", t)) return 0;
+  if (!t || !strftime(name, sizeof name, "reports/report-%Y%m%d-%H%M%S.txt", t)) return 0;
   return sys_data_path(name, path) && sys_write_file(path->p, text, strlen(text), 0);
 }
 

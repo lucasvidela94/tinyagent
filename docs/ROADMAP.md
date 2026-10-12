@@ -17,7 +17,7 @@
 - [x] HTTP status/error reporting without leaking credentials.
 - [x] Host tests for JSON, token boundaries, missing fields and malformed responses; libFuzzer
       on the JSON and SSE parsers (`build/fuzz.sh`).
-- [x] Session reset (`/reiniciar`) and history trimming.
+- [x] Session reset (`/reset`) and history trimming.
 - [x] Exit status in every command result (`[exit=N]`). Separate stdout/stderr: not planned.
 - [x] Ctrl+C cancels the request or the command without killing TinyShell.
 
@@ -28,7 +28,7 @@
 - [ ] Carefully scoped file edits using before/after diff and backup.
 - [ ] Small local project/context file describing the machine and allowed actions.
 - [x] Endpoint/model configuration with secrets outside config (`config.ini` + Credential
-      Manager, `tinyshell login`, `/modelo`).
+      Manager, `tinyshell login`, `/model`).
 - [x] CI cross-build and checks; signed releases with SHA256SUMS (`build/release.sh`).
 
 ## P3: Linux (`docs/adr/0001-linux-port-platform-seam.md`)

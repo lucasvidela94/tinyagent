@@ -1,5 +1,7 @@
 # Test plan
 
+Items checked before 0.8.0 record the Spanish command names and screens of the time (`/ayuda`, `/modelo`, `ejecutar?`); those names remain as aliases. Unchecked items use the current English names.
+
 ## Build checks (Linux)
 
 - [x] `build/build-linux-mingw.sh` exits successfully (`-Werror`).
@@ -12,7 +14,7 @@
 
 - [ ] Program starts from normal CMD without missing-DLL error.
 - [ ] Empty API key exits with a clear message.
-- [ ] `/salir` exits cleanly.
+- [ ] `/quit` exits cleanly (and the alias `/salir`).
 - [ ] User rejects a proposed command; command does not execute.
 - [ ] Approving `ver` returns Windows version output.
 - [ ] Network failure gives a readable error (WinHTTP code + hint) and allows the user to exit.
@@ -22,7 +24,7 @@
 - [ ] Answering `seguro que no` or `salir` to `Ejecutar?` rejects.
 - [ ] A large output (`dir /s C:\Windows`) is truncated with a note and does not hang.
 - [ ] A command waiting for input (`pause`) returns immediately; `ping -n 300 127.0.0.1` is killed at 180 s.
-- [ ] `/reiniciar` clears the history; a long session keeps working (history trimmed).
+- [ ] `/reset` clears the history; a long session keeps working (history trimmed).
 
 ## Under wine (Linux, before the target)
 
@@ -47,7 +49,7 @@
 - [ ] Rules (`─`) and `·` render in the default raster font; colors readable on the default black background.
 - [ ] With the raster font, model text with arrows/quotes/emoji shows ASCII stand-ins (`->`, `"`), accents intact; with Consolas/Lucida the original glyphs show.
 - [ ] Editor: arrows/F7 history and right-click paste work; text appears inside the editor.
-- [ ] Pasting several lines does not answer `ejecutar?` (input flushed).
+- [ ] Pasting several lines does not answer `run it?` / `¿ejecutar?` (input flushed).
 - [ ] `tinyshell login`: arrows move in the menus, right-click paste fills the key with `*`.
 - [ ] Ctrl+C on the real console: cancels a running command and a model request; ends the session at an empty prompt.
 - [ ] After ~300 lines (buffer full) the editor still lands in the right place.

@@ -52,7 +52,7 @@ static void log_line(const char *json) {
   buf_str(&line, stamp);
   buf_str(&line, json);
   buf_str(&line, SYS_EOL);
-  if (sys_data_path("telemetria.log", &path)) sys_write_file(path.p, line.p, line.len, SYS_APPEND);
+  if (sys_data_path("telemetry.log", &path)) sys_write_file(path.p, line.p, line.len, SYS_APPEND);
   free(path.p);
   free(line.p);
 }
@@ -91,7 +91,7 @@ void telemetry_error(const char *kind, const char *code, const char *stage) {
 
 static void show_log(void) {
   Buf path = {0};
-  char *tail = sys_data_path("telemetria.log", &path) ? sys_read_file(path.p, 4095, NULL) : NULL;
+  char *tail = sys_data_path("telemetry.log", &path) ? sys_read_file(path.p, 4095, NULL) : NULL;
   if (tail) say(tr("Last events sent (all of them in %s):\n%s"), path.p, tail);
   else say("%s", tr("Nothing has been sent yet.\n"));
   free(tail);

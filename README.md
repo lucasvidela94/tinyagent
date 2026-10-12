@@ -5,26 +5,23 @@
 [![CI](https://github.com/lucasvidela94/tinyagent/actions/workflows/ci.yml/badge.svg)](https://github.com/lucasvidela94/tinyagent/actions/workflows/ci.yml)
 [![Windows 7+ 32-bit](https://img.shields.io/badge/Windows-7%2B%2032--bit-blue)](docs/PC_PROFILE.md)
 [![Linux i586+](https://img.shields.io/badge/Linux-i586%2B%20static-blue)](docs/adr/0001-linux-port-platform-seam.md)
-[![Single exe ~110 KB](https://img.shields.io/badge/exe-%7E110KB-lightgrey)](docs/ARCHITECTURE.md)
+[![Single exe ~130 KB](https://img.shields.io/badge/exe-%7E130KB-lightgrey)](docs/ARCHITECTURE.md)
 
 A general-purpose terminal agent (in the spirit of OpenCode or Pi) for **old, low-resource PCs**: diagnosing problems, inspecting files, writing scripts, maintenance, or answering questions about the machine.
 
-- One 32-bit binary in C: `tinyshell.exe` for Windows (~110 KB, system DLLs only), and a static Linux build for i586 and newer (in progress). No Node, Python, .NET, services or database.
+- One 32-bit binary in C: `tinyshell.exe` for Windows (~130 KB, system DLLs only), and a static Linux build for i586 and newer (in progress). No Node, Python, .NET, services or database.
 - The model runs remotely, on any OpenAI-compatible API (default: OpenCode Go); the PC only keeps the console, speaks HTTPS and runs commands.
-- **You approve every command** before it runs. Risky ones also ask you to type `EJECUTAR`.
+- **You approve every command** before it runs. Risky ones also ask you to type `RUN`.
+- The interface speaks English or Spanish, following the system's language.
 - Main test machine: Noblex NT1013E, Windows 7 SP1 32-bit, Atom N2600, 2 GB RAM.
 
-Site and downloads: **https://tinyshell.lucasan-videla.workers.dev**
+Site and downloads (English and Spanish): **https://tinyshell.lucasan-videla.workers.dev**
 
 > **Status:** prototype. It builds and passes its tests, but it has **not yet run on the real Windows 7 machine**. See [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md).
 
-## En español
-
-TinyShell es un agente de terminal para revivir PCs viejas: vos pedís algo y aprobás cada comando antes de que se ejecute. La app y las instrucciones para usuarios están en español: **instalación, uso y descargas en https://tinyshell.lucasan-videla.workers.dev**. Para reportar un problema, escribí `/reporte` dentro de TinyShell.
-
 ## Contents
 
-- [Install](#install-windows) · [Use](#use) · [Provider and model](#provider-and-model)
+- [Install](#install-windows) · [Use](#use) · [Language](#language) · [Provider and model](#provider-and-model)
 - [Reporting a problem](#reporting-a-problem) · [Update and roll back](#update-and-roll-back)
 - [Security](#security-in-short) · [Building from source](#building-from-source) · [Documentation](#documentation)
 - [Contributing](#contributing) · [Support](#support) · [License](#license)
@@ -61,17 +58,17 @@ The installer shows the executable's SHA-256; compare it with the one in the rel
 
 ## Use
 
-Log in first (once). The program speaks Spanish:
+Log in first (once):
 
 ```text
 C:\> tinyshell login
-Elegí un proveedor (flechas y Enter):
-> opencode-go    OpenCode Go (el modelo se elige después)
+Pick a provider (arrows and Enter):
+> opencode-go    OpenCode Go (pick the model next)
 
-API key de opencode-go (clic derecho para pegar): ****************************
+API key for opencode-go (right-click to paste): ****************************
 
-Elegí un modelo de opencode-go (38; escribí para filtrar, Enter):
-  filtro: kimi_
+Pick a model from opencode-go (38; type to filter, Enter):
+  filter: kimi_
 > kimi-k2.6
   kimi-k2.7-code
   kimi-k3
@@ -79,37 +76,45 @@ Elegí un modelo de opencode-go (38; escribí para filtrar, Enter):
 
 The key is checked against the provider before it is saved (if rejected, nothing is saved) and is stored encrypted in the Windows Credential Manager. The model list is fetched live, so new models show up. `tinyshell logout` deletes the key.
 
-Then open a **new** CMD window and type `tinyshell`. It is a conversation: you ask, the agent proposes commands one step at a time and you approve them, until the task is done.
+Then open a **new** CMD window and type `tinyshell`. It is a conversation: you ask, the agent proposes commands one step at a time and you approve them, until the task is done. The answer streams in as the model writes it.
 
 ```text
-TinyShell 0.7.0 · opencode-go · /ayuda
+TinyShell 0.8.0 · opencode-go · /help
 
- qué programas arrancan con Windows?                    <- your message
+ which programs start with Windows?                     <- your message
 
 $ wmic startup get caption,command                      <- proposal (yellow; red if risky)
-  ver programas que inician con Windows
-  ejecutar? [s/N] s
+  list the programs that start with Windows
+  run it? [y/N] y
   Adobe ARM   "C:\Program Files\...\reader_sl.exe"
-  ... +18 líneas · exit=0
+  ... +18 lines · exit=0
 
-Tenés 23 programas al inicio. Los que más pesan son...
+You have 23 startup programs. The heaviest ones are...
 ─────────────────────────────────────────────────────────
 > _
 ─────────────────────────────────────────────────────────
-C:\Users\Usuario · 7.2k in · 0.6k out · 12%      deepseek-v4.1-flash
+C:\Users\User · 7.2k in · 0.6k out · 12%       deepseek-v4.1-flash
 ```
+
+The footer shows the current folder, the tokens sent and received, how full the conversation history is, and the model.
 
 | Command | What it does |
 |---|---|
-| `/ayuda` | lists the commands |
-| `/modelo [x]` | pick a model from the list (or type its name) |
-| `/reporte` | report a problem to the developers |
+| `/help` | lists the commands |
+| `/model [x]` | pick a model from the list (or type its name) |
 | `/login` | change provider, key or model |
-| `/reiniciar` | start a new conversation |
-| `/actualizar` | same as `tinyshell --update` |
-| `/salir` | quit |
+| `/report` | report a problem to the developers |
+| `/reset` | start a new conversation |
+| `/update` | same as `tinyshell --update` |
+| `/quit` | quit |
 
-**Ctrl+C** cancels whatever is running (the model's answer or the command) without closing TinyShell; at an empty prompt it quits. The editor has the usual CMD keys: arrows for earlier messages, F7 for history, right-click to paste. Limits that keep an old machine responsive: each command runs without interactive input and is stopped after 180 s; the output the model sees is cut to 24 KB; the history to ~192 KB.
+The earlier Spanish names (`/ayuda`, `/modelo`, `/reporte`, `/reiniciar`, `/actualizar`, `/salir`, `/clave`) still work.
+
+**Ctrl+C** cancels whatever is running (the model's answer or the command) without closing TinyShell; at an empty prompt it quits. On Windows the editor has the usual CMD keys: arrows for earlier messages, F7 for history, right-click to paste. Limits that keep an old machine responsive: each command runs without interactive input and is stopped after 180 s; the output the model sees is cut to 24 KB; the history to ~192 KB.
+
+## Language
+
+The interface is English or Spanish, following the system's language (Windows' display language; `LANG` on Linux). To choose it yourself, set `language` in the `[ui]` section of `config.ini` to `en`, `es` or `auto`. Whatever language you write in, the model answers in it.
 
 ## Provider and model
 
@@ -121,20 +126,23 @@ name = openrouter
 url = https://openrouter.ai/api/v1/chat/completions
 model = deepseek/deepseek-chat
 session_header =
+
+[ui]
+language = auto
 ```
 
 - `name` identifies the saved API key: each provider has its own.
 - `session_header` is only for OpenCode Go (`x-opencode-session`); leave it empty for others.
 - A server on your network (LM Studio, Ollama on another PC) works over `http://` without a key; TinyShell warns that the connection is not encrypted.
-- `/modelo` lists the provider's models; `/modelo another-model` sets one directly. It is saved to `config.ini`.
+- `/model` lists the provider's models; `/model another-model` sets one directly. It is saved to `config.ini`.
 
 ## Reporting a problem
 
-If something fails, type `/reporte` inside TinyShell (or `tinyshell reporte` in CMD):
+If something fails, type `/report` inside TinyShell (or `tinyshell report` in CMD):
 
 1. describe in one line what happened;
-2. TinyShell builds the report (version, OS, model, recent errors and, if you agree, the conversation), saves it under `%LOCALAPPDATA%\TinyShell\reportes\` and **shows everything that would be sent**;
-3. only if you answer `s` is it sent: a public GitHub issue gets a summary without personal data, and the full report stays private for the developer.
+2. TinyShell builds the report (version, OS, model, recent errors and, if you agree, the conversation), saves it under `%LOCALAPPDATA%\TinyShell\reports\` and **shows everything that would be sent**;
+3. only if you answer yes is it sent: a public GitHub issue gets a summary without personal data, and the full report stays private for the developer.
 
 Without internet, email the saved file to lucasan.videla@gmail.com.
 
@@ -143,8 +151,8 @@ Without internet, email the saved file to lucasan.videla@gmail.com.
 While TinyShell is in beta (0.x versions) it sends technical data to find bugs before they are reported: version, OS, model, number of steps and approvals, duration and error codes. **Never** what you type, the commands or their output. It is announced on first run.
 
 ```bat
-tinyshell telemetria --ver   :: what was sent
-tinyshell telemetria off     :: turn it off
+tinyshell telemetry --show   :: what was sent
+tinyshell telemetry off      :: turn it off
 ```
 
 ## Update and roll back
@@ -189,7 +197,7 @@ On Linux with MinGW-w64 (`sudo apt install mingw-w64` / `sudo pacman -S mingw-w6
 ./build/build-linux-musl.sh   # static i586 Linux binary (needs Docker)
 ```
 
-`pnpm install` once enables the pre-commit hook (husky), which runs `build/check.sh`. Node is a development tool only: TinyShell does not need it to run. The code is layered (`src/core`, `src/app`, `src/platform`); see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+`pnpm install` once enables the pre-commit hook (husky), which runs `build/check.sh`. Node is a development tool only: TinyShell does not need it to run. The code is layered (`src/core`, `src/app`, `src/platform`); see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). New user-facing strings go through `tr()` with a Spanish entry in `src/core/i18n_es.c` (`build/checks/i18n.sh` checks it).
 
 On Windows, from Visual Studio's **x86 Native Tools Command Prompt**: `build\build-windows-msvc.bat`.
 

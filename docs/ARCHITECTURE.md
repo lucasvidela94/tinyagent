@@ -63,6 +63,7 @@ a growing file is split along a real interface, not by size.
 | `src/core/provider.c` | `provider_defaults`, `provider_set` | provider (name, URL, model, session header), defaults and `config.ini` validation |
 | `src/core/report.c` | `errlog_*`, `redact`, `report_json`, `event_json` | recent errors, redaction of keys and personal data, relay payloads |
 | `src/core/version.c` | `version_compare`, `version_from_output`, `version_sibling` | X.Y.Z versions, `--version` output, the updater's `.new`/`.old` file names |
+| `src/core/i18n.c`, `i18n_es.c` | `tr`, `i18n_set`, `i18n_parse` | the interface language: English source strings, the Spanish table, checked by `build/checks/i18n.sh` |
 | `src/core/charset.c` | `charset_encode`, `charset_decode`, `charset_from_locale` | text for terminals that are not UTF-8 (`LANG=C` or Latin-1 on old distros) |
 | `src/core/url.c`, `httpwire.c` | `url_parse`, `httpwire_*`, `http_status_hint` | URLs and HTTP/1.1 (request, incremental response, chunked) for Linux; fuzzed |
 | `src/core/ini.c`, `credfile.c` | `ini_get/set`, `credfile_get/set` | `config.ini` editing and the API key file, for Linux |
@@ -71,12 +72,14 @@ a growing file is split along a real interface, not by size.
 
 | Module | Interface | Responsibility |
 |---|---|---|
-| `src/app/main.c` | `main` | subcommands (`login`, `logout`, `reporte`, `telemetria`), flags (`--version/--update/--rollback`), API key, chat loop and `/` commands |
+| `src/app/main.c` | `main` | interface language, API key, chat loop |
+| `src/app/cli.c` | `cli_run` | subcommands (`login`, `logout`, `report`, `telemetry`) and flags (`--version/--update/--rollback`), with the earlier Spanish names as aliases |
+| `src/app/slash.c` | `slash_run` | chat commands (`/help`, `/model`, `/login`, `/report`, `/reset`, `/update`, `/quit`), with Spanish aliases |
 | `src/app/session.c` | `session_send` | system prompt, history, approval gate (`decide`), turn loop, token counts |
 | `src/app/tui.c`, `tui_select.c` | `tui_*`, `tui_select` | minimal inline TUI: user block, proposal, output summary, editor between rules, footer; arrow-key menu with filtering; plain mode without a console |
 | `src/app/login.c` | `login_run`, `login_pick_model` | `tinyshell login`: provider, key (checked against `/models`), model from the live list |
 | `src/app/reporter.c` | `reporter_run` | `/reporte`: builds, saves, shows and sends the report |
-| `src/app/telemetry.c` | `telemetry_init/event/error` | beta telemetry: notice, `telemetria on/off/--ver`, local log of what was sent |
+| `src/app/telemetry.c` | `telemetry_init/event/error` | beta telemetry: notice, `telemetry on/off/--show`, local log of what was sent |
 | `src/app/update.c` | `update_run`, `update_rollback` | `--update`: version.txt, download, signature, self-test, swap with the `.old` sibling; `--rollback` |
 
 ### Platform adapters
