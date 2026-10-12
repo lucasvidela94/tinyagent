@@ -13,10 +13,11 @@
 
 #include "charset.h"
 #include "console.h"
+#include "i18n.h"
 #include "console_posix.h"
 #include "util.h"
 
-const char CONSOLE_PASTE_HINT[] = "Ctrl+Shift+V o clic del medio para pegar";
+const char CONSOLE_PASTE_HINT[] = N_("Ctrl+Shift+V or middle-click to paste");
 
 static int in_tty, out_tty, vt, charset = CHARSET_UTF8;
 

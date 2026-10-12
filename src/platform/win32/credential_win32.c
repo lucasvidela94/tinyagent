@@ -4,12 +4,13 @@
 #include <string.h>
 
 #include "credential.h"
+#include "i18n.h"
 
 #ifdef _MSC_VER
 #pragma comment(lib, "advapi32.lib")
 #endif
 
-const char CREDENTIAL_WHERE[] = "el Administrador de credenciales de Windows";
+const char CREDENTIAL_WHERE[] = N_("the Windows Credential Manager");
 
 static int target(const char *provider, wchar_t out[128]) {
   char t[128];

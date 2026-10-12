@@ -6,6 +6,7 @@
 #include "config.h"
 #include "console.h"
 #include "http.h"
+#include "i18n.h"
 #include "instructions.h"
 #include "json.h"
 #include "policy.h"
@@ -66,24 +67,24 @@ static char *decide(Session *s, const ToolCall *tc) {
   char answer[64], *out;
   if (problem) {
     say("\n");
-    tui_error(problem);
-    return xstrdup(problem);
+    tui_error(tr(problem));
+    return xstrdup(tr(problem));
   }
   risk = risk_reason(system_dialect(), tc->command);
-  tui_proposal(tc->command, tc->reason, risk);
+  tui_proposal(tc->command, tc->reason, risk ? tr(risk) : NULL);
   s->proposed++;
   console_flush_input(); /* leftover pasted lines must not answer the question */
-  say("  ejecutar? [s/N] ");
+  say("%s", tr("  run it? [y/N] "));
   if (read_line(answer, sizeof answer, 1) != LINE_OK || !is_yes(answer)) {
     s->rejected++;
-    return xstrdup("Usuario rechazó la ejecución. No se ejecutó nada.");
+    return xstrdup(tr("The user rejected it. Nothing was run."));
   }
   if (risk) {
     console_flush_input();
-    console_write("  escribí EJECUTAR para confirmar: ", COLOR_DANGER);
-    if (read_line(answer, sizeof answer, 1) != LINE_OK || strcmp(answer, "EJECUTAR")) {
+    console_write(tr("  type RUN to confirm: "), COLOR_DANGER);
+    if (read_line(answer, sizeof answer, 1) != LINE_OK || strcmp(answer, tr("RUN"))) {
       s->rejected++;
-      return xstrdup("Cancelado por seguridad. No se ejecutó nada.");
+      return xstrdup(tr("Cancelled for safety. Nothing was run."));
     }
   }
   s->approved++;
@@ -111,8 +112,8 @@ static int handle_response(Session *s, const Json *j, int streamed) {
   count_usage(s, j);
   if (msg < 0) {
     char *e = json_str(j, json_key(j, json_key(j, 0, "error"), "message"));
-    tui_error(*e ? e : "Respuesta sin message.");
-    telemetry_error("api", "sin message", "chat");
+    tui_error(*e ? e : tr("The answer has no message."));
+    telemetry_error("api", "no message", "chat");
     free(e);
     return 0;
   }
@@ -125,7 +126,7 @@ static int handle_response(Session *s, const Json *j, int streamed) {
       char *out;
       tool_call_parse(j, json_index(j, calls, i), &tc);
       /* After Ctrl+C every remaining call still needs a result, but nothing is asked or run. */
-      out = cancel_requested() ? xstrdup("Cancelado por el usuario con Ctrl+C. No se ejecutó nada.") : decide(s, &tc);
+      out = cancel_requested() ? xstrdup(tr("Cancelled by the user with Ctrl+C. Nothing was run.")) : decide(s, &tc);
       history_add(&s->history, tool_result_json(tc.id, out), 0); /* every call gets a result */
       free(out);
       tool_call_free(&tc);
@@ -133,9 +134,9 @@ static int handle_response(Session *s, const Json *j, int streamed) {
     free(text);
     return !cancel_requested(); /* a cancelled turn stops here */
   }
-  if (!streamed || !*text) tui_text(*text ? text : "(respuesta vacía)");
+  if (!streamed || !*text) tui_text(*text ? text : tr("(empty answer)"));
   finish = json_str(j, json_key(j, choice, "finish_reason"));
-  if (!strcmp(finish, "length")) tui_note("(respuesta cortada por límite de tokens)");
+  if (!strcmp(finish, "length")) tui_note(tr("(answer cut off by the token limit)"));
   free(finish);
   history_add(&s->history, message_json("assistant", text), 0);
   free(text);
@@ -182,7 +183,7 @@ unsigned long session_send(Session *s, const char *text) {
     free(body);
     s->turns++;
     if (!resp && cancel_requested()) {
-      tui_note("cancelado");
+      tui_note(tr("cancelled"));
       return 0;
     }
     if (!resp) {
@@ -194,8 +195,8 @@ unsigned long session_send(Session *s, const char *text) {
     }
     if (json_parse(&j, resp)) more = handle_response(s, &j, shown);
     else {
-      tui_error("Respuesta JSON inválida. No se ejecutó nada.");
-      telemetry_error("api", "json inválido", "chat");
+      tui_error(tr("Invalid JSON answer. Nothing was run."));
+      telemetry_error("api", "invalid json", "chat");
     }
     json_free(&j);
     free(resp);
@@ -203,7 +204,7 @@ unsigned long session_send(Session *s, const char *text) {
   }
   {
     char msg[96];
-    snprintf(msg, sizeof msg, "Límite de %d pasos para este mensaje. Escribí \"seguí\" para continuar.", MAX_TURNS);
+    snprintf(msg, sizeof msg, tr("Limit of %d steps for this message. Type \"continue\" to go on."), MAX_TURNS);
     tui_note(msg);
   }
   return 0;

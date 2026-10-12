@@ -4,12 +4,13 @@
 #include <string.h>
 
 #include "credential.h"
+#include "i18n.h"
 #include "credfile.h"
 #include "sys.h"
 
 #define MAX_CREDFILE (64 * 1024)
 
-const char CREDENTIAL_WHERE[] = "~/.config/tinyshell/credentials (solo tu usuario puede leerlo)";
+const char CREDENTIAL_WHERE[] = N_("~/.config/tinyshell/credentials (only your user can read it)");
 
 static char *read_all(Buf *path) {
   return sys_data_path("credentials", path) ? sys_read_file(path->p, MAX_CREDFILE, NULL) : NULL;

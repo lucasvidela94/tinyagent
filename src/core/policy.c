@@ -5,15 +5,16 @@
 #include <string.h>
 
 #include "config.h"
+#include "i18n.h"
 #include "util.h"
 
 const char *command_problem(const ToolCall *tc) {
   const unsigned char *p;
-  if (strcmp(tc->name, "shell")) return "Herramienta no permitida. No se ejecutó nada.";
-  if (!*tc->command) return "Faltó el comando (argumentos ausentes o JSON inválido). No se ejecutó nada.";
-  if (strlen(tc->command) > MAX_COMMAND) return "Comando demasiado largo. No se ejecutó nada.";
+  if (strcmp(tc->name, "shell")) return N_("Tool not allowed. Nothing was run.");
+  if (!*tc->command) return N_("The command is missing (no arguments or invalid JSON). Nothing was run.");
+  if (strlen(tc->command) > MAX_COMMAND) return N_("Command too long. Nothing was run.");
   for (p = (const unsigned char *)tc->command; *p; p++)
-    if (*p < 0x20 || *p == 0x7F) return "El comando tiene saltos de línea o caracteres de control. No se ejecutó nada.";
+    if (*p < 0x20 || *p == 0x7F) return N_("The command has line breaks or control characters. Nothing was run.");
   return NULL;
 }
 
@@ -131,5 +132,6 @@ int is_yes(const char *answer) {
   a[n] = 0;
   trim_line(a);
   if (*answer) return 0; /* longer than any accepted answer */
-  return !strcmp(a, "s") || !strcmp(a, "si") || !strcmp(a, "s\xc3\xad") || !strcmp(a, "s\xc3\x8d");
+  return !strcmp(a, "s") || !strcmp(a, "si") || !strcmp(a, "s\xc3\xad") || !strcmp(a, "s\xc3\x8d") || !strcmp(a, "y") ||
+         !strcmp(a, "yes");
 }

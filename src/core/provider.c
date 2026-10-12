@@ -1,4 +1,5 @@
 #include "provider.h"
+#include "i18n.h"
 
 #include <ctype.h>
 #include <stdlib.h>
@@ -7,7 +8,7 @@
 #include "json.h"
 
 static const struct { const char *label; Provider p; } PRESETS[] = {
-    {"OpenCode Go (el modelo se elige después)",
+    {N_("OpenCode Go (pick the model next)"),
      {"opencode-go", "https://opencode.ai/zen/go/v1/chat/completions", "deepseek-v4.1-flash",
       "x-opencode-session"}}, /* OpenCode Go answers 400 without the session header */
 };
@@ -51,23 +52,23 @@ static int is_printable(const char *s) {
 
 const char *provider_set(Provider *p, const char *key, const char *value) {
   if (!strcmp(key, "name")) {
-    if (!is_name(value)) return "name: usá letras, números, '-', '_' o '.'";
+    if (!is_name(value)) return N_("name: use letters, digits, '-', '_' or '.'");
     return copy(p->name, sizeof p->name, value) ? NULL : "name: demasiado largo";
   }
   if (!strcmp(key, "url")) {
-    if (strncmp(value, "https://", 8) && strncmp(value, "http://", 7)) return "url: debe empezar con https:// o http://";
-    if (!is_printable(value)) return "url: tiene espacios o caracteres inválidos";
+    if (strncmp(value, "https://", 8) && strncmp(value, "http://", 7)) return N_("url: must start with https:// or http://");
+    if (!is_printable(value)) return N_("url: has spaces or invalid characters");
     return copy(p->url, sizeof p->url, value) ? NULL : "url: demasiado larga";
   }
   if (!strcmp(key, "model")) {
-    if (!*value || !is_printable(value)) return "model: vacío o con espacios";
+    if (!*value || !is_printable(value)) return N_("model: empty or with spaces");
     return copy(p->model, sizeof p->model, value) ? NULL : "model: demasiado largo";
   }
   if (!strcmp(key, "session_header")) {
-    if (!is_header_name(value)) return "session_header: solo letras, números y '-'";
+    if (!is_header_name(value)) return N_("session_header: only letters, digits and '-'");
     return copy(p->session_header, sizeof p->session_header, value) ? NULL : "session_header: demasiado largo";
   }
-  return "clave desconocida";
+  return N_("unknown key");
 }
 
 int provider_insecure(const Provider *p) { return strncmp(p->url, "https://", 8) != 0; }

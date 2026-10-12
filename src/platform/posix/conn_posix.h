@@ -30,6 +30,6 @@ long conn_read(Conn *c, char *buf, size_t n);
 int conn_error(const Conn *c);
 void conn_close(Conn *c);
 
-const char *conn_hint(int error); /* Spanish, for "No se pudo contactar ...: <hint>" */
+const char *conn_hint(int error); /* English (show it through tr()), for "Could not reach ...: <hint>" */
 
 #endif

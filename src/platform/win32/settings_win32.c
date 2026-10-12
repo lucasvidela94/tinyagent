@@ -5,28 +5,25 @@
 #include <string.h>
 
 #include "console.h"
+#include "i18n.h"
 #include "settings.h"
 #include "sys.h"
 
 static wchar_t path_w[MAX_PATH];
 static char path_utf8[MAX_PATH * 3];
 
-static const char *TEMPLATE =
-    "; TinyShell: proveedor del modelo. Sin secretos: las API keys van al Administrador de\r\n"
-    "; credenciales (una por 'name'). Cualquier servicio compatible con OpenAI chat completions.\r\n"
-    ";\r\n"
-    "; Ejemplos:\r\n"
-    ";   OpenAI      url = https://api.openai.com/v1/chat/completions      model = gpt-4o-mini\r\n"
-    ";   OpenRouter  url = https://openrouter.ai/api/v1/chat/completions   model = deepseek/deepseek-chat\r\n"
-    ";   DeepSeek    url = https://api.deepseek.com/chat/completions        model = deepseek-chat\r\n"
-    ";   LM Studio   url = http://192.168.0.10:1234/v1/chat/completions    (http: la key viaja sin cifrar)\r\n"
-    "; Para proveedores que no son OpenCode Go, dejá session_header vacío.\r\n"
+/* The provider section of a new config.ini; the comment above it is written in the
+ * interface language (see write_template). */
+static const char *SECTIONS =
     "\r\n"
     "[provider]\r\n"
     "name = opencode-go\r\n"
     "url = https://opencode.ai/zen/go/v1/chat/completions\r\n"
     "model = deepseek-v4.1-flash\r\n"
-    "session_header = x-opencode-session\r\n";
+    "session_header = x-opencode-session\r\n"
+    "\r\n"
+    "[ui]\r\n"
+    "language = auto\r\n";
 
 /* <data dir>/config.ini (see sys_data_path), kept wide for the profile API. */
 static int resolve_path(void) {
@@ -41,9 +38,20 @@ static int resolve_path(void) {
 
 static void write_template(void) {
   DWORD done;
+  const char *head = tr("; TinyShell: the model provider. No secrets here: API keys go to the Windows\r\n"
+                        "; Credential Manager (one per 'name'). Any OpenAI-compatible chat-completions service.\r\n"
+                        ";\r\n"
+                        "; Examples:\r\n"
+                        ";   OpenAI      url = https://api.openai.com/v1/chat/completions      model = gpt-4o-mini\r\n"
+                        ";   OpenRouter  url = https://openrouter.ai/api/v1/chat/completions   model = deepseek/deepseek-chat\r\n"
+                        ";   DeepSeek    url = https://api.deepseek.com/chat/completions        model = deepseek-chat\r\n"
+                        ";   LM Studio   url = http://192.168.0.10:1234/v1/chat/completions    (http: the key travels unencrypted)\r\n"
+                        "; For providers other than OpenCode Go, leave session_header empty.\r\n"
+                        "; [ui] language: es, en or auto (the system's language).\r\n");
   HANDLE f = CreateFileW(path_w, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
   if (f == INVALID_HANDLE_VALUE) return;
-  WriteFile(f, TEMPLATE, (DWORD)strlen(TEMPLATE), &done, NULL);
+  WriteFile(f, head, (DWORD)strlen(head), &done, NULL);
+  WriteFile(f, SECTIONS, (DWORD)strlen(SECTIONS), &done, NULL);
   CloseHandle(f);
 }
 
@@ -57,7 +65,7 @@ static void apply(Provider *p, const char *key) {
   if (wval[0] == 1) return;
   if (!WideCharToMultiByte(CP_UTF8, 0, wval, -1, val, sizeof val, NULL, NULL)) return;
   if ((err = provider_set(p, key, val)) != NULL) {
-    snprintf(msg, sizeof msg, "config.ini: %s (se usa el valor por defecto)", err);
+    snprintf(msg, sizeof msg, tr("config.ini: %s (the default is used)"), tr(err));
     console_write(msg, COLOR_DANGER);
     say("\n");
   }

@@ -6,6 +6,7 @@
 #include "cancel.h"
 #include "cancel_win32.h"
 #include "command.h"
+#include "i18n.h"
 #include "config.h"
 #include "shell.h"
 #include "util.h"
@@ -83,14 +84,14 @@ char *run_command(const char *cmd) {
   int timed_out, in_job;
   size_t dropped = 0;
   Buf out = {0};
-  char msg[96];
+  char msg[192];
 
-  if (!sl || sl >= MAX_PATH) return xstrdup("No se encontró cmd.exe. No se ejecutó nada.");
+  if (!sl || sl >= MAX_PATH) return xstrdup(tr("cmd.exe was not found. Nothing was run."));
   lstrcatW(app, L"\\cmd.exe");
-  if (!(line = command_line(cmd))) return xstrdup("Comando con codificación inválida. No se ejecutó nada.");
+  if (!(line = command_line(cmd))) return xstrdup(tr("The command has an invalid encoding. Nothing was run."));
   if (!CreatePipe(&rd, &wr, &sa, 0)) {
     free(line);
-    return xstrdup("No se pudo crear el pipe de salida. No se ejecutó nada.");
+    return xstrdup(tr("Could not create the output pipe. Nothing was run."));
   }
   SetHandleInformation(rd, HANDLE_FLAG_INHERIT, 0);
   nul = CreateFileW(L"NUL", GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING, 0, NULL);
@@ -102,7 +103,7 @@ char *run_command(const char *cmd) {
   si.hStdError = wr;
   job = CreateJobObjectW(NULL, NULL);
   if (!CreateProcessW(app, line, NULL, NULL, TRUE, CREATE_SUSPENDED, NULL, NULL, &si, &pi)) {
-    snprintf(msg, sizeof msg, "No se pudo iniciar cmd.exe (error %lu). No se ejecutó nada.",
+    snprintf(msg, sizeof msg, tr("Could not start cmd.exe (error %lu). Nothing was run."),
              (unsigned long)GetLastError());
     pi.hProcess = pi.hThread = NULL;
   }

@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "console.h"
+#include "i18n.h"
 #include "tui.h"
 #include "util.h"
 
@@ -98,7 +99,7 @@ void tui_thinking(int on) {
   if (on) {
     say("\n");
     thinking_row = console_row();
-    console_write("pensando...", COLOR_DIM);
+    console_write(tr("thinking..."), COLOR_DIM);
   } else if (thinking_row >= 0) {
     int printed = console_row() != thinking_row; /* e.g. a network error below it */
     console_clear(thinking_row, thinking_row);
@@ -136,16 +137,30 @@ void tui_error(const char *text) { tui_line("", text, COLOR_DANGER); }
 void tui_proposal(const char *cmd, const char *reason, const char *risk) {
   say("\n");
   tui_line("$ ", cmd, risk ? COLOR_DANGER : COLOR_ACCENT);
-  tui_line("  ", *reason ? reason : "(sin motivo)", COLOR_DIM);
-  if (risk) tui_line("  riesgo: ", risk, COLOR_DANGER);
+  tui_line("  ", *reason ? reason : tr("(no reason given)"), COLOR_DIM);
+  if (risk) tui_line(tr("  risk: "), risk, COLOR_DANGER);
 }
 
-static int is_meta(const char *l) { /* footer lines added by run_command */
-  return !strncmp(l, "[exit=", 6) || !strncmp(l, "[salida truncada", 16) || !strncmp(l, "[tiempo agotado", 15);
+/* Where the notes command_result() appends begin: the trailing "[...]" lines, in whatever
+ * language (exit code, truncation, timeout, Ctrl+C). */
+static const char *notes_start(const char *s) {
+  const char *end = s + strlen(s), *p = end, *start = end;
+  while (p > s) {
+    const char *line = p, *stop = p;
+    while (stop > s && (stop[-1] == '\n' || stop[-1] == '\r')) stop--;
+    for (line = stop; line > s && line[-1] != '\n'; line--) {}
+    if (stop == line) { /* blank line */
+      p = line;
+      continue;
+    }
+    if (line[0] != '[' || stop[-1] != ']') break;
+    start = p = line;
+  }
+  return start;
 }
 
 void tui_output(const char *output) {
-  char *copy = xstrdup(output), *l, *next;
+  char *copy = xstrdup(output), *l, *next, *notes = copy + (notes_start(output) - output);
   int shown = 0, hidden = 0, w = fancy ? console_width() - 3 : 1 << 20;
   Buf meta = {0};
   for (l = copy; l; l = next) {
@@ -155,7 +170,7 @@ void tui_output(const char *output) {
     n = strlen(l);
     if (n && l[n - 1] == '\r') l[--n] = 0;
     if (!l[strspn(l, " \t")]) continue; /* blank lines add nothing to a preview */
-    if (is_meta(l)) {
+    if (l >= notes) {
       buf_str(&meta, meta.len ? " · " : "");
       buf_add(&meta, l + 1, n > 1 ? n - 2 : 0); /* without the brackets */
     } else if (shown < PREVIEW_LINES) {
@@ -170,7 +185,7 @@ void tui_output(const char *output) {
     Buf b = {0};
     char num[48];
     if (hidden) {
-      snprintf(num, sizeof num, "... +%d líneas", hidden);
+      snprintf(num, sizeof num, tr("... +%d lines"), hidden);
       buf_str(&b, num);
     }
     if (meta.len) {

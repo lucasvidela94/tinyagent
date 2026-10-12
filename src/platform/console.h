@@ -9,7 +9,7 @@
 enum { LINE_EOF = 0, LINE_OK = 1, LINE_TOO_LONG = 2 };
 enum { COLOR_NORMAL, COLOR_DIM, COLOR_ACCENT, COLOR_DANGER, COLOR_USER };
 
-extern const char CONSOLE_PASTE_HINT[]; /* how to paste here: "clic derecho para pegar" on Windows 7 */
+extern const char CONSOLE_PASTE_HINT[]; /* how to paste here (English; show it through tr()) */
 
 void console_init(void);
 void say(const char *fmt, ...);               /* printf-style, UTF-8, default color */

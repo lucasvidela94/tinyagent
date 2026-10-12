@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "console.h"
+#include "i18n.h"
 #include "tui.h"
 
 #define VISIBLE 10
@@ -22,7 +23,7 @@ static int plain_select(const char *title, const char *const *items, int n, int 
   int i;
   say("%s\n", title);
   for (i = 0; i < n; i++) say("  %d. %s\n", i + 1, items[i]);
-  say("número o nombre [%d]: ", initial + 1);
+  say(tr("number or name [%d]: "), initial + 1);
   if (read_line(ans, sizeof ans, 1) != LINE_OK) return -1;
   if (!*ans) return initial;
   if ((i = atoi(ans)) >= 1 && i <= n) return i - 1;
@@ -31,20 +32,20 @@ static int plain_select(const char *title, const char *const *items, int n, int 
   return -1;
 }
 
-/* Rows: filter hint, VISIBLE items, "+N más". All reserved up front so redraws never scroll. */
+/* Rows: filter hint, VISIBLE items, "+N more". All reserved up front so redraws never scroll. */
 static void draw(int top, const char *const *items, const int *shown, int count, int sel, int first,
                  const char *filter) {
   char hint[160];
   int i;
   console_clear(top, top + VISIBLE + 1);
   console_goto(top, 0);
-  snprintf(hint, sizeof hint, "  filtro: %s_", filter);
-  tui_line("", *filter ? hint : "  (escribí para filtrar)", COLOR_DIM);
+  snprintf(hint, sizeof hint, tr("  filter: %s_"), filter);
+  tui_line("", *filter ? hint : tr("  (type to filter)"), COLOR_DIM);
   for (i = first; i < count && i < first + VISIBLE; i++)
     tui_line(i == sel ? "> " : "  ", items[shown[i]], i == sel ? COLOR_ACCENT : COLOR_NORMAL);
-  if (!count) tui_line("  ", "(sin coincidencias)", COLOR_DIM);
+  if (!count) tui_line("  ", tr("(no matches)"), COLOR_DIM);
   if (count > first + VISIBLE) {
-    snprintf(hint, sizeof hint, "  ... +%d más", count - first - VISIBLE);
+    snprintf(hint, sizeof hint, tr("  ... +%d more"), count - first - VISIBLE);
     tui_line("", hint, COLOR_DIM);
   }
 }

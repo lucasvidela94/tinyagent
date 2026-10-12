@@ -15,6 +15,7 @@
 #include "charset.h"
 #include "command.h"
 #include "config.h"
+#include "i18n.h"
 #include "shell.h"
 #include "sys.h"
 #include "util.h"
@@ -99,12 +100,12 @@ char *run_command(const char *cmd) {
   Buf out = {0};
   char *text, *res;
   pid_t pid;
-  if (pipe(fds)) return xstrdup("No se pudo crear el pipe de salida. No se ejecutó nada.");
+  if (pipe(fds)) return xstrdup(tr("Could not create the output pipe. Nothing was run."));
   pid = fork();
   if (pid < 0) {
     close(fds[0]);
     close(fds[1]);
-    return xstrdup("No se pudo iniciar /bin/sh. No se ejecutó nada.");
+    return xstrdup(tr("Could not start /bin/sh. Nothing was run."));
   }
   if (pid == 0) {
     close(fds[0]);

@@ -10,6 +10,7 @@
 #include "console.h"
 #include "http.h"
 #include "httpwire.h"
+#include "i18n.h"
 #include "provider.h"
 #include "util.h"
 
@@ -19,16 +20,16 @@
 
 static const char *winhttp_hint(DWORD e) {
   switch (e) {
-  case ERROR_WINHTTP_NAME_NOT_RESOLVED: return "no se resolvió el servidor (DNS o sin red)";
-  case ERROR_WINHTTP_CANNOT_CONNECT: return "no se pudo conectar (red, proxy o firewall)";
-  case ERROR_WINHTTP_TIMEOUT: return "tiempo de espera agotado";
-  case ERROR_WINHTTP_CONNECTION_ERROR: return "conexión cortada; en Windows 7 suele ser TLS 1.2 no habilitado";
+  case ERROR_WINHTTP_NAME_NOT_RESOLVED: return N_("the server name did not resolve (DNS or no network)");
+  case ERROR_WINHTTP_CANNOT_CONNECT: return N_("could not connect (network, proxy or firewall)");
+  case ERROR_WINHTTP_TIMEOUT: return N_("timed out");
+  case ERROR_WINHTTP_CONNECTION_ERROR: return N_("connection dropped; on Windows 7 this is usually TLS 1.2 not enabled");
   case ERROR_WINHTTP_SECURE_FAILURE:
-  case ERROR_WINHTTP_SECURE_CHANNEL_ERROR: return "falló TLS: revisá TLS 1.2 (KB3140245), certificados raíz y fecha/hora";
-  case ERROR_WINHTTP_SECURE_INVALID_CA: return "certificado no confiable: actualizá los certificados raíz";
-  case ERROR_WINHTTP_SECURE_CERT_DATE_INVALID: return "certificado fuera de fecha: revisá la fecha/hora de Windows";
-  case ERROR_WINHTTP_SECURE_CERT_CN_INVALID: return "el certificado no coincide con el host (¿proxy que intercepta?)";
-  default: return "error de red";
+  case ERROR_WINHTTP_SECURE_CHANNEL_ERROR: return N_("TLS failed: check TLS 1.2 (KB3140245), root certificates and the date and time");
+  case ERROR_WINHTTP_SECURE_INVALID_CA: return N_("untrusted certificate: update the root certificates");
+  case ERROR_WINHTTP_SECURE_CERT_DATE_INVALID: return N_("certificate out of date: check the Windows date and time");
+  case ERROR_WINHTTP_SECURE_CERT_CN_INVALID: return N_("the certificate does not match the host (an intercepting proxy?)");
+  default: return N_("network error");
   }
 }
 
@@ -39,7 +40,7 @@ static void enable_tls12(HINTERNET ses) {
   DWORD proto = WINHTTP_FLAG_SECURE_PROTOCOL_TLS1 | WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_1 |
                 WINHTTP_FLAG_SECURE_PROTOCOL_TLS1_2;
   if (!WinHttpSetOption(ses, WINHTTP_OPTION_SECURE_PROTOCOLS, &proto, sizeof proto) && !warned++)
-    say("\nAviso: WinHTTP no aceptó habilitar TLS 1.2 (error %lu). En Windows 7 SP1 instalá KB3140245.\n",
+    say(tr("\nWarning: WinHTTP refused to enable TLS 1.2 (error %lu). On Windows 7 SP1, install KB3140245.\n"),
         (unsigned long)GetLastError());
 }
 
@@ -126,7 +127,7 @@ static int read_body(HINTERNET h, const Req *r, int ok, Buf *b) {
     if (!WinHttpReadData(h, chunk, sizeof chunk, &got)) return 0;
     if (!got) return 1;
     if ((total += got) > r->max) {
-      if (!quiet) say("\nLa respuesta supera %lu bytes; se descartó.\n", (unsigned long)r->max);
+      if (!quiet) say(tr("\nThe response is over %lu bytes; it was discarded.\n"), (unsigned long)r->max);
       SetLastError(0);
       return 0;
     }
@@ -138,7 +139,7 @@ static int read_body(HINTERNET h, const Req *r, int ok, Buf *b) {
 /* One request; redirects are followed. Returns the body (or "" when streamed) on 2xx. */
 static char *request(const Target *t, const Req *r, size_t *out_len) {
   HINTERNET ses = NULL, con = NULL, req = NULL;
-  const char *stage = "abrir sesión";
+  const char *stage = N_("open a session");
   wchar_t *hdr = NULL;
   size_t hdr_bytes = 0;
   DWORD status = 0, sz = sizeof status, len = r->body ? (DWORD)strlen(r->body) : 0, err;
@@ -153,7 +154,7 @@ static char *request(const Target *t, const Req *r, size_t *out_len) {
   enable_tls12(ses);
   if (quiet) WinHttpSetTimeouts(ses, 3000, 3000, 4000, 4000);
   else WinHttpSetTimeouts(ses, 15000, 15000, 30000, 120000);
-  stage = "conectar";
+  stage = N_("connect");
   if (!(con = WinHttpConnect(ses, t->host, t->port, 0))) goto fail;
   if (!(req = WinHttpOpenRequest(con, r->method, t->path, NULL, WINHTTP_NO_REFERER, WINHTTP_DEFAULT_ACCEPT_TYPES,
                                  t->secure ? WINHTTP_FLAG_SECURE : 0)))
@@ -161,11 +162,11 @@ static char *request(const Target *t, const Req *r, size_t *out_len) {
   cancel_watch_http(req); /* Ctrl+C closes it from the console handler thread */
   if (r->api_key || r->body)
     hdr = auth_headers(r->api_key ? r->api_key : "", r->session_header, r->session_id, &hdr_bytes);
-  stage = "enviar";
+  stage = N_("send");
   if (!WinHttpSendRequest(req, hdr ? hdr : WINHTTP_NO_ADDITIONAL_HEADERS, hdr ? (DWORD)-1L : 0,
                           r->body ? (LPVOID)r->body : WINHTTP_NO_REQUEST_DATA, len, len, 0))
     goto fail;
-  stage = "recibir";
+  stage = N_("receive");
   if (!WinHttpReceiveResponse(req, NULL)) goto fail;
   WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, WINHTTP_HEADER_NAME_BY_INDEX,
                       &status, &sz, WINHTTP_NO_HEADER_INDEX);
@@ -179,7 +180,7 @@ static char *request(const Target *t, const Req *r, size_t *out_len) {
     if (b.len > 300) b.p[300] = 0;
     if (*http_status_hint(status) && status < 500) b.len = 0; /* the hint says it; skip the raw JSON */
     if (!quiet)
-      say("\n%s respondió HTTP %lu%s%s%s\n", r->label, (unsigned long)status, http_status_hint(status),
+      say(tr("\n%s answered HTTP %lu%s%s%s\n"), tr(r->label), (unsigned long)status, tr(http_status_hint(status)),
           b.len ? ": " : "", b.len ? b.p : "");
   }
   goto done;
@@ -187,7 +188,8 @@ static char *request(const Target *t, const Req *r, size_t *out_len) {
 fail:
   last_error = err = GetLastError();
   if (err && !quiet && !cancel_requested())
-    say("\nNo se pudo contactar %s (%s): error %lu, %s.\n", r->label, stage, (unsigned long)err, winhttp_hint(err));
+    say(tr("\nCould not reach %s (%s): error %lu, %s.\n"), tr(r->label), tr(stage), (unsigned long)err,
+        tr(winhttp_hint(err)));
 done:
   free(b.p);
   if (hdr) {
@@ -207,7 +209,7 @@ int http_post_stream(const Provider *p, const char *body, const char *api_key, c
   char *out;
   last_status = last_error = 0;
   if (!crack(p->url, &t)) {
-    say("\nURL del proveedor inválida: %s\n", p->url);
+    say(tr("\nInvalid provider URL: %s\n"), p->url);
     return 0;
   }
   memset(&r, 0, sizeof r);
@@ -230,11 +232,11 @@ char *http_get(const char *url, const char *api_key, size_t max, size_t *len) {
   Req r;
   last_status = last_error = 0;
   if (!crack(url, &t)) {
-    say("\nURL inválida: %s\n", url);
+    say(tr("\nInvalid URL: %s\n"), url);
     return NULL;
   }
   memset(&r, 0, sizeof r);
-  r.label = t.secure ? "el servidor" : "el servidor (http)";
+  r.label = t.secure ? N_("the server") : N_("the server (http)");
   r.method = L"GET";
   r.api_key = api_key && *api_key ? api_key : NULL;
   r.max = max;
@@ -248,7 +250,7 @@ char *http_post_json(const char *url, const char *body, int quiet_mode, size_t m
   last_status = last_error = 0;
   if (!crack(url, &t)) return NULL;
   memset(&r, 0, sizeof r);
-  r.label = "el servidor de reportes";
+  r.label = N_("the report server");
   r.method = L"POST";
   r.body = body;
   r.max = max;

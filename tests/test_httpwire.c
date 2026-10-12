@@ -90,7 +90,7 @@ static void test_malformed(void) {
   CHECK(parse(big, 4096, &r) == HTTPWIRE_BAD); /* head over 32 KB */
   httpwire_free(&r);
   free(big);
-  CHECK(!strcmp(http_status_hint(429), " (límite de uso; esperá y reintentá)") && !strcmp(http_status_hint(200), ""));
+  CHECK(!strcmp(http_status_hint(429), " (usage limit; wait and try again)") && !strcmp(http_status_hint(200), ""));
 }
 
 int main(void) {

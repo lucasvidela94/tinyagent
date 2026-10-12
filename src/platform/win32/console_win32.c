@@ -6,13 +6,14 @@
 #include <string.h>
 
 #include "console.h"
+#include "i18n.h"
 #include "util.h"
 
 #ifndef TMPF_TRUETYPE
 #define TMPF_TRUETYPE 0x04 /* wingdi.h, excluded by WIN32_LEAN_AND_MEAN */
 #endif
 
-const char CONSOLE_PASTE_HINT[] = "clic derecho para pegar"; /* Ctrl+V does nothing in the Win7 console */
+const char CONSOLE_PASTE_HINT[] = N_("right-click to paste"); /* Ctrl+V does nothing in the Win7 console */
 
 static HANDLE con_in, con_out;
 static int in_is_console, out_is_console, raster_font = 1;

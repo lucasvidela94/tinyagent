@@ -147,7 +147,8 @@ static void test_is_yes(void) {
   CHECK(!is_yes("sin"));
   CHECK(!is_yes("salir"));
   CHECK(!is_yes("seguro que no"));
-  CHECK(!is_yes("yes"));
+  CHECK(is_yes("y") && is_yes("Yes")); /* the English interface asks [y/N] */
+  CHECK(!is_yes("yess") && !is_yes("yes please"));
 }
 
 static void test_history(void) {

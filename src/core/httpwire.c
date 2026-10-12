@@ -6,6 +6,7 @@
 #include <string.h>
 
 #include "config.h"
+#include "i18n.h"
 
 #define MAX_HEAD (32 * 1024)
 #define MAX_SIZE_LINE 256
@@ -168,9 +169,9 @@ int httpwire_eof(const HttpwireResp *r) {
 }
 
 const char *http_status_hint(unsigned long status) {
-  if (status == 401 || status == 403) return " (API key inválida o sin acceso al modelo)";
-  if (status == 404) return " (no encontrado; ¿hay un release publicado?)";
-  if (status == 429) return " (límite de uso; esperá y reintentá)";
-  if (status >= 500) return " (problema del proveedor; reintentá más tarde)";
+  if (status == 401 || status == 403) return N_(" (invalid API key or no access to the model)");
+  if (status == 404) return N_(" (not found; is there a published release?)");
+  if (status == 429) return N_(" (usage limit; wait and try again)");
+  if (status >= 500) return N_(" (provider problem; try again later)");
   return "";
 }

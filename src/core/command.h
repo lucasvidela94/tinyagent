@@ -6,8 +6,9 @@
 #include <stddef.h>
 
 /* text: the command's output as UTF-8 (NUL bytes already replaced). Returns it, or
- * "(sin salida)", followed by a truncation note if `dropped` bytes were cut, and then
- * either the Ctrl+C note, the timeout note or "[exit=N]". Caller frees. */
+ * "(no output)", followed by a truncation note if `dropped` bytes were cut, and then either
+ * the Ctrl+C note, the timeout note or "[exit=N]": trailing "[...]" lines, in the interface
+ * language (tr()). Caller frees. */
 char *command_result(const char *text, size_t dropped, int timed_out, int cancelled, unsigned long code);
 
 #endif

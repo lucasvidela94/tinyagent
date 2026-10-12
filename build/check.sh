@@ -9,6 +9,7 @@ bash build/checks/banned.sh "${SRC[@]}"
 bash build/checks/size.sh "${SRC[@]}" tests/*.c tests/fuzz/*.c
 bash build/checks/includes.sh "${SRC[@]}"
 bash build/checks/docs.sh
+bash build/checks/i18n.sh
 ./build/test-core.sh
 if command -v uv >/dev/null 2>&1 || python3 -c 'import pyte' 2>/dev/null; then
   ./build/tui-test.sh

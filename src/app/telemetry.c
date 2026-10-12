@@ -6,6 +6,7 @@
 #include "config.h"
 #include "console.h"
 #include "http.h"
+#include "i18n.h"
 #include "machine.h"
 #include "report.h"
 #include "settings.h"
@@ -32,9 +33,9 @@ void telemetry_init(void) {
   /* Beta default: on while 0.x unless the user turned it off. */
   enabled = settings_get("telemetry", "enabled", v, sizeof v) ? atoi(v) != 0 : TINYSHELL_VERSION[0] == '0';
   if (enabled && !settings_get("telemetry", "noticed", v, sizeof v)) {
-    tui_note("Beta: TinyShell envía datos técnicos de uso y errores (versión, sistema, modelo, códigos de\n"
-             "error; nunca lo que escribís ni los comandos). Ver: tinyshell telemetria --ver ·\n"
-             "apagar: tinyshell telemetria off");
+    tui_note(tr("Beta: TinyShell sends technical usage and error data (version, OS, model, error codes;\n"
+                "never what you type or the commands). See it: tinyshell telemetry --show \xc2\xb7\n"
+                "turn it off: tinyshell telemetry off"));
     settings_set("telemetry", "noticed", "1");
   }
 }
@@ -91,8 +92,8 @@ void telemetry_error(const char *kind, const char *code, const char *stage) {
 static void show_log(void) {
   Buf path = {0};
   char *tail = sys_data_path("telemetria.log", &path) ? sys_read_file(path.p, 4095, NULL) : NULL;
-  if (tail) say("Últimos eventos enviados (completo en %s):\n%s", path.p, tail);
-  else say("Todavía no se envió nada.\n");
+  if (tail) say(tr("Last events sent (all of them in %s):\n%s"), path.p, tail);
+  else say("%s", tr("Nothing has been sent yet.\n"));
   free(tail);
   free(path.p);
 }
@@ -102,15 +103,15 @@ int telemetry_command(const char *arg) {
     int on = !strcmp(arg, "on");
     settings_set("telemetry", "enabled", on ? "1" : "0");
     settings_set("telemetry", "noticed", "1");
-    say(on ? "Telemetría activada. Gracias.\n" : "Telemetría desactivada.\n");
+    say("%s", on ? tr("Telemetry on. Thanks.\n") : tr("Telemetry off.\n"));
     return 0;
   }
-  if (arg && !strcmp(arg, "--ver")) {
+  if (arg && (!strcmp(arg, "--show") || !strcmp(arg, "--ver"))) { /* --ver: earlier Spanish name */
     show_log();
     return 0;
   }
   telemetry_init();
-  say("Telemetría: %s · id de instalación %s\nUso: tinyshell telemetria on | off | --ver\n",
-      enabled ? "activada" : "desactivada", install_id);
+  say(tr("Telemetry: %s \xc2\xb7 installation id %s\nUsage: tinyshell telemetry on | off | --show\n"),
+      enabled ? tr("on") : tr("off"), install_id);
   return 0;
 }

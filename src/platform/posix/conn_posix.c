@@ -19,6 +19,7 @@
 #include "cancel.h"
 #include "cancel_posix.h"
 #include "conn_posix.h"
+#include "i18n.h"
 
 struct Conn {
   int fd, tls, timeout_ms, err;
@@ -212,13 +213,13 @@ void conn_close(Conn *c) {
 
 const char *conn_hint(int error) {
   switch (error) {
-  case CONN_DNS: return "no se resolvió el servidor (DNS o sin red)";
-  case CONN_CONNECT: return "no se pudo conectar (red, proxy o firewall)";
-  case CONN_TIMEOUT: return "tiempo de espera agotado";
-  case CONN_CERT_DATE: return "certificado fuera de fecha: revisá la fecha y hora del equipo (date)";
-  case CONN_CERT_UNTRUSTED: return "certificado no confiable (¿un proxy que intercepta HTTPS?)";
-  case CONN_CERT_NAME: return "el certificado no coincide con el servidor (¿un proxy que intercepta?)";
-  case CONN_TLS: return "falló TLS al negociar la conexión segura";
-  default: return "la conexión se cortó";
+  case CONN_DNS: return N_("the server name did not resolve (DNS or no network)");
+  case CONN_CONNECT: return N_("could not connect (network, proxy or firewall)");
+  case CONN_TIMEOUT: return N_("timed out");
+  case CONN_CERT_DATE: return N_("certificate out of date: check this computer's date and time (date)");
+  case CONN_CERT_UNTRUSTED: return N_("untrusted certificate (a proxy intercepting HTTPS?)");
+  case CONN_CERT_NAME: return N_("the certificate does not match the server (an intercepting proxy?)");
+  case CONN_TLS: return N_("TLS failed while negotiating the secure connection");
+  default: return N_("the connection dropped");
   }
 }

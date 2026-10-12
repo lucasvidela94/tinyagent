@@ -31,7 +31,7 @@ int main(void) {
   CHECK(!settings_get("telemetry", "noticed", v, sizeof v) && v[0] == 0);
   sys_data_path("config.ini", &cfg);
   text = sys_read_file(cfg.p, 65536, NULL);
-  CHECK(text && strstr(text, "; Ejemplos:") != NULL); /* the user's comments survive edits */
+  CHECK(text && strstr(text, "; Examples:") != NULL); /* the user's comments survive edits */
   free(text);
   sys_write_file(cfg.p, "[provider]\nmodel = con espacio\n", 31, 0); /* invalid value: default kept */
   settings_load(&p);

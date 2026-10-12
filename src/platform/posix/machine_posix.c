@@ -91,3 +91,11 @@ void system_details(Buf *b) {
 }
 
 const Dialect *system_dialect(void) { return &DIALECT_SH; }
+
+/* The messages locale, as gettext programs use it. */
+const char *system_language(void) {
+  const char *v = getenv("LC_ALL");
+  if (!v || !*v) v = getenv("LC_MESSAGES");
+  if (!v || !*v) v = getenv("LANG");
+  return v ? v : "";
+}

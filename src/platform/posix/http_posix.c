@@ -12,6 +12,7 @@
 #include "console.h"
 #include "http.h"
 #include "httpwire.h"
+#include "i18n.h"
 #include "url.h"
 #include "util.h"
 
@@ -52,7 +53,7 @@ static void on_body(void *ctx, const char *data, size_t n) {
 static void fail(const Req *r, const char *stage, int error) {
   last_error = (unsigned long)error;
   if (!r->quiet && !cancel_requested())
-    say("\nNo se pudo contactar %s (%s): %s.\n", r->label, stage, conn_hint(error));
+    say(tr("\nCould not reach %s (%s): %s.\n"), tr(r->label), tr(stage), tr(conn_hint(error)));
 }
 
 /* One exchange. Returns 1 when a full response arrived (any status); x holds it. */
@@ -62,14 +63,14 @@ static int exchange(const Url *u, const Req *r, Rx *x) {
   int error = CONN_OK, st = HTTPWIRE_MORE;
   Conn *c = conn_open(u, r->quiet ? 4000 : 30000, &error);
   if (!c) {
-    fail(r, "conectar", error);
+    fail(r, N_("connect"), error);
     return 0;
   }
   httpwire_request(&out, r->method, u, r->api_key, r->session_header, r->session_id, r->body);
   if (!conn_write(c, out.p, out.len)) {
     wipe(out.p, out.len); /* holds the API key */
     free(out.p);
-    fail(r, "enviar", conn_error(c));
+    fail(r, N_("send"), conn_error(c));
     conn_close(c);
     return 0;
   }
@@ -82,7 +83,7 @@ static int exchange(const Url *u, const Req *r, Rx *x) {
     else break;
   }
   if (st != HTTPWIRE_DONE) {
-    fail(r, "recibir", st == HTTPWIRE_BAD ? CONN_IO : conn_error(c));
+    fail(r, N_("receive"), st == HTTPWIRE_BAD ? CONN_IO : conn_error(c));
     conn_close(c);
     return 0;
   }
@@ -97,7 +98,7 @@ static char *request(const char *url, const Req *orig, size_t *out_len) {
   int hops;
   last_status = last_error = 0;
   if (!url_parse(url, &u)) {
-    if (!r->quiet) say("\nURL inválida: %s\n", url);
+    if (!r->quiet) say(tr("\nInvalid URL: %s\n"), url);
     return NULL;
   }
   for (hops = 0; hops <= MAX_REDIRECTS; hops++) {
@@ -119,7 +120,7 @@ static char *request(const char *url, const Req *orig, size_t *out_len) {
       char host[sizeof u.host];
       memcpy(host, u.host, sizeof host);
       if (!url_parse(x.resp.location, &u) || (https && !u.https)) { /* never downgrade to http */
-        if (!r->quiet) say("\nRedirección inválida desde %s.\n", r->label);
+        if (!r->quiet) say(tr("\nInvalid redirect from %s.\n"), tr(r->label));
         httpwire_free(&x.resp);
         free(x.body.p);
         return NULL;
@@ -131,21 +132,21 @@ static char *request(const char *url, const Req *orig, size_t *out_len) {
     }
     ok = status >= 200 && status < 300;
     if (x.overflow) {
-      if (!r->quiet) say("\nLa respuesta supera %lu bytes; se descartó.\n", (unsigned long)r->max);
+      if (!r->quiet) say(tr("\nThe response is over %lu bytes; it was discarded.\n"), (unsigned long)r->max);
     } else if (ok) {
       if (out_len) *out_len = x.body.len;
       out = x.body.p ? buf_take(&x.body) : xstrdup("");
     } else if (!r->quiet) {
       if (x.body.len > 300) x.body.p[300] = 0;
       if (*http_status_hint((unsigned long)status) && status < 500) x.body.len = 0; /* the hint says it */
-      say("\n%s respondió HTTP %d%s%s%s\n", r->label, status, http_status_hint((unsigned long)status),
+      say(tr("\n%s answered HTTP %d%s%s%s\n"), tr(r->label), status, tr(http_status_hint((unsigned long)status)),
           x.body.len ? ": " : "", x.body.len ? x.body.p : "");
     }
     httpwire_free(&x.resp);
     free(x.body.p);
     return out;
   }
-  if (!r->quiet) say("\nDemasiadas redirecciones desde %s.\n", r->label);
+  if (!r->quiet) say(tr("\nToo many redirects from %s.\n"), tr(r->label));
   return NULL;
 }
 
@@ -171,7 +172,7 @@ int http_post_stream(const Provider *p, const char *body, const char *api_key, c
 char *http_get(const char *url, const char *api_key, size_t max, size_t *len) {
   Req r;
   memset(&r, 0, sizeof r);
-  r.label = strncmp(url, "https://", 8) ? "el servidor (http)" : "el servidor";
+  r.label = strncmp(url, "https://", 8) ? N_("the server (http)") : N_("the server");
   r.method = "GET";
   r.api_key = api_key;
   r.max = max;
@@ -181,7 +182,7 @@ char *http_get(const char *url, const char *api_key, size_t max, size_t *len) {
 char *http_post_json(const char *url, const char *body, int quiet, size_t max) {
   Req r;
   memset(&r, 0, sizeof r);
-  r.label = "el servidor de reportes";
+  r.label = N_("the report server");
   r.method = "POST";
   r.body = body;
   r.max = max;

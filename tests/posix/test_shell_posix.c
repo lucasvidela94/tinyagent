@@ -44,14 +44,14 @@ static void test_output_and_exit(void) {
   free(out);
   CHECK(has(run_command("echo err >&2; exit 3"), "err\n\n[exit=3]")); /* stderr merged */
   out = run_command("cat"); /* stdin is empty: returns at once */
-  CHECK(out && !strcmp(out, "(sin salida)\n[exit=0]"));
+  CHECK(out && !strcmp(out, "(no output)\n[exit=0]"));
   free(out);
   CHECK(has(run_command("kill -9 $$"), "[exit=137]")); /* killed by a signal: 128 + 9 */
 }
 
 static void test_truncation(void) {
   char *out = run_command("head -c 100000 /dev/zero | tr '\\0' a");
-  CHECK(out && strstr(out, "[salida truncada: ") && strspn(out, "a") == MAX_OUTPUT);
+  CHECK(out && strstr(out, "[output truncated: ") && strspn(out, "a") == MAX_OUTPUT);
   free(out);
 }
 
@@ -59,7 +59,7 @@ static void test_timeout_kills_the_tree(void) {
   unsigned long t0 = sys_ms();
   char *out = run_command("sleep 30 & echo $!; wait");
   pid_t grandchild = out ? (pid_t)atol(out) : 0;
-  CHECK(out && strstr(out, "[tiempo agotado"));
+  CHECK(out && strstr(out, "[timed out"));
   CHECK(sys_ms() - t0 < 4000);
   CHECK(grandchild > 0 && !alive(grandchild));
   free(out);
@@ -86,7 +86,7 @@ static void test_ctrl_c(void) {
   }
   t0 = sys_ms();
   out = run_command("sleep 30");
-  CHECK(out && strstr(out, "[cancelado por el usuario con Ctrl+C]"));
+  CHECK(out && strstr(out, "[cancelled by the user with Ctrl+C]"));
   CHECK(sys_ms() - t0 < 1500);
   CHECK(cancel_requested());
   CHECK(!cancel_take_input_interrupt()); /* it stopped the command, not a prompt */

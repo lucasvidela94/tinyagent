@@ -66,3 +66,6 @@ void system_details(Buf *b) {
 }
 
 const Dialect *system_dialect(void) { return &DIALECT_CMD; }
+
+/* The display language of Windows itself (what menus are in), not the regional format. */
+const char *system_language(void) { return PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_SPANISH ? "es" : "en"; }

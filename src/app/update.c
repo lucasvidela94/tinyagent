@@ -1,9 +1,11 @@
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "config.h"
 #include "console.h"
 #include "http.h"
+#include "i18n.h"
 #include "policy.h"
 #include "shell.h"
 #include "sys.h"
@@ -34,13 +36,14 @@ static void paths_free(Paths *p) {
  * on this system (libraries, CRT) and reports a version that is covered by the signature. */
 static int self_test(const char *fresh, char *ver, size_t cap) {
   Buf cmd = {0};
-  char *out;
+  char *out, exit0[64];
   int ok;
   buf_str(&cmd, "\"");
   buf_str(&cmd, fresh);
   buf_str(&cmd, "\" --version");
   out = run_command(cmd.p);
-  ok = version_from_output(out, ver, cap) && strstr(out, "[exit=0]") != NULL;
+  snprintf(exit0, sizeof exit0, tr("[exit=%lu]"), 0ul); /* command_result's note, in the interface language */
+  ok = version_from_output(out, ver, cap) && strstr(out, exit0) != NULL;
   free(out);
   free(cmd.p);
   return ok;
@@ -52,7 +55,7 @@ static int fetch_latest(char *latest, size_t cap) {
   if (!v) return 0;
   trim_line(v);
   if (strlen(v) + 1 > cap || version_compare(v, TINYSHELL_VERSION) == VERSION_INVALID) {
-    say("version.txt del release es inválido.\n");
+    say("%s", tr("The release's version.txt is invalid.\n"));
     free(v);
     return 0;
   }
@@ -81,19 +84,19 @@ static int stage(const Paths *p, const char *latest) {
   int ok = 0;
   if (!exe || !sig) goto done;
   sha256_hex((const unsigned char *)exe, exe_len, hex);
-  say("Descargado: %lu bytes, SHA-256 %s\n", (unsigned long)exe_len, hex);
+  say(tr("Downloaded: %lu bytes, SHA-256 %s\n"), (unsigned long)exe_len, hex);
   if (!signature_valid((const unsigned char *)exe, exe_len, (const unsigned char *)sig, sig_len)) {
-    say("FIRMA INVÁLIDA: el binario no viene de la clave de releases. No se instaló nada.\n");
+    say("%s", tr("INVALID SIGNATURE: the binary is not from the release key. Nothing was installed.\n"));
     goto done;
   }
-  say("Firma verificada.\n");
+  say("%s", tr("Signature verified.\n"));
   if (!sys_write_file(p->fresh.p, exe, exe_len, SYS_EXECUTABLE)) {
-    say("No se pudo escribir el binario nuevo (¿carpeta sin permiso de escritura?).\n");
+    say("%s", tr("Could not write the new binary (is the folder read-only?).\n"));
     goto done;
   }
   if (!self_test(p->fresh.p, tested, sizeof tested) || version_compare(tested, latest) != 0 ||
       version_compare(tested, TINYSHELL_VERSION) <= 0) {
-    say("El binario nuevo no pasó la prueba de arranque en este equipo. No se instaló nada.\n");
+    say("%s", tr("The new binary failed the start-up test on this machine. Nothing was installed.\n"));
     sys_remove(p->fresh.p);
     goto done;
   }
@@ -107,12 +110,12 @@ done:
 /* self -> old, fresh -> self; on failure the previous binary is put back. */
 static int swap_in(const Paths *p) {
   if (!sys_rename(p->self.p, p->old.p)) {
-    say("No se pudo apartar el binario actual (error %lu). No se instaló nada.\n", sys_error());
+    say(tr("Could not move the current binary aside (error %lu). Nothing was installed.\n"), sys_error());
     sys_remove(p->fresh.p);
     return 0;
   }
   if (!sys_rename(p->fresh.p, p->self.p)) {
-    say("No se pudo instalar el binario nuevo (error %lu); se restauró el anterior.\n", sys_error());
+    say(tr("Could not install the new binary (error %lu); the previous one was restored.\n"), sys_error());
     sys_rename(p->old.p, p->self.p);
     sys_remove(p->fresh.p);
     return 0;
@@ -123,22 +126,22 @@ static int swap_in(const Paths *p) {
 static int run(Paths *p) {
   char latest[32], answer[64];
   if (!release_key_present()) {
-    say("Este binario no trae la clave pública de releases: no puede verificar actualizaciones.\n");
+    say("%s", tr("This binary has no release public key: it cannot verify updates.\n"));
     return 1;
   }
-  say("TinyShell %s. Buscando actualizaciones...\n", TINYSHELL_VERSION);
+  say(tr("TinyShell %s. Checking for updates...\n"), TINYSHELL_VERSION);
   if (!fetch_latest(latest, sizeof latest)) return 1;
   if (version_compare(latest, TINYSHELL_VERSION) <= 0) {
-    say("Ya tenés la última versión.\n");
+    say("%s", tr("You already have the latest version.\n"));
     return 0;
   }
-  say("Hay una versión nueva: %s. ¿Instalarla? [s/N]: ", latest);
+  say(tr("A new version is available: %s. Install it? [y/N]: "), latest);
   if (read_line(answer, sizeof answer, 1) != LINE_OK || !is_yes(answer)) {
-    say("Cancelado.\n");
+    say("%s", tr("Cancelled.\n"));
     return 1;
   }
   if (!stage(p, latest) || !swap_in(p)) return 1;
-  say("Actualizado a %s. Cerrá y volvé a abrir TinyShell.\nSi algo falla: tinyshell --rollback\n", latest);
+  say(tr("Updated to %s. Close TinyShell and open it again.\nIf something fails: tinyshell --rollback\n"), latest);
   return 0;
 }
 
@@ -146,7 +149,7 @@ int update_run(void) {
   Paths p;
   int r;
   if (!paths_init(&p)) {
-    say("No se pudo ubicar el ejecutable actual.\n");
+    say("%s", tr("Could not locate the current executable.\n"));
     paths_free(&p);
     return 1;
   }
@@ -158,20 +161,20 @@ int update_run(void) {
 /* self -> fresh (temporary), old -> self, fresh -> old: a second rollback rolls forward. */
 static int rollback(const Paths *p) {
   if (!sys_exists(p->old.p)) {
-    say("No hay versión anterior guardada (%s).\n", p->old.p);
+    say(tr("There is no previous version saved (%s).\n"), p->old.p);
     return 1;
   }
   if (!sys_rename(p->self.p, p->fresh.p)) {
-    say("No se pudo apartar el binario actual (error %lu).\n", sys_error());
+    say(tr("Could not move the current binary aside (error %lu).\n"), sys_error());
     return 1;
   }
   if (!sys_rename(p->old.p, p->self.p)) {
-    say("No se pudo restaurar la versión anterior (error %lu).\n", sys_error());
+    say(tr("Could not restore the previous version (error %lu).\n"), sys_error());
     sys_rename(p->fresh.p, p->self.p);
     return 1;
   }
   sys_rename(p->fresh.p, p->old.p);
-  say("Versión anterior restaurada. Cerrá y volvé a abrir TinyShell.\n");
+  say("%s", tr("Previous version restored. Close TinyShell and open it again.\n"));
   return 0;
 }
 
@@ -179,7 +182,7 @@ int update_rollback(void) {
   Paths p;
   int r;
   if (!paths_init(&p)) {
-    say("No se pudo ubicar el ejecutable actual.\n");
+    say("%s", tr("Could not locate the current executable.\n"));
     paths_free(&p);
     return 1;
   }
