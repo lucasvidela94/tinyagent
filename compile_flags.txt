@@ -1,0 +1,8 @@
+-std=c11
+-Isrc
+-Isrc/core
+-Isrc/app
+-Isrc/platform
+-Isrc/platform/posix
+-Isrc/platform/win32
+-D_POSIX_C_SOURCE=200809L

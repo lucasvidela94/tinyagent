@@ -10,7 +10,7 @@ set -euo pipefail
 cd "$(dirname "${BASH_SOURCE[0]}")/../.."
 STD='^(assert|ctype|errno|limits|stdarg|stddef|stdint|stdio|stdlib|string|time|wchar)\.h$' # C99, any layer
 OS_WIN32='^(windows|wincred|wincrypt|winhttp)\.h$'
-OS_POSIX='^(unistd|fcntl|termios|signal|poll|pwd|sys/(stat|types|wait|ioctl|utsname|time|socket))\.h$'
+OS_POSIX='^(unistd|fcntl|termios|signal|poll|pwd|netdb|sys/(stat|types|wait|ioctl|utsname|time|socket)|mbedtls/(ssl|x509_crt|net_sockets|pk|md)|psa/crypto)\.h$' # + vendored Mbed TLS (ADR 0001)
 os_headers() { # the OS headers a file may include: only its own platform's
   case "$1" in src/platform/win32/*) echo "$OS_WIN32" ;; src/platform/posix/*) echo "$OS_POSIX" ;; *) echo '^$' ;; esac
 }

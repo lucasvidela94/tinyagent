@@ -1,5 +1,5 @@
-/* Release authenticity checks with the Windows CryptoAPI (Win32 adapter, no extra code
- * or DLLs beyond advapi32/crypt32, available since XP SP3). */
+/* Release authenticity checks: Windows CryptoAPI (advapi32/crypt32, XP SP3 and later) or,
+ * on Linux, Mbed TLS. */
 #ifndef TINYSHELL_VERIFY_H
 #define TINYSHELL_VERIFY_H
 
