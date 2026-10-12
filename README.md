@@ -96,7 +96,7 @@ Tenés 23 programas al inicio. Los que más pesan son...
 ─────────────────────────────────────────────────────────
 > _
 ─────────────────────────────────────────────────────────
-C:\Users\Pepa · 7.2k in · 0.6k out · 12%      deepseek-v4.1-flash
+C:\Users\Usuario · 7.2k in · 0.6k out · 12%      deepseek-v4.1-flash
 ```
 
 | Command | What it does |
