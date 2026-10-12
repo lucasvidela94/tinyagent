@@ -25,8 +25,18 @@
 
 - [x] Problem reports shown in full before sending (`/report`) and opt-out beta telemetry.
 - [ ] Read-only file inspection with explicit path approval.
+- [ ] `read` tool: bounded file reads (offset/limit, 24 KB cap like shell output), paths approved like commands.
+- [ ] `grep`/`glob` tools: bounded code search over the working tree, same output cap, no recursive scans without approval.
 - [ ] Carefully scoped file edits using before/after diff and backup.
+- [ ] `apply` tool: edits only from a shown unified diff, one file per approval, backup kept next to the file.
 - [ ] Small local project/context file describing the machine and allowed actions.
+- [ ] `/plan` step list: the model states its steps up front, progress shown in the TUI, no extra processes or background agents.
+- [ ] Symbol search without LSP: ctags index plus bounded `grep` (go to definition, find
+  references). Native, KBs of RAM, no language-server processes on the target.
+- [ ] MCP strictly as a stdio client: one server at a time, explicit allowlist, every server
+  tool approved like a command, memory/time caps. Only native/small servers are usable on
+  the target; Node/Python servers stay a capable-machine option behind a flag. Each tool
+  still needs its regression tests and must fit the exe and memory budgets.
 - [x] Endpoint/model configuration with secrets outside config (`config.ini` + Credential
       Manager, `tinyshell login`, `/model`).
 - [x] CI cross-build and checks; signed releases with SHA256SUMS (`build/release.sh`).
@@ -62,3 +72,8 @@
 ## Explicitly out of scope for the low-spec target
 
 - Local model inference, Electron, browser UI, Docker, persistent agents and heavyweight runtimes.
+- Bundled MCP/LSP servers: external servers cost more RAM than the whole binary and break
+  the single-file promise. Allowed only as strict clients (MCP over stdio, ctags instead of
+  LSP) under the P2 conditions above, never as bundled servers.
+- Background agents and subagent trees: the CLI stays synchronous and memory-bounded; `/plan`
+  covers multi-step work without extra processes.
