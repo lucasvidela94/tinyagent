@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
-# Falla ante APIs C nunca aceptables en TinyShell. Sin excepciones con marcador:
-# gets, sprintf (usar snprintf), strtok, system(, popen(, wsprintf, variantes ANSI (A),
-# lstrcpyA/lstrcatA, alloca sin tope.
-# strcpy/strcat/lstrcpyW/lstrcatW NO estan en esta lista: el arbol los usa con
-# guarda de longitud previa verificada (ver credential_win32.c:target,
-# provider.c:copy). Endurecerlos con marcador queda como paso futuro.
+# Fails on C APIs never accepted in TinyShell, with no exception markers: gets, sprintf (use
+# snprintf), strtok, system(, popen(, wsprintf, ANSI (A) variants, lstrcpyA/lstrcatA, alloca.
+# strcpy/strcat/lstrcpyW/lstrcatW are not listed: the tree uses them after a checked length
+# guard (see credential_win32.c:target, provider.c:copy).
 set -euo pipefail
 fail=0
 # Only code counts: strings, chars and comments are blanked in one pass (keeping line

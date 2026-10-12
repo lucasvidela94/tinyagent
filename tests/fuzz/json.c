@@ -4,7 +4,7 @@
 
 #include "json.h"
 
-/* libFuzzer entry: parser JSON con entrada remota. Sin salida ante basura. */
+/* libFuzzer entry: the JSON parser reads remote input; garbage must never crash it. */
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
   if (size > 65536) return 0;
   char *tmp = malloc(size + 1);

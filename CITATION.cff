@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+title: TinyShell
+message: Si usás TinyShell en tu trabajo, citalo así.
+type: software
+authors:
+  - given-names: Lucas
+    family-names: Videla
+    email: lucasan.videla@gmail.com
+repository-code: https://github.com/lucasvidela94/tinyagent
+homepage: https://tinyshell.lucasan-videla.workers.dev
+license: MIT
+version: 0.7.0
+date-released: 2026-10-11
+keywords:
+  - terminal-agent
+  - windows-7
+  - win32
+  - c
+  - llm-agent
+  - opencode

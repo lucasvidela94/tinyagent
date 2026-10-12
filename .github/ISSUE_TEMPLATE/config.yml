@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Pregunta de uso
+    url: https://github.com/lucasvidela94/tinyagent/discussions
+    about: Dudas, ayuda con instalación o configuración.
+  - name: Problema de seguridad
+    url: mailto:lucasan.videla@gmail.com
+    about: Vulnerabilidades. No abrir issue público, ver SECURITY.md.

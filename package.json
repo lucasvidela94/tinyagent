@@ -1,7 +1,7 @@
 {
   "name": "tinyshell-dev",
   "private": true,
-  "description": "Solo herramientas de desarrollo (hooks de git). TinyShell no usa Node en runtime.",
+  "description": "Development tooling only (git hooks). TinyShell does not use Node at run time.",
   "scripts": {
     "prepare": "husky",
     "check": "bash build/check.sh"

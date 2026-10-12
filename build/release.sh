@@ -8,22 +8,22 @@ set -euo pipefail
 # Before running: set TINYSHELL_VERSION in src/config.h and add a "## X.Y.Z" CHANGELOG entry.
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
-VERSION="${1:?uso: build/release.sh X.Y.Z [--dry-run]}"
+VERSION="${1:?usage: build/release.sh X.Y.Z [--dry-run]}"
 DRY="${2:-}"
 KEY="${TINYSHELL_SIGNING_KEY:-$HOME/.config/tinyshell/release-signing-key.pem}"
 die() { echo "release: $*" >&2; exit 1; }
 
-[[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "versión inválida: $VERSION"
-grep -q "#define TINYSHELL_VERSION \"$VERSION\"" src/config.h || die "src/config.h no dice TINYSHELL_VERSION \"$VERSION\""
-grep -q "^## $VERSION" CHANGELOG.md || die "falta la entrada '## $VERSION' en CHANGELOG.md"
-[[ -f "$KEY" ]] || die "no encuentro la clave privada $KEY (build/gen-signing-key.sh)"
-grep -q "RELEASE_PUBLIC_KEY_LEN 0" src/release_key.h && die "src/release_key.h es el placeholder"
+[[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || die "invalid version: $VERSION"
+grep -q "#define TINYSHELL_VERSION \"$VERSION\"" src/config.h || die "src/config.h does not say TINYSHELL_VERSION \"$VERSION\""
+grep -q "^## $VERSION" CHANGELOG.md || die "CHANGELOG.md has no '## $VERSION' entry"
+[[ -f "$KEY" ]] || die "private key $KEY not found (build/gen-signing-key.sh)"
+grep -q "RELEASE_PUBLIC_KEY_LEN 0" src/release_key.h && die "src/release_key.h is still the placeholder"
 diff -q <(openssl pkey -in "$KEY" -pubout) keys/release-public.pem >/dev/null ||
-  die "la clave privada no corresponde a keys/release-public.pem"
+  die "the private key does not match keys/release-public.pem"
 if [[ "$DRY" != --dry-run ]]; then
-  [[ "$(git branch --show-current)" == main ]] || die "publicá desde main"
-  [[ -z "$(git status --porcelain)" ]] || die "hay cambios sin commitear"
-  git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null && die "el tag v$VERSION ya existe"
+  [[ "$(git branch --show-current)" == main ]] || die "release from main"
+  [[ -z "$(git status --porcelain)" ]] || die "there are uncommitted changes"
+  git rev-parse -q --verify "refs/tags/v$VERSION" >/dev/null && die "tag v$VERSION already exists"
 fi
 
 ./build/test-core.sh
@@ -37,7 +37,7 @@ openssl dgst -sha256 -verify keys/release-public.pem -signature "$DIST/tinyshell
 (cd "$DIST" && sha256sum tinyshell.exe tinyshell.exe.sig install.bat version.txt >SHA256SUMS)
 cat "$DIST/SHA256SUMS"
 if [[ "$DRY" == --dry-run ]]; then
-  echo "Dry run: artefactos en $DIST (no se publicó nada)."
+  echo "Dry run: artifacts in $DIST (nothing was published)."
   exit 0
 fi
 
@@ -45,5 +45,5 @@ NOTES="$(awk -v v="## $VERSION" 'index($0, v) == 1 {on = 1; next} /^## / {on = 0
 git tag -a "v$VERSION" -m "TinyShell $VERSION"
 git push origin main "v$VERSION"
 gh release create "v$VERSION" "$DIST"/* --title "TinyShell $VERSION" \
-  --notes "$NOTES"$'\n\n'"SHA-256 de tinyshell.exe: \`$(cut -d' ' -f1 <"$DIST/SHA256SUMS" | head -1)\`"
-echo "Publicado v$VERSION."
+  --notes "$NOTES"$'\n\n'"SHA-256 of tinyshell.exe: \`$(cut -d' ' -f1 <"$DIST/SHA256SUMS" | head -1)\`"
+echo "Published v$VERSION."

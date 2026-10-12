@@ -2,117 +2,130 @@
 
 ## Architectural style
 
-**Single-process, synchronous CLI / thin remote-agent harness.** C nativo + WinHTTP + `cmd.exe`. No servidor local, daemon, DB, framework ni runtime administrado. El proveedor remoto genera propuestas; el ejecutable es el mediador local que pide permiso y ejecuta el comando.
+**Single-process, synchronous CLI / thin remote-agent harness.** Native C with the system's
+HTTP stack (WinHTTP on Windows; Mbed TLS, statically linked, on Linux) and the system shell
+(`cmd.exe` or `/bin/sh`). No local server, daemon, database, framework or managed runtime.
+The remote provider proposes; the executable is the local mediator that asks for approval and
+runs the command.
 
 ```text
-Persona
-  │ texto en español / confirmación local
+Person
+  │ request in any language / local approval
   ▼
-CLI (main)
-  ├── historial de mensajes JSON
-  ├── cliente HTTP(S) WinHTTP ───────────► API compatible con OpenAI (config.ini)
-  │                                         por defecto OpenCode Go / deepseek-v4.1-flash
-  │◄──────────────── respuesta JSON / tool call
-  ├── parser JSON mínimo
-  ├── control local de aprobación
-  └── ejecutor cmd.exe (CreateProcessW + pipe, stdin = NUL, timeout)
-           │ stdout/stderr + exit code
-           └──────────────────────────────► historial / siguiente turno
+CLI (src/app/main.c)
+  ├── message history (JSON)
+  ├── HTTP(S) client ───────────────────► OpenAI-compatible API (config.ini)
+  │                                        default: OpenCode Go / deepseek-v4.1-flash
+  │◄──────────────── streamed answer / tool call
+  ├── small JSON tokenizer + SSE parser
+  ├── local approval gate
+  └── shell runner (cmd.exe or /bin/sh, stdin empty, timeout)
+           │ output + exit code
+           └──────────────────────────────► history / next turn
 ```
 
 ## Source map
 
-`src/` está ordenado por capas (rutas en `build/sources.sh`; decisión en
+`src/` is layered (paths in `build/sources.sh`; the decision is
 `docs/adr/0001-linux-port-platform-seam.md`):
 
 ```
-src/config.h, release_key.h   constantes de build
-src/core/                     portable, testeado en el host (build/test-core.sh)
-src/app/                      el programa: sesión, TUI, login, reportes, main
-src/platform/                 el seam de plataforma: un .h por servicio del sistema
-src/platform/win32/           adaptadores Windows
-src/platform/posix/           adaptadores Linux (en curso: sys, consola, shell y Ctrl+C listos)
+src/config.h, release_key.h   build-time constants
+src/core/                     portable, host-tested (build/test-core.sh)
+src/app/                      the program: session, TUI, login, reports, update, main
+src/platform/                 the platform seam: one header per OS service
+src/platform/win32/           Windows adapters
+src/platform/posix/           Linux adapters (static i586 binary: build/build-linux-musl.sh)
 ```
 
-Regla de dependencias, verificada en cada commit por `build/checks/includes.sh`:
-`core` solo incluye `core` y `config.h`; `platform/*.h` incluye `core`; `app` incluye
-`core`, `app` y `platform`, nunca un adaptador; un adaptador incluye `core`, `platform` y
-su propia carpeta, nunca `app` ni otra plataforma. Los `#include` no llevan rutas.
+Dependency rule, checked on every commit by `build/checks/includes.sh`: `core` includes only
+`core` and `config.h`; `platform/*.h` include `core`; `app` includes `core`, `app` and
+`platform`, never an adapter; an adapter includes `core`, `platform` and its own folder, never
+`app` or another platform. OS headers are allowed only in their own adapters. `#include`s
+carry no paths.
 
-Un módulo por archivo, cada uno con una interfaz chica en su `.h`. Regla de mantenimiento: ningún archivo pasa de ~300 líneas (objetivo ~200); si crece, se divide por una interfaz real, no por tamaño.
+One module per file, each with a small header. No file grows past ~300 lines (aim for ~200);
+a growing file is split along a real interface, not by size.
 
-| Módulo | Interfaz | Responsabilidad | Plataforma |
-|---|---|---|---|
-| `src/config.h` | constantes | endpoint, modelo, límites (`MAX_HTTP`, `MAX_HISTORY`, `MAX_OUTPUT`, `MAX_COMMAND`, `CMD_TIMEOUT_MS`…) | — |
-| `src/core/util.c` | `Buf`, `utf8_valid`, `jesc` | buffers, validación UTF-8, escape JSON (bytes inválidos → `\ufffd`) | portable |
-| `src/core/json.c` | `json_parse/key/index/str` | tokenizer acotado (profundidad, tokens), `\uXXXX` → UTF-8 | portable |
-| `src/core/conversation.c` | `History`, `build_request`, `ToolCall` | historial con recorte por intercambios completos, body de la request, extracción de tool calls | portable |
-| `src/core/provider.c` | `provider_defaults`, `provider_set` | proveedor (nombre, URL, modelo, header de sesión), valores por defecto y validación de `config.ini` | portable |
-| `src/core/report.c` | `errlog_*`, `redact`, `report_json`, `event_json` | errores recientes, limpieza de keys y datos personales, cuerpos para el relay | portable |
-| `src/core/stream.c` | `stream_feed`, `stream_response` | streaming SSE: texto en vivo, une los pedazos de tool calls, rearma la respuesta normal | portable |
-| `src/core/version.c` | `version_compare`, `version_from_output` | versiones X.Y.Z y salida de `--version` para el updater | portable |
-| `src/core/charset.c` | `charset_encode`, `charset_decode`, `charset_from_locale` | texto para terminales que no son UTF-8 (`LANG=C` o Latin-1 en distros viejas) | portable |
-| `src/core/command.c` | `command_result` | el texto con que vuelve al modelo el resultado de un comando, igual en todas las plataformas | portable |
-| `src/core/dialect.h`, `dialect_cmd.c`, `dialect_sh.c` | `DIALECT_CMD`, `DIALECT_SH` | lo que depende del shell, como datos: reglas de riesgo y guía del prompt para `cmd.exe` y `/bin/sh` | portable |
-| `src/core/instructions.c` | `instructions` | instrucciones agnósticas de tarea del prompt, con las partes del dialecto | portable |
-| `src/core/policy.c` | `command_problem`, `risk_reason`, `is_yes` | rechazo previo, heurística de riesgo, respuesta de aprobación | portable |
-| `src/platform/win32/console_win32.c` | `say`, `read_line`, `console_*` | E/S de consola UTF-16 (sin cambiar code page), líneas largas rechazadas; colores, ancho, cursor, borrar filas, vaciar entrada | Win32 |
-| `src/platform/win32/settings_win32.c` | `settings_load`, `settings_save_model` | `%LOCALAPPDATA%\TinyShell\config.ini` (`GetPrivateProfileStringW`), plantilla comentada en el primer arranque | Win32 |
-| `src/app/tui.c` | `tui_prompt`, `tui_user`, `tui_proposal`, `tui_output`… | TUI mínima en línea: bloque del usuario, propuesta, resumen de salida, editor entre reglas, footer; modo plano si no hay consola | portable |
-| `src/platform/win32/console_input_win32.c` | `read_line`, `read_secret`, `read_key` | entrada: líneas, keys con `*`, teclas para menús | Win32 |
-| `src/app/tui_select.c` | `tui_select` | menú con flechas, filtro tipeando y ventana de 10 filas | portable |
-| `src/app/login.c` | `login_run`, `login_pick_model` | `tinyshell login`: proveedor, key (validada con `/models`), modelo de la lista en vivo | portable |
-| `src/app/reporter.c` | `reporter_run` | `/reporte`: arma, guarda en `.txt`, muestra y envía el informe | portable |
-| `src/app/telemetry.c` | `telemetry_init/event/error` | telemetría de la beta: aviso, `telemetria on/off/--ver`, registro local de lo enviado | portable |
-| `src/platform/win32/cancel_win32.c` | `cancel_*` | Ctrl+C: cierra el pedido HTTP o mata el comando desde el hilo del handler, con handles protegidos; corta la lectura pendiente | Win32 |
-| `src/platform/win32/credential_win32.c` | `credential_load/save/delete` | API key opcional en el Administrador de credenciales (DPAPI por usuario) | Win32 |
-| `src/app/session.c` | `session_send` | historial, gate de aprobación (`decide`), bucle de turnos, conteo de tokens | portable |
-| `src/platform/win32/sys_win32.c` | `sys_random`, `sys_ms`, `sys_data_path`, `sys_read_file`, `sys_rename`… | primitivas del sistema con rutas UTF-8: random, reloj, carpeta actual, carpeta de datos (`%LOCALAPPDATA%\TinyShell`), archivos, identidad, ruta propia y renombrar un binario en uso | Win32 |
-| `src/platform/win32/http_win32.c` | `http_post_stream`, `http_get`, `http_post_json` | WinHTTP sobre cualquier URL http(s) (`WinHttpCrackUrl`), TLS 1.2 explícito, errores legibles, cuerpo acotado; GET de releases solo por HTTPS | Win32 |
-| `src/platform/win32/shell_win32.c` | `run_command` | `cmd.exe /d /s /c` vía `CreateProcessW`, job + timeout, salida OEM → UTF-8 | Win32 |
-| `src/platform/posix/sys_posix.c` | igual que `sys_win32` | `/dev/urandom`, `CLOCK_MONOTONIC`, `~/.config/tinyshell` (0700), archivos 0600, `/proc/self/exe` | POSIX |
-| `src/platform/posix/console_posix.c`, `console_input_posix.c` | igual que `console_win32` | escapes ANSI, posición del cursor con `ESC[6n`, termios (modo canónico para líneas, carácter a carácter para claves y menús), charset del locale | POSIX |
-| `src/platform/posix/shell_posix.c` | `run_command` | `/bin/sh -c` en su propio grupo de procesos; timeout y Ctrl+C matan el grupo | POSIX |
-| `src/platform/posix/cancel_posix.c` | `cancel_*` | SIGINT sin `SA_RESTART` (corta la lectura pendiente), SIGPIPE ignorado | POSIX |
-| `src/platform/win32/machine_win32.c` | `system_os`, `system_details`, `system_dialect` | equipo detectado al arrancar (versión de Windows, arquitectura, RAM, CPUs, carpeta actual) y el dialecto `cmd` | Win32 |
-| `src/platform/win32/verify_win32.c` | `signature_valid`, `sha256_hex` | firma RSA-3072/SHA-256 de releases con la CryptoAPI; clave pública en `src/release_key.h` | Win32 |
-| `src/app/update.c` | `update_run`, `update_rollback` | `--update`: version.txt → descarga → firma → self-test → swap con el hermano `.old` (`version_sibling`); `--rollback`. Usa `sys` para ruta propia, renombrar y el asset del release | portable |
-| `src/app/main.c` | `main` | subcomandos (`login`, `logout`) y flags (`--version/--update/--rollback`), API key, bucle de chat y comandos `/` | Win32 |
+### Core (portable, host-tested)
 
-Los módulos portables no incluyen `<windows.h>` y se prueban en el host con `build/test-core.sh` (`tests/`). Los adapters Win32 tienen un solo adapter cada uno: el seam es el `.h`, no hay capa de abstracción extra.
+| Module | Interface | Responsibility |
+|---|---|---|
+| `src/config.h` | constants | endpoint, model, limits (`MAX_HTTP`, `MAX_HISTORY`, `MAX_OUTPUT`, `MAX_COMMAND`, `CMD_TIMEOUT_MS`…) |
+| `src/core/util.c` | `Buf`, `utf8_valid`, `jesc`, `wipe` | buffers, UTF-8 checks, JSON escaping (invalid bytes become `�`), wiping secrets |
+| `src/core/json.c` | `json_parse/key/index/str` | bounded tokenizer (depth, tokens), `\uXXXX` to UTF-8; fuzzed |
+| `src/core/stream.c` | `stream_feed`, `stream_response` | SSE streaming: live text, joins tool-call pieces, rebuilds the plain response; fuzzed |
+| `src/core/conversation.c` | `History`, `build_request`, `ToolCall` | history trimmed by whole exchanges, request body with the shell tool (per dialect), tool-call extraction |
+| `src/core/policy.c` | `command_problem`, `risk_reason`, `is_yes` | pre-approval refusals, risk heuristic per dialect, approval answers |
+| `src/core/dialect.h`, `dialect_cmd.c`, `dialect_sh.c` | `DIALECT_CMD`, `DIALECT_SH` | what depends on the shell, as data: risk rules and prompt guidance for `cmd.exe` and `/bin/sh` |
+| `src/core/instructions.c` | `instructions` | the task-agnostic prompt instructions, with the dialect's parts |
+| `src/core/command.c` | `command_result` | the text a command result goes back to the model as, the same on every platform |
+| `src/core/provider.c` | `provider_defaults`, `provider_set` | provider (name, URL, model, session header), defaults and `config.ini` validation |
+| `src/core/report.c` | `errlog_*`, `redact`, `report_json`, `event_json` | recent errors, redaction of keys and personal data, relay payloads |
+| `src/core/version.c` | `version_compare`, `version_from_output`, `version_sibling` | X.Y.Z versions, `--version` output, the updater's `.new`/`.old` file names |
+| `src/core/charset.c` | `charset_encode`, `charset_decode`, `charset_from_locale` | text for terminals that are not UTF-8 (`LANG=C` or Latin-1 on old distros) |
+| `src/core/url.c`, `httpwire.c` | `url_parse`, `httpwire_*`, `http_status_hint` | URLs and HTTP/1.1 (request, incremental response, chunked) for Linux; fuzzed |
+| `src/core/ini.c`, `credfile.c` | `ini_get/set`, `credfile_get/set` | `config.ini` editing and the API key file, for Linux |
 
-Otros archivos:
+### App (portable, built on the platform interfaces)
 
-- `build/build-linux-mingw.sh`: cross-compile Linux → Windows x86, enlaza `msvcrt.dll` (no UCRT).
-- `build/build-windows-msvc.bat`: build desde Developer Command Prompt de MSVC.
-- `build/test-core.sh`: tests de los módulos portables (ASan/UBSan si están disponibles).
-- `build/gen-signing-key.sh`: crea una vez el par de claves de releases (privada fuera del repo).
-- `build/release.sh`: tests, build, firma, tag y `gh release create` (`--dry-run` disponible).
-- `relay/`: Cloudflare Worker + D1 que recibe reportes (issue público con resumen + informe completo privado) y telemetría.
-- `scripts/install.bat`: instalador publicado en cada release (curl/bitsadmin o copia local por USB).
-- `scripts/collect-diagnostics.bat`: diagnóstico local separado; no necesita API.
-- `docs/`: decisiones, operación, seguridad, pruebas y hoja de ruta.
+| Module | Interface | Responsibility |
+|---|---|---|
+| `src/app/main.c` | `main` | subcommands (`login`, `logout`, `reporte`, `telemetria`), flags (`--version/--update/--rollback`), API key, chat loop and `/` commands |
+| `src/app/session.c` | `session_send` | system prompt, history, approval gate (`decide`), turn loop, token counts |
+| `src/app/tui.c`, `tui_select.c` | `tui_*`, `tui_select` | minimal inline TUI: user block, proposal, output summary, editor between rules, footer; arrow-key menu with filtering; plain mode without a console |
+| `src/app/login.c` | `login_run`, `login_pick_model` | `tinyshell login`: provider, key (checked against `/models`), model from the live list |
+| `src/app/reporter.c` | `reporter_run` | `/reporte`: builds, saves, shows and sends the report |
+| `src/app/telemetry.c` | `telemetry_init/event/error` | beta telemetry: notice, `telemetria on/off/--ver`, local log of what was sent |
+| `src/app/update.c` | `update_run`, `update_rollback` | `--update`: version.txt, download, signature, self-test, swap with the `.old` sibling; `--rollback` |
+
+### Platform adapters
+
+Each header in `src/platform/` has a Windows and a Linux adapter.
+
+| Service | Windows (`src/platform/win32/`) | Linux (`src/platform/posix/`) |
+|---|---|---|
+| `sys` | `sys_win32.c`: CryptoAPI random, `GetTickCount`, `%LOCALAPPDATA%\TinyShell`, UTF-16 paths, renaming a running exe | `sys_posix.c`: `/dev/urandom`, `CLOCK_MONOTONIC`, `~/.config/tinyshell` (0700), files 0600, `/proc/self/exe` |
+| `console`, `console_input` | `console_win32.c`, `console_input_win32.c`: UTF-16 console API without changing the code page, raster-font glyph fitting | `console_posix.c`, `console_input_posix.c`: ANSI escapes, cursor row via `ESC[6n`, termios, locale charset |
+| `shell` | `shell_win32.c`: `cmd.exe /d /s /c` via `CreateProcessW`, job object, OEM output to UTF-8 | `shell_posix.c`: `/bin/sh -c` in its own process group; timeout and Ctrl+C kill the group |
+| `cancel` | `cancel_win32.c`: console handler closes the request or kills the job; guarded handles | `cancel_posix.c`: SIGINT without `SA_RESTART`, SIGPIPE ignored |
+| `http` | `http_win32.c`: WinHTTP, TLS 1.2 requested explicitly, readable errors | `conn_posix.c` + `http_posix.c`: TCP with timeouts, Mbed TLS with system plus embedded Mozilla roots (`ca_bundle.c`), redirects never to http and never carrying the key to another host |
+| `credential` | `credential_win32.c`: Credential Manager (DPAPI) | `credential_posix.c`: `~/.config/tinyshell/credentials`, 0600, written atomically |
+| `settings` | `settings_win32.c`: `GetPrivateProfileStringW` | `settings_posix.c`: `core/ini` |
+| `machine` | `machine_win32.c`: `RtlGetVersion`, RAM, CPUs; the `cmd` dialect | `machine_posix.c`: os-release/lsb-release/issue, kernel, `/proc/meminfo`; the `sh` dialect |
+| `verify` | `verify_win32.c`: RSA-3072/SHA-256 with the CryptoAPI | `verify_posix.c`: Mbed TLS |
+
+Other files:
+
+- `build/build-linux-mingw.sh`: Linux-to-Windows x86 cross-build with LTO; links `msvcrt.dll`, not the UCRT.
+- `build/build-windows-msvc.bat`: build from the MSVC Developer Command Prompt.
+- `build/build-linux-musl.sh`: static i586 Linux binary in the pinned `build/linux/Dockerfile` image; rejects post-i586 instructions.
+- `build/test-core.sh`, `build/tui-test.sh`, `build/fuzz.sh`, `build/check.sh`: host tests (POSIX adapters included on Linux), the TUI in a pty, fuzzing, every check.
+- `build/gen-signing-key.sh`, `build/release.sh`: release key pair (private key outside the repo) and signed releases.
+- `relay/`: Cloudflare Worker + D1 that receives reports (public issue with a summary, private full report) and telemetry.
+- `scripts/install.bat`: installer published with each release (curl, bitsadmin or a USB copy).
+- `scripts/collect-diagnostics.bat`: separate local diagnostics; needs no API.
 
 ## Data flow
 
-1. La persona escribe un objetivo.
-2. El programa añade el mensaje al historial y lo envía por HTTPS.
-3. El modelo puede devolver una respuesta normal o una llamada a `shell`.
-4. Si devuelve `shell`, el programa muestra comando y motivo.
-5. Si se rechaza, devuelve al modelo que el usuario lo rechazó; si se aprueba, ejecuta mediante `cmd.exe`.
-6. El resultado vuelve como mensaje de herramienta y el modelo puede continuar, dentro de un límite de 25 pasos por mensaje (`MAX_TURNS`).
-7. Antes de cada request se recorta el historial a ~192 KB descartando intercambios completos (nunca separa un `tool_calls` de sus resultados).
+1. The person writes a goal.
+2. The program adds it to the history and sends it over HTTPS.
+3. The model streams a normal answer or a call to `shell`.
+4. For `shell`, the program shows the command and the reason.
+5. A rejection goes back to the model as such; an approved command runs in the platform shell.
+6. The result goes back as a tool message and the model may continue, up to 25 steps per message (`MAX_TURNS`).
+7. Before each request the history is trimmed to ~192 KB by dropping whole exchanges (a `tool_calls` message is never separated from its results).
 
 ## Constraints / design choices
 
-- Arquitectura objetivo: x86 de 32 bits; compilar con `i686-w64-mingw32-gcc` o toolchain x86 de MSVC.
-- HTTP: WinHTTP del sistema, TLS/certificados dependen de la instalación de Windows 7.
-- JSON: parser embebido pequeño, sin dependencia externa; debe considerarse código sensible y probarse contra respuestas inesperadas.
-- Ejecución: `cmd.exe /d /s /c` vía `CreateProcessW`; no es un sandbox y el quoting de comandos tiene límites.
-- Memoria: respuesta ≤ 1 MB (`MAX_HTTP`), historial ~192 KB (`MAX_HISTORY`, blando: el último intercambio siempre se conserva), salida de comando ≤ 24 KB (`MAX_OUTPUT`), comando ≤ 2000 bytes (`MAX_COMMAND`), JSON ≤ 20 000 tokens (`MAX_TOKENS`) y 64 niveles (`MAX_DEPTH`), comandos con límite de 180 s (`CMD_TIMEOUT_MS`).
-- Texto: todo es UTF-8 internamente; la consola usa la API UTF-16 y la salida de comandos se convierte desde el code page OEM.
+- Targets: 32-bit x86. Windows from XP-era APIs up (tested target: Windows 7 SP1); Linux from i586 CPUs, any libc.
+- HTTP: WinHTTP on Windows, so TLS and certificates depend on the Windows 7 installation; Mbed TLS 4.1 LTS on Linux, with its own roots, so an old distro's expired bundle does not matter (TLS 1.2 is requested explicitly on Windows).
+- JSON: small embedded tokenizer, no external dependency; treated as sensitive code, tested and fuzzed against unexpected responses.
+- Execution: the platform shell in its own job or process group; not a sandbox, and command quoting has limits.
+- Memory: response ≤ 1 MB (`MAX_HTTP`), history ~192 KB (`MAX_HISTORY`, soft: the last exchange is always kept), command output ≤ 24 KB (`MAX_OUTPUT`), command ≤ 2000 bytes (`MAX_COMMAND`), JSON ≤ 20 000 tokens (`MAX_TOKENS`) and 64 levels (`MAX_DEPTH`), commands stopped after 180 s (`CMD_TIMEOUT_MS`).
+- Text: UTF-8 internally; the Windows console uses the UTF-16 API and command output is converted from the OEM code page; on Linux, output to non-UTF-8 terminals goes through `core/charset`.
 
 ## Future changes
 
-- No separar en microservicios ni agregar runtimes: la máquina destino debe seguir siendo simple.
-- Un segundo adapter (p. ej. una herramienta de solo lectura de archivos) recién justifica generalizar el despacho de herramientas en `main.c`; con una sola herramienta, no.
+- No microservices or extra runtimes: the target machines must stay simple.
+- A second tool (for example read-only file access) is what would justify generalizing tool dispatch; with one tool, it is not worth it.

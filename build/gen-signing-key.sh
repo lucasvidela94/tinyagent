@@ -10,13 +10,13 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 KEY="${TINYSHELL_SIGNING_KEY:-$HOME/.config/tinyshell/release-signing-key.pem}"
 if [[ -e "$KEY" ]]; then
-  echo "Ya existe $KEY; no la sobrescribo. Para regenerar solo el lado público:" >&2
+  echo "$KEY already exists; not overwriting it. To regenerate only the public half:" >&2
   echo "  REGEN_PUBLIC=1 $0" >&2
   [[ "${REGEN_PUBLIC:-}" == 1 ]] || exit 1
 else
   mkdir -p "$(dirname "$KEY")"
   (umask 077 && openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 -out "$KEY" 2>/dev/null)
-  echo "Clave privada: $KEY (hacé un backup offline)"
+  echo "Private key: $KEY (keep an offline backup)"
 fi
 mkdir -p keys
 openssl pkey -in "$KEY" -pubout -out keys/release-public.pem
@@ -34,4 +34,4 @@ openssl pkey -in "$KEY" -pubout -out keys/release-public.pem
   echo
   echo "#endif"
 } >src/release_key.h
-echo "Clave pública: keys/release-public.pem y src/release_key.h (commitealas)."
+echo "Public key: keys/release-public.pem and src/release_key.h (commit both)."

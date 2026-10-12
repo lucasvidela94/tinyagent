@@ -1,29 +1,29 @@
-# Glosario
+# Glossary
 
-Términos del dominio de TinyShell. El código y los docs usan estos nombres.
+TinyShell's domain terms. Code and docs use these names.
 
-- **Sesión** (`Session`): una conversación con el modelo: historial, proveedor, API key,
-  contadores e ID de sesión.
-- **Proveedor** (`Provider`): un endpoint compatible con OpenAI chat completions (nombre,
-  URL, modelo y header de sesión). OpenCode Go es el preset por defecto.
-- **Turno**: un ida y vuelta con el modelo. Un mensaje del usuario puede llevar hasta
-  `MAX_TURNS` turnos.
-- **Propuesta**: un comando que el modelo pide ejecutar con la herramienta `shell`, con su
-  motivo. El modelo solo propone.
-- **Aprobación**: la confirmación local escrita (`s` + Enter, y `EJECUTAR` si hay riesgo) sin
-  la cual no se ejecuta nada.
-- **Riesgo**: el motivo local (`risk_reason`) por el que un comando pide la confirmación
-  fuerte. Lo decide el código, no el prompt.
-- **Dialecto de shell**: lo que depende del shell de la plataforma: reglas de riesgo y guía
-  del prompt (`cmd.exe` en Windows, `/bin/sh` en Linux).
-- **Núcleo**: los módulos portables de `src/`, testeados en el host.
-- **Seam de plataforma**: los headers de `src/` que cada plataforma implementa
-  (`console`, `http`, `shell`, `credential`, `settings`, `cancel`, `sys`, `verify`).
-- **Adaptador de plataforma**: la implementación de esos headers para una plataforma
-  (`src/win32/`, `src/posix/`).
-- **Release**: binario firmado con la clave RSA de releases, más `version.txt`, la firma y
-  `SHA256SUMS`. `--update` solo instala lo que verifica y pasa el self-test.
-- **Reporte**: lo que manda `/reporte`: el resumen público redactado (issue en GitHub) y el
-  informe completo privado (D1).
-- **Evento**: telemetría de la beta: solo metadatos, nunca lo que el usuario escribe.
-- **Relay**: el Worker de Cloudflare que recibe reportes y eventos.
+- **Session** (`Session`): one conversation with the model: history, provider, API key,
+  counters and session ID.
+- **Provider** (`Provider`): an OpenAI-compatible chat-completions endpoint (name, URL, model
+  and session header). OpenCode Go is the default preset.
+- **Turn**: one round trip with the model. A user message may take up to `MAX_TURNS` turns.
+- **Proposal**: a command the model asks to run through the `shell` tool, with its reason.
+  The model only proposes.
+- **Approval**: the typed local confirmation (`s` + Enter, plus `EJECUTAR` when risky)
+  without which nothing runs.
+- **Risk**: the local reason (`risk_reason`) a command needs the strong confirmation. Code
+  decides it, not the prompt.
+- **Shell dialect** (`Dialect`): what depends on the platform's shell: risk rules, prompt
+  guidance and the tool description (`cmd.exe` on Windows, `/bin/sh` on Linux).
+- **Core**: the portable modules in `src/core/`, tested on the host.
+- **Platform seam**: the headers in `src/platform/` that each platform implements (`sys`,
+  `console`, `console_input`, `http`, `shell`, `credential`, `settings`, `cancel`, `machine`,
+  `verify`).
+- **Platform adapter**: the implementation of those headers for one platform
+  (`src/platform/win32/`, `src/platform/posix/`).
+- **Release**: a binary signed with the RSA release key, plus `version.txt`, the signature and
+  `SHA256SUMS`. `--update` installs only what verifies and passes the self-test.
+- **Report**: what `/reporte` sends: the redacted public summary (a GitHub issue) and the
+  private full report (D1).
+- **Event**: beta telemetry: metadata only, never what the user types.
+- **Relay**: the Cloudflare Worker that receives reports and events.

@@ -4,12 +4,12 @@
 
 #include "stream.h"
 
-/* libFuzzer entry: chunks SSE partidos en cualquier punto, incluso UTF-8. */
+/* libFuzzer entry: SSE chunks split anywhere, UTF-8 sequences included. */
 int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
   if (size > 65536) return 0;
   Stream st;
   stream_init(&st);
-  /* alimenta de a trozos impares para simular TCP fragmentado */
+  /* feed odd-sized pieces, like a fragmented TCP stream */
   size_t off = 0;
   while (off < size) {
     size_t n = (off * 7 % 13) + 1;

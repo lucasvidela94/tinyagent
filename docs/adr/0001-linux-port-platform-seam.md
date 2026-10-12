@@ -1,90 +1,95 @@
-# ADR 0001: port a Linux con un seam de plataforma
+# ADR 0001: Linux port through a platform seam
 
-Estado: aceptado (2026-10-11). Preguntas abiertas al final.
+Status: accepted (2026-10-11).
 
-## Contexto
+## Context
 
-TinyShell existe para revivir PCs viejas, primero las más viejas. Muchas de ellas corren
-distros Linux de 32 bits, no Windows. Hoy todo el código del sistema es Win32 y los
-archivos `*_win32.c` mezclan dos cosas:
+TinyShell exists to revive old PCs, the oldest first. Many of them run 32-bit Linux distros,
+not Windows. All the system code was Win32, and the `*_win32.c` files mixed two things:
 
-- adaptadores de verdad (consola, WinHTTP, CreateProcess, Credential Manager, config.ini,
-  Ctrl+C, CryptoAPI);
-- lógica portable con nombre de Windows: `tui`, `tui_select` y `login` no usan Win32;
-  `session` y `main` solo usan reloj, random y carpeta actual; `update` mezcla el flujo
-  (versión, firma, self-test, swap) con el renombrado de archivos.
+- real adapters (console, WinHTTP, CreateProcess, Credential Manager, config.ini, Ctrl+C,
+  CryptoAPI);
+- portable logic with a Windows name: `tui`, `tui_select` and `login` made no Win32 calls;
+  `session` and `main` only used the clock, random bytes and the current directory; `update`
+  mixed the flow (version, signature, self-test, swap) with file renaming.
 
-También hay primitivas repetidas en varios módulos (random, reloj, leer/escribir archivos,
-carpeta actual, nombre de PC y usuario) e interfaces que dejan ver Windows
-(`settings_file(wchar_t *)`, `http_last_error()` "código WinHTTP",
+Primitives were also repeated across modules (random, clock, reading and writing files,
+current directory, host and user names), and some interfaces exposed Windows
+(`settings_file(wchar_t *)`, `http_last_error()` as "WinHTTP code",
 `cancel_watch_process(job, process)`).
 
-## Decisión
+## Decision
 
-Un **seam de plataforma** con dos adaptadores: Win32 (el actual) y POSIX. Con Linux el
-seam deja de ser hipotético: hay dos adaptadores reales.
+A **platform seam** with two adapters, Win32 and POSIX. With Linux the seam stops being
+hypothetical: there are two real adapters.
 
 ```
-src/core/             portable, testeado en el host
-src/app/              el programa (sesión, TUI, login, reportes, main)
-src/platform/         las interfaces del seam (una sola definición)
-src/platform/win32/   adaptadores Windows
-src/platform/posix/   adaptadores Linux
-vendor/               librería TLS (solo posix)
+src/core/             portable, host-tested
+src/app/              the program (session, TUI, login, reports, update, main)
+src/platform/         the seam's interfaces (one definition)
+src/platform/win32/   Windows adapters
+src/platform/posix/   Linux adapters
+build/linux/          toolchain image (GCC + musl for i586 + Mbed TLS, pinned versions and SHAs)
 ```
 
-La regla de dependencias entre capas la verifica `build/checks/includes.sh`.
+`build/checks/includes.sh` enforces the dependency rule between layers.
 
-- Sin `#ifdef` de plataforma en el núcleo: cada script de build elige su carpeta.
-- `sys.h` (nuevo): random, reloj monótono, carpeta actual, carpeta de datos, archivos con
-  rutas UTF-8, nombre de PC y usuario. Junta las primitivas repetidas.
-- **Dialecto de shell** como datos: reglas de riesgo de `policy` y guía de shell del prompt,
-  una tabla para `cmd.exe` y otra para `/bin/sh`. Son datos puros: los tests prueban los dos
-  en el host.
-- `update` portable: el flujo se escribe una vez; la plataforma aporta su ruta, renombrar y
-  ejecutarse con `--version`.
-- `cancel.h` público queda en `init`, `requested`, `reset` y `take_input_interrupt`; vigilar
-  un request o un proceso es privado de cada plataforma.
+- No platform `#ifdef` in portable code: each build script picks its folder.
+- `sys.h`: random, monotonic clock, current directory, data folder, files with UTF-8 paths,
+  host and user names, and what the updater needs. It gathers the repeated primitives.
+- **Shell dialect** as data: `policy`'s risk rules, the prompt's shell guidance and the tool
+  description, one table for `cmd.exe` and one for `/bin/sh`. Pure data, so tests cover both
+  on the host.
+- A portable `update`: the flow is written once; the platform supplies its path, renaming and
+  running itself with `--version`.
+- The public `cancel.h` keeps `init`, `requested`, `reset` and `take_input_interrupt`;
+  watching a request or a process is private to each platform.
 
 Linux:
 
-- Binario **estático de 32 bits** con musl, CPU base **i586 sin SSE2** (Pentium, Pentium
-  II/III, Athlon XP, K6-2 y posteriores). No depende de la glibc ni del OpenSSL de la distro.
-  La musl de Alpine x86 está compilada para Pentium M con SSE2, así que no sirve: el
-  toolchain sale de musl-cross-make con versiones fijas (`build/linux/Dockerfile`).
-- **TLS empaquetado: Mbed TLS 4.1 LTS** (soporte hasta 2029-03). Trae RSA y SHA-256, así que
-  también verifica la firma de los updates. Certificados: primero el bundle del sistema,
-  después uno de Mozilla embebido que se renueva en cada release (las distros viejas
-  traen certificados vencidos).
-- Terminal con termios y escapes ANSI, glifos ASCII-safe. Shell con `fork`/`exec` de
-  `/bin/sh -c` en su propio grupo de procesos (timeout y Ctrl+C matan el árbol).
-- Config en `~/.config/tinyshell/`, binario en `~/.local/bin`, `install.sh` para curl/wget.
+- A **static 32-bit** binary with musl, CPU floor **i586 without SSE2** (Pentium, Pentium
+  II/III, Athlon XP, K6-2 and later). It depends on neither the distro's glibc nor its
+  OpenSSL. Alpine's x86 musl is built for the Pentium M with SSE2, so it does not fit: the
+  toolchain comes from musl-cross-make with pinned versions (`build/linux/Dockerfile`), and
+  every build fails if post-i586 instructions appear outside Mbed TLS's cpuid-guarded AES-NI
+  code.
+- **Bundled TLS: Mbed TLS 4.1 LTS** (supported until 2029-03), built in the toolchain image
+  from the official tarball checked by SHA-256 (not copied into the repo). It brings RSA and
+  SHA-256, so it also verifies update signatures. Certificates: the system bundle plus
+  Mozilla's, embedded (`src/platform/posix/ca_bundle.c`, generated by
+  `build/linux/update-ca-bundle.sh` and refreshed each release), because old distros ship
+  expired roots.
+- Terminal through termios and ANSI escapes, ASCII-safe glyphs, text converted for non-UTF-8
+  locales. The shell is `fork`/`exec` of `/bin/sh -c` in its own process group (timeout and
+  Ctrl+C kill the tree).
+- Config in `~/.config/tinyshell/`, binary in `~/.local/bin`, an `install.sh` for curl/wget.
 
-## Orden
+## Order
 
-1. Paso 0, solo Windows y sin cambiar comportamiento: renombrar los módulos mal
-   etiquetados, `sys.h`, limpiar las interfaces que dejan ver Windows, dialecto de shell,
-   `update` portable y ordenar `src/` por capas. Mismo binario, mismos tests.
-2. Adaptadores posix: sys, consola, shell y cancel; después HTTP con TLS; al final
-   credenciales y update.
-3. Release dual (`tinyshell.exe` y `tinyshell-linux-i386`, firmados) y sitio.
+1. Step 0, Windows only and without behavior changes: rename the mislabeled modules, add
+   `sys.h`, clean the interfaces that expose Windows, make `update` portable and layer
+   `src/`. Same binary, same tests.
+2. POSIX adapters: sys, console, shell and cancel; then HTTP with TLS; then credentials,
+   settings, machine and signature verification.
+3. A dual release (`tinyshell.exe` and `tinyshell-linux-i386`, both signed) and the site.
 
-## Alternativas descartadas
+## Rejected alternatives
 
-- **TLS del sistema** (OpenSSL dinámico o libcurl): en las distros viejas es 0.9.8/1.0.1, con
-  ABI distinta por distro y certificados vencidos.
-- **BearSSL**: más chico y auditable, pero sigue en beta y su último release es 0.6 (2018).
-- **`#ifdef _WIN32` dentro de cada módulo**: mezcla las dos plataformas en cada archivo y
-  rompe la locality.
+- **The system's TLS** (dynamic OpenSSL or libcurl): 0.9.8/1.0.1 on old distros, a different
+  ABI per distro, and expired certificates.
+- **BearSSL**: smaller and more auditable, but still labeled beta, and its last release is
+  0.6 (2018).
+- **`#ifdef _WIN32` inside each module**: mixes both platforms in every file and breaks
+  locality.
 
-## Decisiones posteriores (2026-10-11)
+## Later decisions (2026-10-11)
 
-- **API key en Linux:** archivo `~/.config/tinyshell/credentials`, permisos `0600`, con el
-  mismo opt-in que en Windows; `tinyshell logout` lo borra. Las distros viejas no tienen un
-  llavero común (libsecret necesita DBus y un escritorio).
-- **Piso de hardware:** i586 sin SSE2 (ver arriba).
+- **API key on Linux:** the file `~/.config/tinyshell/credentials`, mode `0600`, with the
+  same opt-in as on Windows; `tinyshell logout` deletes it. Old distros have no common
+  keyring (libsecret needs D-Bus and a desktop).
+- **Hardware floor:** i586 without SSE2 (above).
 
-## Pendiente
+## Pending
 
-- Distros concretas para probar. Docker prueba userlands viejos, no kernels viejos: eso pide
-  QEMU o la PC real.
+- Which old distros to test on. Docker covers old userlands, not old kernels: those need QEMU
+  or the real PC.

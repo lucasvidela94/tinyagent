@@ -2,33 +2,33 @@
 
 ## Goal
 
-Proveer un agente de terminal pequeño y de propósito general (idea similar a OpenCode o Pi) para PCs viejas con Windows: diagnosticar, inspeccionar archivos, escribir scripts, mantenimiento o responder preguntas sobre la máquina. El modelo razona remotamente; la máquina vieja solo mantiene la consola, realiza HTTPS y ejecuta comandos que el usuario aprueba. El equipo de prueba principal es Windows 7 x86.
+A small, general-purpose terminal agent (in the spirit of OpenCode or Pi) for old PCs, Windows or Linux: diagnosing problems, inspecting files, writing scripts, maintenance, or answering questions about the machine. The model reasons remotely; the old machine only keeps the console, speaks HTTPS and runs the commands the user approves. The main test machine runs Windows 7 x86.
 
 ## Goals
 
-1. Ejecutable Win32/x86 compatible con el equipo objetivo, con consumo local bajo.
-2. No depender de Node.js, Go, Python, una base de datos ni un servicio en segundo plano al ejecutar el binario.
-3. Hablar con cualquier API compatible con OpenAI chat completions, configurable en `config.ini` (por defecto OpenCode Go con `deepseek-v4.1-flash`).
-4. Mostrar comando exacto y motivo antes de ejecutarlo.
-5. Inspeccionar primero; cambios solo después de una aprobación consciente.
-6. Entregar salida y código de retorno al modelo para iterar sobre evidencia real.
-7. Mantener el proyecto fácil de compilar, inspeccionar y modificar.
-8. Mantener el system prompt agnóstico de tarea y de equipo: la máquina se detecta al arrancar.
+1. One 32-bit executable per platform that runs on the target machines with low local resource use (Windows: PE32 linking only system DLLs; Linux: static i586 binary).
+2. No Node.js, Go, Python, database or background service needed to run the binary.
+3. Talk to any OpenAI-compatible chat-completions API, configured in `config.ini` (default: OpenCode Go with `deepseek-v4.1-flash`).
+4. Show the exact command and its reason before running it.
+5. Inspect first; changes only after a deliberate approval.
+6. Give the output and exit code back to the model so it iterates on real evidence.
+7. Keep the project easy to build, inspect and change.
+8. Keep the system prompt task- and machine-agnostic: the machine is detected at startup.
 
-## Non-goals (por ahora)
+## Non-goals (for now)
 
-- Ejecutar tareas sin supervisión o elevar privilegios automáticamente.
-- Sustituir un antivirus, herramienta de recuperación, técnico o copia de seguridad.
-- Ejecutar un LLM local en 2 GB de RAM.
-- Ser un clon completo de Pi/OpenCode: no hay navegación de codebase, edición integrada, git tools, MCP, shell persistente o planificación avanzada.
-- Garantizar reparación correcta en todos los casos.
+- Running tasks unattended or elevating privileges automatically.
+- Replacing an antivirus, a recovery tool, a technician or a backup.
+- Running an LLM locally on 2 GB of RAM.
+- Being a full Pi/OpenCode clone: no codebase navigation, built-in editing, git tools, MCP, persistent shell or advanced planning.
+- Guaranteeing a correct repair in every case.
 
 ## Definition of done for the first usable build
 
-- Compila como PE32 x86 y se identifica como 32 bits.
-- Arranca en Windows 7 SP1 x86 sin instalar runtimes adicionales.
-- Una petición de diagnóstico inocua completa la ida y vuelta con la API.
-- La respuesta puede proponer una herramienta; rechazarla evita toda ejecución.
-- Aprobar un comando de solo lectura devuelve stdout/stderr y el resultado al modelo.
-- Clave API no escrita a disco ni impresa en logs.
-- Casos de error de red/API se muestran sin cerrar inesperadamente el programa.
+- Builds as PE32 x86 and identifies as 32-bit.
+- Starts on Windows 7 SP1 x86 without installing extra runtimes.
+- A harmless diagnostic request completes the round trip with the API.
+- The answer can propose a tool call; rejecting it prevents any execution.
+- Approving a read-only command returns its output and result to the model.
+- The API key is never written to disk unasked or printed in logs.
+- Network and API errors are shown without the program closing unexpectedly.

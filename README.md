@@ -1,15 +1,28 @@
 # TinyShell
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/lucasvidela94/tinyagent)](https://github.com/lucasvidela94/tinyagent/releases/latest)
+[![CI](https://github.com/lucasvidela94/tinyagent/actions/workflows/ci.yml/badge.svg)](https://github.com/lucasvidela94/tinyagent/actions/workflows/ci.yml)
+[![Windows 7+ 32-bit](https://img.shields.io/badge/Windows-7%2B%2032--bit-blue)](docs/PC_PROFILE.md)
+[![Single exe ~70 KB](https://img.shields.io/badge/exe-%7E70KB-lightgrey)](docs/ARCHITECTURE.md)
+
 Agente de terminal de propósito general (en la línea de OpenCode o Pi) para **PCs viejas con Windows y pocos recursos**: diagnosticar problemas, inspeccionar archivos, escribir scripts, hacer mantenimiento o responder preguntas sobre la máquina.
 
 - Un solo `.exe` de 32 bits en C (~70 KB). Sin Node, Python, .NET, servicios ni base de datos.
-- El modelo corre remoto, en cualquier API compatible con OpenAI (por defecto OpenCode Go con `deepseek-v4.1-flash`); la PC solo mantiene la consola, habla HTTPS y ejecuta comandos.
+- El modelo corre remoto, en cualquier API compatible con OpenAI (por defecto OpenCode Go); la PC solo mantiene la consola, habla HTTPS y ejecuta comandos.
 - **Cada comando lo aprobás vos** antes de que se ejecute. Los riesgosos piden además escribir `EJECUTAR`.
 - Equipo de prueba principal: Noblex NT1013E, Windows 7 SP1 32 bits, Atom N2600, 2 GB RAM.
 
 Sitio y descargas: **https://tinyshell.lucasan-videla.workers.dev**
 
 > **Estado:** prototipo. Compila y pasa los tests en Linux, pero todavía **no se probó en el equipo Windows 7 real**. Ver [`docs/TEST_PLAN.md`](docs/TEST_PLAN.md).
+
+## Contenido
+
+- [Instalar](#instalar) · [Usar](#usar) · [Proveedor y modelo](#proveedor-y-modelo)
+- [Reportar un problema](#reportar-un-problema) · [Actualizar y volver atrás](#actualizar-y-volver-atrás)
+- [Seguridad](#seguridad-en-corto) · [Compilar desde el código](#compilar-desde-el-código) · [Documentación](#documentación)
+- [Cómo contribuir](#cómo-contribuir) · [Soporte](#soporte) · [Licencia](#licencia)
 
 ## Instalar
 
@@ -157,7 +170,7 @@ Si algo sale muy mal, volver a correr el instalador (o el USB) siempre deja una 
 - No lo ejecutes como administrador para tareas de rutina.
 - Lo que escribís y la salida de los comandos se envían al proveedor del modelo.
 
-Detalle completo en [`docs/SECURITY.md`](docs/SECURITY.md).
+Vulnerabilidades: escribí a lucasan.videla@gmail.com, no abras issue público. Detalle en [`SECURITY.md`](SECURITY.md) y [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ## Compilar desde el código
 
@@ -167,7 +180,8 @@ En Linux con MinGW-w64 (`sudo apt install mingw-w64` / `sudo pacman -S mingw-w64
 ./build/test-core.sh          # tests del núcleo portable (JSON, historial, política, versiones)
 ./build/build-linux-mingw.sh  # genera tinyshell.exe (PE32, enlaza msvcrt.dll, no la UCRT)
 ./build/check.sh --build      # todos los chequeos + build (lo mismo que corre CI)
-./build/fuzz.sh               # fuzz de los parsers JSON y SSE (clang con libFuzzer)
+./build/fuzz.sh               # fuzz de los parsers JSON, SSE y HTTP (clang con libFuzzer)
+./build/build-linux-musl.sh   # binario Linux estático para i586 (necesita Docker)
 ```
 
 Para contribuir: `pnpm install` una vez activa el hook de pre-commit (husky), que corre
@@ -188,6 +202,23 @@ Cada release, desde `main` limpio:
 1. Subí `TINYSHELL_VERSION` en `src/config.h` y agregá `## X.Y.Z` al `CHANGELOG.md`; commit.
 2. `./build/release.sh X.Y.Z --dry-run` para revisar los artefactos en `dist/`.
 3. `./build/release.sh X.Y.Z`: corre los tests, compila, firma, crea el tag y publica con `gh`.
+
+Ver [`CHANGELOG.md`](CHANGELOG.md) para el historial.
+
+## Cómo contribuir
+
+¡Todo aporte suma! No hay código de conducta formal: mientras quieras aportar de buena fe, estás bienvenido/a.
+
+1. Leé [`CONTRIBUTING.md`](CONTRIBUTING.md) (5 minutos).
+2. Para errores usá la [plantilla de bug](.github/ISSUE_TEMPLATE/bug_report.yml); para ideas, la [de feature](.github/ISSUE_TEMPLATE/feature_request.yml).
+3. Un PR chico con tests pasa rápido. La [plantilla de PR](.github/PULL_REQUEST_TEMPLATE.md) te guía.
+
+## Soporte
+
+- ¿Duda de uso? [Discussions](https://github.com/lucasvidela94/tinyagent/discussions).
+- ¿Error? [Bug report](https://github.com/lucasvidela94/tinyagent/issues/new/choose).
+- Sin internet: `scripts/collect-diagnostics.bat` y el archivo a lucasan.videla@gmail.com.
+- Detalle en [`SUPPORT.md`](SUPPORT.md).
 
 ## Documentación
 

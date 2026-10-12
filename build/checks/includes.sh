@@ -42,7 +42,7 @@ for f in "$@"; do
     if echo "$hdr" | grep -Eq "$STD" || echo "$hdr" | grep -Eq "$(os_headers "$f")"; then
       :
     elif [[ "$hdr" == */* ]]; then
-      echo "check-includes: $f: sin rutas en includes ($hdr); las carpetas van en build/sources.sh" >&2
+      echo "check-includes: $f: no paths in includes ($hdr); folders go in build/sources.sh" >&2
       fail=1
     elif layer="$(layer_of "$hdr")" && [ -n "$layer" ]; then
       allowed "$f" "$layer" || { echo "check-includes: $f no puede incluir $hdr (capa $layer)" >&2; fail=1; }

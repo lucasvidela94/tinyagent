@@ -13,7 +13,7 @@ bash build/checks/docs.sh
 if command -v uv >/dev/null 2>&1 || python3 -c 'import pyte' 2>/dev/null; then
   ./build/tui-test.sh
 else
-  echo "check: AVISO: sin pyte/uv, no se probó la TUI en pty (CI sí la prueba)" >&2
+  echo "check: WARNING: no pyte/uv, the TUI was not tested in a pty (CI tests it)" >&2
 fi
 if [[ "${1:-}" == --build ]]; then
   ./build/build-linux-mingw.sh

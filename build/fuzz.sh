@@ -15,7 +15,7 @@ FLAGS=(-std=c11 -g "${INCLUDES[@]}" -fsanitize=fuzzer,address,undefined)
 # libFuzzer brings its own main(), so the probe defines only the fuzz entry point.
 printf '#include <stddef.h>\n#include <stdint.h>\nint LLVMFuzzerTestOneInput(const uint8_t *d, size_t n) { (void)d; (void)n; return 0; }\n' >"$OUT/probe.c"
 if ! "$CC" "${FLAGS[@]}" -o "$OUT/probe" "$OUT/probe.c" 2>/dev/null; then
-  echo "fuzz: $CC sin libFuzzer; no se corrió nada" >&2
+  echo "fuzz: $CC has no libFuzzer; nothing was run" >&2
   exit 1
 fi
 mkdir -p "$OUT/json" "$OUT/stream" "$OUT/httpwire"
@@ -27,4 +27,4 @@ for t in json stream httpwire; do
   "$CC" "${FLAGS[@]}" -o "$OUT/fuzz_$t" "tests/fuzz/$t.c" "${CORE_SRC[@]}"
   "$OUT/fuzz_$t" -max_total_time="$SECS" -max_len=65536 -artifact_prefix=fuzz-findings/ "$OUT/$t" 2>&1 | tail -1
 done
-echo "fuzz: OK ($SECS s por parser)"
+echo "fuzz: OK ($SECS s per parser)"

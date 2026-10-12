@@ -8,7 +8,7 @@ cd "$ROOT"
 . build/sources.sh
 CC="${CC:-i686-w64-mingw32-gcc}"
 if ! command -v "$CC" >/dev/null 2>&1; then
-  echo "No encuentro $CC. Instalá mingw-w64 (ver comentario al inicio del script)." >&2
+  echo "$CC not found. Install mingw-w64 (see the comment at the top of this script)." >&2
   exit 127
 fi
 # -flto drops core modules only Linux uses (the PE linker's --gc-sections keeps them).
@@ -24,8 +24,8 @@ fi
 file tinyshell.exe 2>/dev/null || true
 if command -v "${CC%gcc}objdump" >/dev/null 2>&1; then
   DLLS="$("${CC%gcc}objdump" -p tinyshell.exe | awk '/DLL Name/{print $3}' | tr '\n' ' ')"
-  echo "DLLs importadas: $DLLS"
-  case "$DLLS" in *api-ms-win-crt*) echo "AVISO: depende de la UCRT; en Windows 7 requiere KB2999226." >&2 ;; esac
+  echo "Imported DLLs: $DLLS"
+  case "$DLLS" in *api-ms-win-crt*) echo "WARNING: depends on the UCRT; Windows 7 needs KB2999226 for it." >&2 ;; esac
 fi
-echo "Generado: $ROOT/tinyshell.exe"
-echo "Nota: compilar no sustituye las pruebas reales en Windows 7 x86."
+echo "Built $ROOT/tinyshell.exe"
+echo "Note: building is not testing on a real Windows 7 x86 machine."

@@ -37,9 +37,12 @@
 - [x] Step 0: `sys` seam, portable `update`, `cancel` without Windows handles.
 - [ ] `http_last_error` without WinHTTP wording; shell dialect as data (with the POSIX shell).
 - [x] POSIX adapters: sys, console, shell and cancel (tested natively; TUI checked in a pty).
-- [ ] POSIX adapters: HTTP with Mbed TLS, settings, credentials, prompt, verify; then a Linux binary.
-- [ ] Static i386 musl build, `install.sh`, dual signed release, site section.
-- [ ] Decide API key storage on Linux and the hardware floor (open questions in the ADR).
+- [x] POSIX adapters: HTTP with Mbed TLS, settings, credentials, machine, verify.
+- [x] Static i586 musl build (no SSE2), checked: real HTTPS update check and a real model
+      session with a tool call on this host.
+- [ ] Test on old distros (Docker userlands; QEMU or real hardware for old kernels).
+- [ ] `install.sh`, dual signed release, site section, CI job for the Linux build.
+- [x] API key storage on Linux (0600 file) and the hardware floor (i586) decided.
 
 ## Explicitly out of scope for the low-spec target
 

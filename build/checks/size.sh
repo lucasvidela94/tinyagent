@@ -9,7 +9,7 @@ for f in "$@"; do
   head -1 "$f" | grep -q '^/\* GENERATED' && continue
   n=$(wc -l <"$f")
   if [ "$n" -gt "$MAX" ]; then
-    echo "check-size: $f tiene $n lineas (maximo $MAX). Dividir por interfaz real." >&2
+    echo "check-size: $f has $n lines (max $MAX). Split it along a real interface." >&2
     fail=1
   fi
 done

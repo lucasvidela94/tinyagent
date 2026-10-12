@@ -1,0 +1,53 @@
+name: Bug report
+description: Contar algo que anda mal en TinyShell.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Gracias por reportar. Mientras más concreto, más rápido se arregla.
+  - type: input
+    id: version
+    attributes:
+      label: Versión
+      description: Salida de `tinyshell --version`.
+      placeholder: "0.7.0"
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Entorno
+      description: Windows, 32/64 bits, proveedor y modelo.
+      placeholder: "Windows 7 SP1 32 bits, opencode-go, deepseek-v4.1-flash"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Qué esperabas
+      placeholder: "Que liste los programas de inicio."
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Qué pasó
+      placeholder: "Pegá el error completo y el comando propuesto."
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Pasos para repetirlo
+      value: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Info extra
+      description: Logs, capturas o salida de scripts/collect-diagnostics.bat.
