@@ -36,7 +36,7 @@ Maintain a small, auditable, low-resource, general-purpose terminal agent (in th
 - `relay/`: Cloudflare Worker + D1 that receives reports and telemetry (see `relay/README.md`).
 - `tests/`: host-side regression tests for `src/core` (`build/test-core.sh`); `tests/posix/`: the POSIX adapters, run natively on Linux by the same script; `tests/tui/`: the real TUI on the POSIX console driven in a pty and checked with pyte (`build/tui-test.sh`); `tests/fuzz/`: libFuzzer entry points (`build/fuzz.sh`).
 - `build/`: developer tooling. `sources.sh` (source layout), `build-linux-mingw.sh` (Linux-to-Windows x86 cross-build, links `msvcrt.dll`, not the UCRT), `build-windows-msvc.bat`, `test-core.sh`, `build-linux-musl.sh` (static i586 Linux binary in the pinned `build/linux/Dockerfile` image; checks no post-i586 instructions), `linux/update-ca-bundle.sh`, `fuzz.sh`, `tui-test.sh`, `check.sh` (every check; run by husky and CI) with `checks/` (banned APIs, file size, include layering, docs drift, exe budget), `release.sh`, `gen-signing-key.sh`.
-- `scripts/`: files shipped to users: `install.bat` (installer, published with each release) and `collect-diagnostics.bat` (optional local diagnostic report).
+- `scripts/`: files shipped to users: `install.bat` (downloads and runs `TinyShell-Setup.exe`), `install.sh` (Linux: download, SHA256SUMS check, `~/.local/bin/tinyshell`) and `collect-diagnostics.bat` (optional local diagnostic report).
 - `docs/`: goals, architecture, entry points, target machine, operations, API, security, system prompt, test plan, roadmap, and `adr/` (architecture decisions). `GLOSSARY.md`: domain terms.
 
 ## Change process

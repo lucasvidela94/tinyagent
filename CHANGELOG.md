@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.0 — Linux
+
+- TinyShell for Linux: `tinyshell-linux-i386`, one static binary for x86 PCs from the Pentium up (i586, no SSE2 needed), 32- or 64-bit distros, whatever their libc or OpenSSL. It brings its own TLS (Mbed TLS 4.1 LTS) and Mozilla's root certificates, so old distros with expired roots still connect; it ran and connected on 32-bit Debian 4.0 (2007) to 8 userlands. Same agent, approval gate, login, reports and signed updates as on Windows, with `/bin/sh` risk rules and prompt guidance; the API key, if saved, goes to `~/.config/tinyshell/credentials` (mode 0600).
+- `install.sh`: `curl` or `wget`, checks SHA256SUMS, installs to `~/.local/bin/tinyshell`, checks that it starts; `sh install.sh ./tinyshell-linux-i386` installs a copy brought on a USB stick (very old distros may not reach GitHub at all).
+- Releases sign both binaries for `--update`.
+
 ## 0.8.0 — installer, English and Spanish, groundwork for Linux
 
 - Windows installer, `TinyShell-Setup.exe`: per user without administrator rights, Start menu entry, optional desktop shortcut, user PATH, Programs and Features entry with an uninstaller, and "set it up now" at the end. The exe gets an icon and version details. `install.bat` now downloads and runs the installer; a loose `tinyshell.exe` remains as the portable option.

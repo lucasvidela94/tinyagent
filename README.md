@@ -9,7 +9,7 @@
 
 A general-purpose terminal agent (in the spirit of OpenCode or Pi) for **old, low-resource PCs**: diagnosing problems, inspecting files, writing scripts, maintenance, or answering questions about the machine.
 
-- One 32-bit binary in C: `tinyshell.exe` for Windows (~130 KB, system DLLs only), and a static Linux build for i586 and newer (in progress). No Node, Python, .NET, services or database.
+- One 32-bit binary in C: `tinyshell.exe` for Windows 7 and later (~130 KB, system DLLs only), and `tinyshell-linux-i386` for any x86 Linux from a Pentium up (static, ~1 MB with its own TLS). No Node, Python, .NET, services or database.
 - The model runs remotely, on any OpenAI-compatible API (default: OpenCode Go); the PC only keeps the console, speaks HTTPS and runs commands.
 - **You approve every command** before it runs. Risky ones also ask you to type `RUN`.
 - The interface speaks English or Spanish, following the system's language.
@@ -21,7 +21,7 @@ Site and downloads (English and Spanish): **https://tinyshell.lucasan-videla.wor
 
 ## Contents
 
-- [Install](#install-windows) · [Use](#use) · [Language](#language) · [Provider and model](#provider-and-model)
+- [Install on Windows](#install-windows) · [Install on Linux](#install-linux) · [Use](#use) · [Language](#language) · [Provider and model](#provider-and-model)
 - [Reporting a problem](#reporting-a-problem) · [Update and roll back](#update-and-roll-back)
 - [Security](#security-in-short) · [Building from source](#building-from-source) · [Documentation](#documentation)
 - [Contributing](#contributing) · [Support](#support) · [License](#license)
@@ -55,6 +55,20 @@ Prefer no installer? `tinyshell.exe` from the release also runs on its own (port
 - Service Pack 1 and update **KB3140245** (TinyShell requests TLS 1.2 itself; without the update it cannot connect).
 - Up-to-date root certificates and a correct date and time.
 - An API key from [OpenCode Go](https://docs.opencode.ai/docs/go/) or another provider (see "Provider and model").
+
+## Install (Linux)
+
+One static 32-bit binary for x86 PCs from the Pentium up (i586, no SSE2 needed). It runs on 32- and 64-bit distros whatever their libc or OpenSSL, and brings its own TLS and root certificates, so old distros with expired certificates still connect.
+
+```sh
+curl -fsSLo /tmp/tinyshell-install.sh https://github.com/lucasvidela94/tinyagent/releases/latest/download/install.sh && sh /tmp/tinyshell-install.sh
+```
+
+(`wget -qO /tmp/tinyshell-install.sh <same URL>` works too.) It checks the download against `SHA256SUMS`, installs `~/.local/bin/tinyshell`, checks that it starts and tells you if that folder is not on your `PATH`. Then run `tinyshell login`.
+
+Very old distros may not reach GitHub at all (their `curl`/`wget` predate TLS 1.2). Download `tinyshell-linux-i386` and `install.sh` on another PC, copy them to a USB stick, and run `sh install.sh ./tinyshell-linux-i386`. Once installed, `tinyshell --update` uses TinyShell's own TLS.
+
+Settings and the saved API key (mode 0600, only if you agree) live in `~/.config/tinyshell/`.
 
 ## Use
 
