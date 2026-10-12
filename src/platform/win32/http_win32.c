@@ -9,6 +9,7 @@
 #include "config.h"
 #include "console.h"
 #include "http.h"
+#include "httpwire.h"
 #include "provider.h"
 #include "util.h"
 
@@ -29,14 +30,6 @@ static const char *winhttp_hint(DWORD e) {
   case ERROR_WINHTTP_SECURE_CERT_CN_INVALID: return "el certificado no coincide con el host (¿proxy que intercepta?)";
   default: return "error de red";
   }
-}
-
-static const char *status_hint(DWORD status) {
-  if (status == 401 || status == 403) return " (API key inválida o sin acceso al modelo)";
-  if (status == 404) return " (no encontrado; ¿hay un release publicado?)";
-  if (status == 429) return " (límite de uso; esperá y reintentá)";
-  if (status >= 500) return " (problema del proveedor; reintentá más tarde)";
-  return "";
 }
 
 /* Windows 7 WinHTTP defaults to SSL3/TLS 1.0; ask for TLS 1.1/1.2 explicitly.
@@ -184,9 +177,9 @@ static char *request(const Target *t, const Req *r, size_t *out_len) {
     out = buf_take(&b);
   } else {
     if (b.len > 300) b.p[300] = 0;
-    if (*status_hint(status) && status < 500) b.len = 0; /* the hint says it; skip the raw JSON */
+    if (*http_status_hint(status) && status < 500) b.len = 0; /* the hint says it; skip the raw JSON */
     if (!quiet)
-      say("\n%s respondió HTTP %lu%s%s%s\n", r->label, (unsigned long)status, status_hint(status),
+      say("\n%s respondió HTTP %lu%s%s%s\n", r->label, (unsigned long)status, http_status_hint(status),
           b.len ? ": " : "", b.len ? b.p : "");
   }
   goto done;
