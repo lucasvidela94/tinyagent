@@ -11,3 +11,4 @@ relay/node_modules/
 relay/.wrangler/
 node_modules/
 fuzz-findings/
+tinyshell-linux-i386
