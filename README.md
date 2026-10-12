@@ -194,7 +194,7 @@ If something goes badly wrong, installing again (the Windows installer or `insta
 - Do not run it as administrator (or root) for routine tasks: commands run with TinyShell's permissions.
 - What you type and the commands' output are sent to the model provider.
 
-Vulnerabilities: email lucasan.videla@gmail.com; do not open a public issue. Details in [`SECURITY.md`](SECURITY.md) and [`docs/SECURITY.md`](docs/SECURITY.md).
+Security vulnerabilities (a way to run commands without approval, bypass the update signature or steal API keys): email lucasan.videla@gmail.com instead of opening a public issue, so it can be fixed before it is public. For anything else, issues are welcome. Details in [`SECURITY.md`](SECURITY.md) and [`docs/SECURITY.md`](docs/SECURITY.md).
 
 ## Building from source
 
