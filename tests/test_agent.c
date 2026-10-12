@@ -171,7 +171,7 @@ static void test_history(void) {
   CHECK(h.m[1].user); /* history restarts at a user message */
   for (i = 1; i < h.n; i++)
     if (strstr(h.m[i].json, "\"tool\"")) CHECK(strstr(h.m[i - 1].json, "tool_calls") != NULL);
-  req = build_request(&h, "modelo \"raro\"");
+  req = build_request(&h, "modelo \"raro\"", &DIALECT_CMD);
   CHECK(json_parse(&j, req));
   CHECK(json_size(&j, json_key(&j, 0, "messages")) == h.n);
   {

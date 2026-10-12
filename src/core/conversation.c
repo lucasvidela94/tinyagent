@@ -73,17 +73,22 @@ char *tool_result_json(const char *id, const char *output) {
   return buf_take(&b);
 }
 
-static const char *TOOLS =
-    "\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"shell\","
-    "\"description\":\"Run one cmd.exe command on the local Windows machine after the user approves it. "
-    "Use it to inspect the system and files and to make changes the user agreed to. No interactive input; "
-    "time-limited; long output is cut.\","
-    "\"parameters\":{\"type\":\"object\",\"properties\":{"
-    "\"command\":{\"type\":\"string\",\"description\":\"Exact command to run in cmd.exe\"},"
-    "\"reason\":{\"type\":\"string\",\"description\":\"Why this command is needed\"}},"
-    "\"required\":[\"command\",\"reason\"],\"additionalProperties\":false}}}],\"tool_choice\":\"auto\"";
+/* The shell tool, described for the platform's shell (dialect.h). */
+static void add_tools(Buf *b, const Dialect *d) {
+  buf_str(b, "\"tools\":[{\"type\":\"function\",\"function\":{\"name\":\"shell\",\"description\":\"Run one ");
+  buf_str(b, d->shell);
+  buf_str(b, " command on the local ");
+  buf_str(b, d->os);
+  buf_str(b, " machine after the user approves it. Use it to inspect the system and files and to make changes the "
+             "user agreed to. No interactive input; time-limited; long output is cut.\","
+             "\"parameters\":{\"type\":\"object\",\"properties\":{"
+             "\"command\":{\"type\":\"string\",\"description\":\"Exact command to run in ");
+  buf_str(b, d->shell);
+  buf_str(b, "\"},\"reason\":{\"type\":\"string\",\"description\":\"Why this command is needed\"}},"
+             "\"required\":[\"command\",\"reason\"],\"additionalProperties\":false}}}],\"tool_choice\":\"auto\"");
+}
 
-char *build_request(const History *h, const char *model) {
+char *build_request(const History *h, const char *model, const Dialect *d) {
   Buf b = {0};
   char *em = jesc(model);
   int i;
@@ -96,7 +101,7 @@ char *build_request(const History *h, const char *model) {
     buf_str(&b, h->m[i].json);
   }
   buf_str(&b, "],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"max_tokens\":4096,");
-  buf_str(&b, TOOLS);
+  add_tools(&b, d);
   buf_str(&b, "}");
   return buf_take(&b);
 }

@@ -9,6 +9,8 @@
 #pragma comment(lib, "advapi32.lib")
 #endif
 
+const char CREDENTIAL_WHERE[] = "el Administrador de credenciales de Windows";
+
 static int target(const char *provider, wchar_t out[128]) {
   char t[128];
   if (strlen(provider) + 11 > sizeof t) return 0;

@@ -9,6 +9,7 @@
 #include "util.h"
 
 extern const char SYS_EOL[]; /* line ending for text files the user may open ("\r\n" on Windows) */
+extern const char SYS_HOME_LABEL[];    /* the home folder in redacted reports ("%USERPROFILE%", "~") */
 extern const char SYS_RELEASE_ASSET[]; /* this platform's binary in a release ("tinyshell.exe") */
 
 /* n bytes from the OS random generator; a weak time-based fill only if it is unavailable.

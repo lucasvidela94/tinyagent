@@ -12,6 +12,7 @@
 #include "sys.h"
 
 const char SYS_EOL[] = "\n";
+const char SYS_HOME_LABEL[] = "~";
 const char SYS_RELEASE_ASSET[] = "tinyshell-linux-i386";
 
 static unsigned long last_error;

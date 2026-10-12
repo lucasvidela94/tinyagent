@@ -22,6 +22,7 @@ typedef struct {
                          basename before any '.'), not any word: "ls /etc/init.d" is safe */
 
   /* System prompt pieces (English, see docs/SYSTEM_PROMPT.md). */
+  const char *os;      /* "Windows" */
   const char *machine; /* "Windows PC" */
   const char *shell;   /* "cmd.exe" */
   const char *scripts; /* "batch scripts" */

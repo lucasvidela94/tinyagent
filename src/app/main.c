@@ -1,4 +1,4 @@
-/* TinyShell: general-purpose terminal agent for old Windows PCs. Entry point: CLI flags,
+/* TinyShell: general-purpose terminal agent for old PCs. Entry point: CLI flags,
  * API key setup and the chat loop with its slash commands. */
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +28,7 @@ static int usage(void) {
       "  telemetria      on | off | --ver (datos técnicos de la beta)\n"
       "  --version       muestra la versión\n"
       "  --update        busca, verifica e instala la última versión\n"
-      "  --rollback      vuelve a la versión anterior (tinyshell.old.exe)\n"
+      "  --rollback      vuelve a la versión anterior (la copia que deja --update)\n"
       "Proveedor y modelo: %s\n", settings_path());
   return 0;
 }
@@ -61,8 +61,8 @@ static int run_flag(const char *flag, const char *arg) {
 /* Asks for the key (hidden) and offers to save it. Empty is allowed (local servers
  * usually need none). 0 only on EOF. */
 static int ask_key(const Provider *p, char *key, size_t cap) {
-  char answer[16], msg[96];
-  say("API key de %s (clic derecho para pegar; Enter si no usa): ", p->name);
+  char answer[16], msg[160];
+  say("API key de %s (%s; Enter si no usa): ", p->name, CONSOLE_PASTE_HINT);
   if (read_secret(key, cap) != LINE_OK) return 0;
   if (!*key) {
     tui_note("sin API key");
@@ -70,7 +70,8 @@ static int ask_key(const Provider *p, char *key, size_t cap) {
   }
   snprintf(msg, sizeof msg, "clave recibida (%d caracteres)", (int)strlen(key));
   tui_note(msg);
-  say("¿Guardarla para este usuario de Windows? [s/N] ");
+  snprintf(msg, sizeof msg, "¿Guardarla en %s? [s/N] ", CREDENTIAL_WHERE);
+  say("%s", msg);
   if (read_line(answer, sizeof answer, 1) == LINE_OK && is_yes(answer))
     tui_note(credential_save(p->name, key) ? "guardada · tinyshell logout la borra" : "no se pudo guardar");
   return 1;

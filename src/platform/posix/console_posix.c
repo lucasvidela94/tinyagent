@@ -16,6 +16,8 @@
 #include "console_posix.h"
 #include "util.h"
 
+const char CONSOLE_PASTE_HINT[] = "Ctrl+Shift+V o clic del medio para pegar";
+
 static int in_tty, out_tty, vt, charset = CHARSET_UTF8;
 
 int console_charset(void) { return charset; }

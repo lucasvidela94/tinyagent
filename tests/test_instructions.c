@@ -6,6 +6,7 @@
 
 #include "check.h"
 #include "config.h"
+#include "conversation.h"
 #include "instructions.h"
 
 static int has(const char *s, const char *part) { return strstr(s, part) != NULL; }
@@ -23,5 +24,15 @@ int main(void) {
   CHECK(has(win, "approves every command") && has(lin, "approves every command"));
   free(win);
   free(lin);
+  { /* the shell tool sent with every request describes the same shell */
+    History h;
+    memset(&h, 0, sizeof h);
+    win = build_request(&h, "m", &DIALECT_CMD);
+    lin = build_request(&h, "m", &DIALECT_SH);
+    CHECK(has(win, "Run one cmd.exe command on the local Windows machine") && !has(win, "/bin/sh"));
+    CHECK(has(lin, "Run one /bin/sh command on the local Linux machine") && !has(lin, "cmd.exe"));
+    free(win);
+    free(lin);
+  }
   return CHECK_DONE("test_instructions");
 }

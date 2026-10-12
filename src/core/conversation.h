@@ -4,6 +4,7 @@
 
 #include <stddef.h>
 
+#include "dialect.h"
 #include "json.h"
 
 /* One JSON object per message; m[0] is the system prompt. Zero-initialize before use. */
@@ -20,7 +21,7 @@ void history_free(History *h);
 
 char *message_json(const char *role, const char *content);
 char *tool_result_json(const char *id, const char *output);
-char *build_request(const History *h, const char *model); /* POST body with the shell tool */
+char *build_request(const History *h, const char *model, const Dialect *d); /* POST body with the shell tool */
 
 /* One entry of message.tool_calls. Missing pieces become "", never NULL. */
 typedef struct { char *id, *name, *command, *reason; } ToolCall;

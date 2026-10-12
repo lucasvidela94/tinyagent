@@ -32,7 +32,7 @@ void telemetry_init(void) {
   /* Beta default: on while 0.x unless the user turned it off. */
   enabled = settings_get("telemetry", "enabled", v, sizeof v) ? atoi(v) != 0 : TINYSHELL_VERSION[0] == '0';
   if (enabled && !settings_get("telemetry", "noticed", v, sizeof v)) {
-    tui_note("Beta: TinyShell envía datos técnicos de uso y errores (versión, Windows, modelo, códigos de\n"
+    tui_note("Beta: TinyShell envía datos técnicos de uso y errores (versión, sistema, modelo, códigos de\n"
              "error; nunca lo que escribís ni los comandos). Ver: tinyshell telemetria --ver ·\n"
              "apagar: tinyshell telemetria off");
     settings_set("telemetry", "noticed", "1");

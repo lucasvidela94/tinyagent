@@ -9,6 +9,8 @@
 
 #define MAX_CREDFILE (64 * 1024)
 
+const char CREDENTIAL_WHERE[] = "~/.config/tinyshell/credentials (solo tu usuario puede leerlo)";
+
 static char *read_all(Buf *path) {
   return sys_data_path("credentials", path) ? sys_read_file(path->p, MAX_CREDFILE, NULL) : NULL;
 }

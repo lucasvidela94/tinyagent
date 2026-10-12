@@ -62,7 +62,7 @@ int login_run(Provider *p, char *key, size_t cap) {
   }
   provider_preset(pick, &chosen);
   tui_line("proveedor: ", chosen.name, COLOR_ACCENT);
-  say("\nAPI key de %s (clic derecho para pegar): ", chosen.name);
+  say("\nAPI key de %s (%s): ", chosen.name, CONSOLE_PASTE_HINT);
   if (read_secret(secret, sizeof secret) != LINE_OK || !*secret) {
     tui_note("cancelado: no se ingresó ninguna clave");
     wipe(secret, sizeof secret);
@@ -81,7 +81,7 @@ int login_run(Provider *p, char *key, size_t cap) {
   }
   ok = credential_save(chosen.name, secret);
   if (ok) {
-    snprintf(msg, sizeof msg, "clave de %s guardada en el Administrador de credenciales de Windows", chosen.name);
+    snprintf(msg, sizeof msg, "clave de %s guardada en %s", chosen.name, CREDENTIAL_WHERE);
     tui_note(msg);
     if (!settings_save_provider(&chosen)) tui_error("no se pudo escribir config.ini");
     snprintf(msg, sizeof msg, "listo · %s · %s", chosen.name, chosen.model);
@@ -89,7 +89,7 @@ int login_run(Provider *p, char *key, size_t cap) {
     if (p) *p = chosen;
     if (key && strlen(secret) < cap) strcpy(key, secret);
   } else {
-    tui_error("no se pudo guardar la clave en el Administrador de credenciales");
+    tui_error("no se pudo guardar la clave");
   }
   wipe(secret, sizeof secret);
   return ok;

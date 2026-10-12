@@ -177,7 +177,7 @@ unsigned long session_send(Session *s, const char *text) {
     int more = 0, shown = 0;
     char *body, *resp;
     history_trim(&s->history, MAX_HISTORY);
-    body = build_request(&s->history, s->provider.model);
+    body = build_request(&s->history, s->provider.model, system_dialect());
     resp = round_trip(s, body, &shown);
     free(body);
     s->turns++;

@@ -7,6 +7,8 @@
 
 #include <stddef.h>
 
+extern const char CREDENTIAL_WHERE[]; /* for messages: "el Administrador de credenciales de Windows" */
+
 /* One key per provider name. */
 int credential_load(const char *provider, char *out, size_t cap); /* 1 if a saved key was copied */
 int credential_save(const char *provider, const char *key);

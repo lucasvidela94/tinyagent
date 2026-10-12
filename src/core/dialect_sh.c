@@ -81,6 +81,7 @@ static const RiskRule RULES[] = {
 const Dialect DIALECT_SH = {
     MARKS, RULES, sizeof MARKS / sizeof MARKS[0], sizeof RULES / sizeof RULES[0],
     " \t\"'<", 0, 0, 1, /* segments split at | ; & ( ); words at blanks and quotes */
+    "Linux",
     "Linux PC",
     "/bin/sh",
     "shell scripts",

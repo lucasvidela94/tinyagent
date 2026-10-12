@@ -69,7 +69,7 @@ static void show_result(const char *resp) {
 
 int reporter_run(const Session *s) {
   char what[1024], answer[16], msg[256];
-  const char *names[3], *labels[3] = {"%USERPROFILE%", "<pc>", "<usuario>"};
+  const char *names[3], *labels[3] = {SYS_HOME_LABEL, "<pc>", "<usuario>"};
   Buf pub = {0}, full = {0}, both = {0}, os = {0}, host = {0}, user = {0}, home = {0}, path = {0};
   char *public_text, *full_text, *json, *resp;
   int saved;

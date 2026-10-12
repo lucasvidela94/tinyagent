@@ -57,6 +57,7 @@ const Dialect DIALECT_CMD = {
     MARKS, RULES, sizeof MARKS / sizeof MARKS[0], sizeof RULES / sizeof RULES[0],
     /* "DEL/S", "c:\windows\system32\format.com" and "\"rd\" x" all expose a bare word */
     " \t\"'@(),;=.:\\%|<", '/', 1, 0,
+    "Windows",
     "Windows PC",
     "cmd.exe",
     "batch scripts",
