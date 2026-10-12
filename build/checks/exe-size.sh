@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Size budget for the Windows exe: one binary, a checkable size.
-# Now ~110 KB (2026-10-11). Ceiling 128 KB; raising it needs a reason in the commit.
+# Now ~132 KB (2026-10-11): code ~110 KB, the Spanish string table ~18 KB, icon and version
+# details ~5 KB. Ceiling 160 KB; raising it needs a reason in the commit.
 set -euo pipefail
-MAX="${MAX_EXE:-131072}"
+MAX="${MAX_EXE:-163840}"
 f="${1:-tinyshell.exe}"
 [ -f "$f" ] || { echo "check-exe-size: $f does not exist (build it first)" >&2; exit 1; }
 n=$(wc -c <"$f")

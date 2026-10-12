@@ -20,7 +20,11 @@ trap 'rm -rf "$PROBE"' EXIT
 if "$CC" -mcrtdll=msvcrt-os -x c -o "$PROBE/probe.exe" - <<<'int main(void){return 0;}' 2>/dev/null; then
   CRT=(-mcrtdll=msvcrt-os)
 fi
-"$CC" -std=c11 -Os -s -flto -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wstrict-prototypes -Werror "${CRT[@]}" "${INCLUDES[@]}" -Isrc/platform/win32 -o tinyshell.exe "${CORE_SRC[@]}" "${APP_SRC[@]}" "${WIN32_SRC[@]}" -lwinhttp -lcrypt32 -ladvapi32
+# Icon and version details (src/platform/win32/tinyshell.rc); the numeric version comes from
+# TINYSHELL_VERSION ("0.8.0" -> 0,8,0,0).
+VER="$(sed -n 's/^#define TINYSHELL_VERSION "\([0-9.]*\)".*/\1/p' src/config.h)"
+"${CC%gcc}windres" -Isrc -DTS_VERSION_NUM="${VER//./,},0" -O coff -o "$PROBE/tinyshell.res" src/platform/win32/tinyshell.rc
+"$CC" -std=c11 -Os -s -flto -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wstrict-prototypes -Werror "${CRT[@]}" "${INCLUDES[@]}" -Isrc/platform/win32 -o tinyshell.exe "${CORE_SRC[@]}" "${APP_SRC[@]}" "${WIN32_SRC[@]}" "$PROBE/tinyshell.res" -lwinhttp -lcrypt32 -ladvapi32
 file tinyshell.exe 2>/dev/null || true
 if command -v "${CC%gcc}objdump" >/dev/null 2>&1; then
   DLLS="$("${CC%gcc}objdump" -p tinyshell.exe | awk '/DLL Name/{print $3}' | tr '\n' ' ')"
