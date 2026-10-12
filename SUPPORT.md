@@ -1,23 +1,23 @@
-# Soporte
+# Support
 
-## Dónde pedir ayuda
+## Where to ask for help
 
-- **Dudas de uso:** abrí una [Discussion](https://github.com/lucasvidela94/tinyagent/discussions) (o un issue con el formulario de pregunta si las Discussions no están activadas).
-- **Errores:** [abrí un bug report](https://github.com/lucasvidela94/tinyagent/issues/new/choose) con la plantilla correspondiente.
-- **Algo falla y no hay internet:** corré `scripts/collect-diagnostics.bat` y mandá la carpeta generada a lucasan.videla@gmail.com.
-- **Desde TinyShell:** escribí `/reporte` y seguí los pasos (te muestra todo antes de enviar).
+- **Usage questions:** open a [discussion](https://github.com/lucasvidela94/tinyagent/discussions) (or an issue if discussions are not enabled).
+- **Bugs:** [open a bug report](https://github.com/lucasvidela94/tinyagent/issues/new/choose) with the matching form.
+- **From inside TinyShell:** type `/reporte` and follow the steps (it shows everything before sending, and needs no GitHub account).
+- **Something fails and there is no internet (Windows):** run `scripts/collect-diagnostics.bat` and email the folder it creates to lucasan.videla@gmail.com.
 
-## Antes de preguntar
+## Before asking
 
-1. Decí tu versión: `tinyshell --version`.
-2. Decí tu Windows (ej. Windows 7 SP1 32 bits) y proveedor/modelo.
-3. Pegá el mensaje de error completo y qué comando lo provocó.
-4. Probá con una instalación limpia (volver a correr `install.bat`).
+1. Give your version: `tinyshell --version`.
+2. Give your OS (for example Windows 7 SP1 32-bit, or the distro and kernel) and your provider and model.
+3. Paste the full error message and the command that caused it.
+4. Try a clean install (run the installer again).
 
-## Lo que este canal no cubre
+## Not covered here
 
-- Soporte del proveedor del modelo (OpenCode Go, OpenRouter, etc.): eso va con ellos.
-- PCs sin los requisitos mínimos (ver README: SP1 + KB3140245, certificados y fecha/hora correctos).
-- Binarios compilados por terceros: solo se da soporte sobre releases firmados del proyecto o código de `main`.
+- Support for the model provider (OpenCode Go, OpenRouter and so on): that is theirs.
+- Machines below the minimum requirements (see the README: on Windows 7, SP1 + KB3140245, up-to-date root certificates and a correct date and time).
+- Binaries built by third parties: support covers the project's signed releases and code on `main`.
 
-Tiempo de respuesta: proyecto mantenido en tiempo libre, sin SLA. Los reportes con pasos reproducibles tienen prioridad.
+Response time: maintained in spare time, with no SLA. Reports with reproducible steps come first.

@@ -1,21 +1,21 @@
-## Qué / por qué / cómo
+## What / why / how
 
-<!-- Una o dos líneas por punto: qué cambia, por qué importa, cómo lo implementaste. -->
+<!-- One or two lines each: what changes, why it matters, how you implemented it. -->
 
-## Issue relacionado
+## Related issue
 
-<!-- Closes #NNN, o contexto si no hay issue. -->
+<!-- Closes #NNN, or context if there is no issue. -->
 
 ## Tests
 
-<!-- Comandos corridos y resultado: ./build/test-core.sh, ./build/check.sh --build, fuzz, prueba en Windows 7 real o wine... -->
+<!-- Commands run and their result: ./build/test-core.sh, ./build/check.sh --build, fuzz, a run on real Windows 7, wine or an old distro... -->
 
 - [ ] `./build/test-core.sh`
 - [ ] `./build/check.sh --build`
-- [ ] Probado en Windows 7 real (o aclarar dónde se probó)
+- [ ] Tested on a real old machine (or say where it was tested)
 
-## Impacto
+## Impact
 
-- [ ] Actualicé docs / `CHANGELOG.md` si el cambio lo necesita
-- [ ] Es un solo tema y menos de ~400 líneas sin tests
-- [ ] No toqué `build/` ni la config para hacer pasar un check
+- [ ] Updated the docs / `CHANGELOG.md` if the change needs it
+- [ ] One topic, under ~400 lines without tests
+- [ ] Did not touch `build/` or the config to make a check pass

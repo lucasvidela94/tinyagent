@@ -1,36 +1,36 @@
 name: Feature request
-description: Pedir una mejora o proponer una idea.
+description: Ask for an improvement or propose an idea.
 title: "[idea] "
 labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
-      value: "Contá el problema antes que la solución: ¿qué querés lograr en tu PC vieja?"
+      value: "Describe the problem before the solution: what do you want to get done on your old PC?"
   - type: textarea
     id: problem
     attributes:
-      label: Problema
-      placeholder: "En mi netbook con 2 GB no puedo..."
+      label: Problem
+      placeholder: "On my 2 GB netbook I cannot..."
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
-      label: Propuesta
-      placeholder: "Que TinyShell haga X de esta forma..."
+      label: Proposal
+      placeholder: "TinyShell could do X like this..."
     validations:
       required: true
   - type: textarea
     id: alt
     attributes:
-      label: Alternativas que probaste
-      placeholder: "Hoy lo resuelvo con..."
+      label: Alternatives you tried
+      placeholder: "Today I work around it with..."
   - type: dropdown
     id: scope
     attributes:
-      label: Alcance estimado
+      label: Estimated scope
       options:
-        - No sé
-        - Solo docs/mensajes
-        - Cambio chico de código
-        - Cambio grande (nuevo módulo, red, ejecución)
+        - Not sure
+        - Docs or messages only
+        - Small code change
+        - Large change (new module, networking, execution)

@@ -1,33 +1,34 @@
-# Política de seguridad
+# Security policy
 
-## Reportar una vulnerabilidad
+## Reporting a vulnerability
 
-**No abras un issue público** para vulnerabilidades (ejecución de comandos sin aprobación, bypass de firma de updates, robo de API keys, inyección vía respuesta del modelo).
+**Do not open a public issue** for a vulnerability (command execution without approval, bypassing the update signature, stealing API keys, injection through the model's answers).
 
-Escribí a **lucasan.videla@gmail.com** con:
+Email **lucasan.videla@gmail.com** with:
 
-- Versión (`tinyshell --version`) y Windows afectado.
-- Descripción del problema e impacto estimado.
-- Pasos mínimos para reproducirlo (o PoC).
-- Si podés, qué componente creés que falla (`src/...`).
+- The version (`tinyshell --version`) and the affected OS.
+- A description of the problem and its likely impact.
+- Minimal steps to reproduce it (or a proof of concept).
+- If you can, the component you think is at fault (`src/...`).
 
-Vas a recibir acuse de recibo y aviso cuando haya fix o release. Si querés, te credito en el `CHANGELOG.md`.
+You will get an acknowledgement and word when a fix or release is out. If you want, you are credited in `CHANGELOG.md`.
 
-## Alcance
+## Scope
 
-- El binario `tinyshell.exe`, `scripts/install.bat` y el flujo `--update` (firma RSA + self-test).
-- El gate de aprobación local (`src/core/policy.c`, `src/core/command.c`, `src/app/session.c`).
-- Manejo de API keys (`src/platform/win32/credential_win32.c`) y `config.ini`.
-- El relay de reportes/telemetría (`relay/`).
+- The binaries (`tinyshell.exe`, `tinyshell-linux-i386`), `scripts/install.bat` and the `--update` flow (RSA signature and self-test).
+- The local approval gate (`src/core/policy.c`, `src/core/command.c`, `src/app/session.c`).
+- API key handling (`src/platform/win32/credential_win32.c`, `src/platform/posix/credential_posix.c`) and `config.ini`.
+- The HTTPS client on Linux (`src/platform/posix/conn_posix.c`, `src/platform/posix/http_posix.c`).
+- The report and telemetry relay (`relay/`).
 
-Fuera de alcance: el proveedor del modelo, Windows mismo o PCs ya comprometidas.
+Out of scope: the model provider, the operating system itself, or machines that are already compromised.
 
-## Reglas de operación segura
+## Safe operation
 
-El detalle completo está en [`docs/SECURITY.md`](docs/SECURITY.md). En corto:
+The full detail is in [`docs/SECURITY.md`](docs/SECURITY.md). In short:
 
-- El modelo es un recomendador no confiable: leé cada comando antes de aprobarlo.
-- La seguridad está en el código local, no en el prompt.
-- La API key solo se guarda si aceptás, en el Administrador de credenciales de Windows. `tinyshell logout` la borra.
-- Nunca corras como administrador para tareas de rutina.
-- Los updates nunca son automáticos y siempre verifican firma RSA antes de instalar.
+- The model is an untrusted recommender: read every command before approving it.
+- Safety lives in local code, not in the prompt.
+- The API key is saved only if you agree: in the Windows Credential Manager, or on Linux in `~/.config/tinyshell/credentials` (mode 0600). `tinyshell logout` deletes it.
+- Never run it as administrator or root for routine tasks.
+- Updates are never automatic and always verify the RSA signature before installing.

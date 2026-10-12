@@ -1,70 +1,74 @@
-# Cómo contribuir a TinyShell
+# Contributing to TinyShell
 
-Gracias por querer aportar. No hay burocracia: si la idea mejora el proyecto, es bienvenida.
+Thanks for wanting to help. There is no bureaucracy: if an idea makes the project better, it is welcome.
 
-## Formas de ayudar
+## Ways to help
 
-- Probar en una PC real vieja (Windows 7 32 bits ideal) y contar qué pasó.
-- Reportar errores con pasos para repetirlos.
-- Proponer o mandar un fix pequeño.
-- Mejorar docs, mensajes o el instalador.
-- Agregar tests en `tests/` para casos que hoy no están cubiertos.
+- Test on a real old PC (Windows 7 32-bit, or an old 32-bit Linux distro) and say what happened.
+- Report bugs with steps to reproduce them.
+- Propose or send a small fix.
+- Improve the docs, the messages or the installer.
+- Add tests in `tests/` for cases that are not covered yet.
 
-No hace falta pedir permiso antes: abrí el issue o el PR directamente.
+No need to ask first: open the issue or the pull request directly.
 
-## Antes de programar
+## Before writing code
 
-1. Leé `docs/ARCHITECTURE.md`, `docs/SECURITY.md` y `docs/TEST_PLAN.md` si vas a tocar ejecución, red o parsing.
-2. Mirá `AGENTS.md` (reglas del repo) y `GLOSSARY.md` (términos).
-3. Si el cambio es grande, abrí primero un issue corto contando la idea para no trabajar de más.
+1. Read `docs/ARCHITECTURE.md`, `docs/SECURITY.md` and `docs/TEST_PLAN.md` if you will touch execution, networking or parsing.
+2. Read `AGENTS.md` (the repo's rules) and `GLOSSARY.md` (its terms).
+3. For a large change, open a short issue with the idea first, so no work is wasted.
 
-## Puesta en marcha
+## Getting started
 
 ```bash
-# tests del núcleo portable
+# host tests (the portable core, and the POSIX adapters on Linux)
 ./build/test-core.sh
 
-# cross-build Windows 32 bits (necesita mingw-w64)
+# Windows 32-bit cross-build (needs mingw-w64)
 ./build/build-linux-mingw.sh
 
-# todo lo que corre CI
+# static i586 Linux build (needs Docker)
+./build/build-linux-musl.sh
+
+# everything CI runs
 ./build/check.sh --build
 ```
 
-En Windows, desde el **x86 Native Tools Command Prompt**: `build\build-windows-msvc.bat`.
+On Windows, from the **x86 Native Tools Command Prompt**: `build\build-windows-msvc.bat`.
 
-`pnpm install` una vez activa el hook de pre-commit (husky), que corre `build/check.sh`. Node es solo herramienta de desarrollo, nunca requisito de runtime.
+`pnpm install` once enables the pre-commit hook (husky), which runs `build/check.sh`. Node is a development tool only, never a runtime requirement.
 
-## Reglas del código
+## Code rules
 
-- Un commit hace una sola cosa, menos de ~400 líneas sin contar tests, directo a `main`.
-- Cada archivo fuente ronda las ~200 líneas (máximo ~300). Si crece, se divide por interfaz de módulo real.
-- Las llamadas a Windows viven en `src/platform/win32/`; `core` y `app` nunca incluyen un adaptador.
-- Sin dependencias nuevas sin justificarlo en el mensaje de commit.
-- Sin abstracciones de una sola implementación (nada de vtables/providers hasta tener dos casos reales).
-- Cambio de comportamiento requiere test. Un refactor no cambia comportamiento.
-- Comentarios que explican el *por qué*, nunca repiten el código.
-- Prohibidos `gets/sprintf/strtok/system/popen/wsprintf/variantes-A/alloca`. `strcpy/strcat` solo con guarda de longitud en las líneas previas (`build/checks/banned.sh` lo verifica).
-- Nunca edites `build/` o la config para que un check pase: se arregla el código o se discute el check.
+- One commit does one thing, under ~400 lines not counting tests.
+- Source files stay around ~200 lines (~300 at most). A growing file is split along a real module interface.
+- Operating system calls live in `src/platform/win32/` and `src/platform/posix/`; `core` and `app` never include an adapter (`build/checks/includes.sh` enforces it).
+- No new dependency without a reason in the commit message.
+- No single-implementation abstractions (no vtables or providers until there are two real cases).
+- A behavior change needs a test. A refactor changes no behavior.
+- Comments explain *why*; they never repeat the code.
+- `gets/sprintf/strtok/system/popen/wsprintf/A-variants/alloca` are banned. `strcpy/strcat` only with a length guard on the lines above (`build/checks/banned.sh` checks it).
+- Never edit `build/` or the config to make a check pass: fix the code or discuss the check.
+- Repo text (code, comments, docs, commits) is English; only what end users see (the program's strings, `install.bat`, the site) is Spanish.
 
-## Commits y PRs
+## Commits and pull requests
 
-- Mensajes cortos en español o inglés, en presente: `agrega timeout a http_get`, no `agregado...`.
-- Explicá el *por qué* del cambio y qué probaste (comando + resultado).
-- Un PR = un tema. Mantenelo chico y fácil de revisar.
-- La plantilla del PR te pide: qué/por qué/cómo, issue relacionado, tests y impacto en docs o releases. Completala, no la borres.
-- CI debe pasar: checks estáticos, tests con sanitizers, cross-build Win32, presupuesto del `.exe` y tests de TUI.
+- Short commit subjects in English, imperative mood: `Add a timeout to http_get`, not `Added...`.
+- Explain *why* the change is needed and what you tested (command and result).
+- One pull request, one topic. Keep it small and easy to review.
+- The pull request template asks what, why and how, the related issue, tests and the impact on docs or releases. Fill it in rather than deleting it.
+- CI must pass: static checks, tests with sanitizers, the Win32 cross-build, the exe size budget, the TUI test and fuzzing.
 
-## Tests que se esperan
+## Expected tests
 
-- Casos de JSON malformado, campos faltantes, herramientas desconocidas, red caída, comandos rechazados y salidas gigantes.
-- Si tocás `json` o `stream`, corré `./build/fuzz.sh`.
-- No digas que algo anda en Windows 7 hasta probarlo en Windows 7 real (o aclarar que fue bajo wine).
+- Cases for malformed JSON, missing fields, unknown tools, a failed network, rejected commands and huge outputs.
+- If you touch `json`, `stream` or `httpwire`, run `./build/fuzz.sh`.
+- Do not say something works on Windows 7 (or an old distro) until it ran there; say so when it was tested under wine or Docker.
 
-## Reportar errores
+## Reporting bugs
 
-Usá la plantilla de bug report: qué esperabas, qué pasó, versión (`tinyshell --version`), Windows, proveedor/modelo y pasos mínimos para repetirlo. Si hay un crash o un problema de seguridad, mirá `SECURITY.md`.
+Use the bug report form: what you expected, what happened, the version (`tinyshell --version`), the OS, provider and model, and minimal steps to reproduce. For a crash with security impact, see `SECURITY.md`.
 
-## Preguntas
+## Questions
 
-Abrí un issue o una discussion con tu duda. No hay preguntas tontas en este repo.
+Open an issue or a discussion. There are no silly questions here.

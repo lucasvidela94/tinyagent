@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 title: TinyShell
-message: Si usás TinyShell en tu trabajo, citalo así.
+message: If you use TinyShell in your work, please cite it as below.
 type: software
 authors:
   - given-names: Lucas
@@ -14,6 +14,7 @@ date-released: 2026-10-11
 keywords:
   - terminal-agent
   - windows-7
+  - linux
   - win32
   - c
   - llm-agent
