@@ -60,7 +60,7 @@ The API key is read from the saved store if the user chose to save it (Windows C
 ## Build access points
 
 - `build/build-linux-mingw.sh` → `tinyshell.exe`; `build/build-linux-musl.sh` → `tinyshell-linux-i386`; `build/release.sh` → signed GitHub release.
-- Install (Windows): `scripts/install.bat` → `%LOCALAPPDATA%\TinyShell` and the user `PATH` (HKCU).
+- Install (Windows): `TinyShell-Setup.exe` (`build/build-installer.sh`) → `%LOCALAPPDATA%\TinyShell`, Start menu, user `PATH` (HKCU), Programs and Features entry `HKCU\...\Uninstall\TinyShell`. `scripts/install.bat` downloads and runs it.
 - Windows/MSVC: `build/build-windows-msvc.bat` → `tinyshell.exe`.
 
 ## Future access points (not implemented)

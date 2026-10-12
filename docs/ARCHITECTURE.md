@@ -106,7 +106,8 @@ Other files:
 - `build/test-core.sh`, `build/tui-test.sh`, `build/fuzz.sh`, `build/check.sh`: host tests (POSIX adapters included on Linux), the TUI in a pty, fuzzing, every check.
 - `build/gen-signing-key.sh`, `build/release.sh`: release key pair (private key outside the repo) and signed releases.
 - `relay/`: Cloudflare Worker + D1 that receives reports (public issue with a summary, private full report) and telemetry.
-- `scripts/install.bat`: installer published with each release (curl, bitsadmin or a USB copy).
+- `build/installer/tinyshell.nsi`, `build/build-installer.sh`: the Windows installer (`TinyShell-Setup.exe`, NSIS in Docker): per user, Start menu, PATH, Programs and Features, uninstaller.
+- `scripts/install.bat`: downloads and runs the installer (kept for one-line commands published earlier).
 - `scripts/collect-diagnostics.bat`: separate local diagnostics; needs no API.
 
 ## Data flow

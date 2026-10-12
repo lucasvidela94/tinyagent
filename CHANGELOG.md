@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.0 — installer, English and Spanish, groundwork for Linux
+
+- Windows installer, `TinyShell-Setup.exe`: per user without administrator rights, Start menu entry, optional desktop shortcut, user PATH, Programs and Features entry with an uninstaller, and "set it up now" at the end. The exe gets an icon and version details. `install.bat` now downloads and runs the installer; a loose `tinyshell.exe` remains as the portable option.
+- The interface speaks English or Spanish, following the system's language, or `[ui] language = es|en` in `config.ini`. Command names are English, with the Spanish ones kept as aliases: `login`, `logout`, `report`, `telemetry` (`--show`), `/help`, `/model`, `/report`, `/reset`, `/update`, `/quit`. Approvals also accept `y`/`yes`; the strong confirmation is `RUN` in English.
+- The data folder's report folder and telemetry log are now `reports\` and `telemetry.log`.
+- Fixes: a failed JSON parse leaked memory (found by the new fuzzing of the JSON, SSE and HTTP parsers); the Ctrl+C note in a command's output was shown as output.
+- Smaller exe from link-time optimization; checks for banned C functions, file size, include layering, docs drift and translations run before every commit and in CI.
+- Groundwork for Linux: the code is now layered with a platform seam, and a static i586 Linux build exists (not published yet; see `docs/adr/0001-linux-port-platform-seam.md`).
+
 ## 0.7.0 — streaming, Ctrl+C, license
 
 - Streaming: answers appear as they arrive (server-sent events), replacing "pensando...". Tool-call pieces are joined and the usual response is rebuilt, so approval and history work as before; providers that do not stream are handled transparently. Token counts come from the stream.

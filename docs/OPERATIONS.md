@@ -2,10 +2,10 @@
 
 ## First launch
 
-1. Install with the one-liner from the README (curl on Windows 10+, bitsadmin on Windows 7) or copy `tinyshell.exe` + `install.bat` from a USB stick and run `install.bat`.
-2. Compare the SHA-256 printed by the installer with the release page.
-3. Open a **new** CMD window as the normal user, not administrator.
-4. Run `tinyshell`; provide the OpenCode Go API key interactively.
+1. Run `TinyShell-Setup.exe` as the normal user (downloaded, or copied from a USB stick; the README also has one-line commands). Unsigned for now: Windows may say the publisher is unknown ("More info", "Run anyway" on Windows 10/11).
+2. Compare the installer's SHA-256 with the release page (`certutil -hashfile TinyShell-Setup.exe SHA256`).
+3. Keep "Set it up now" checked at the end, or later open TinyShell from the Start menu (or `tinyshell` in a **new** CMD window) and run `tinyshell login`.
+4. Provide the API key when asked.
 5. Begin with a read-only task: `Tell me the Windows version, the free RAM and the free space on C:. Do not change anything.`
 6. Inspect every proposed command, including pipes, redirection, quoted arguments and nested commands.
 7. Use `/quit` to finish.
@@ -13,10 +13,10 @@
 ## Updating
 
 - `tinyshell --update` (or `/update` inside a session). Close and reopen TinyShell afterwards.
-- "FIRMA INVÁLIDA": do not work around it; the release was not signed with the project key.
-- "no pasó la prueba de arranque": the new build does not start on this Windows; nothing was changed. Report it.
+- "INVALID SIGNATURE" / "FIRMA INVÁLIDA": do not work around it; the release was not signed with the project key.
+- "failed the start-up test" / "no pasó la prueba de arranque": the new build does not start on this machine; nothing was changed. Report it.
 - `tinyshell --rollback` restores `tinyshell.old.exe`; running it again rolls forward.
-- If the updater itself is broken, rerun the installer (USB works offline).
+- If the updater itself is broken, run the installer again (a USB copy works offline). Uninstall from Programs and Features.
 
 ## Troubleshooting sequence
 

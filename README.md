@@ -28,27 +28,27 @@ Site and downloads (English and Spanish): **https://tinyshell.lucasan-videla.wor
 
 ## Install (Windows)
 
-Open **CMD** (not as administrator) and paste the matching line. It installs to `%LOCALAPPDATA%\TinyShell` and adds it to your `PATH`.
+1. Download **[TinyShell-Setup.exe](https://github.com/lucasvidela94/tinyagent/releases/latest/download/TinyShell-Setup.exe)** (also on the site and the [releases page](https://github.com/lucasvidela94/tinyagent/releases/latest)).
+2. Run it and follow the steps. It installs for your user only, **no administrator rights**, into `%LOCALAPPDATA%\TinyShell`, adds a Start menu entry and puts `tinyshell` on your `PATH`.
+3. Leave **"Set it up now"** checked at the end: it runs `tinyshell login`.
 
-**Windows 10 / 11** (they ship `curl`):
+The installer is not code-signed yet, so Windows may warn that the publisher is unknown (on Windows 10/11: "More info", then "Run anyway"). Its SHA-256 is in the release notes and in `SHA256SUMS`; check it with `certutil -hashfile TinyShell-Setup.exe SHA256`. Uninstall it from **Programs and Features** like any other program.
 
-```bat
-curl -fsSLo "%TEMP%\tinyshell-install.bat" https://github.com/lucasvidela94/tinyagent/releases/latest/download/install.bat && "%TEMP%\tinyshell-install.bat"
-```
-
-**Windows 7** (no `curl`; uses `bitsadmin`):
+From CMD, in one line (it downloads the installer and runs it):
 
 ```bat
-bitsadmin /transfer tinyshell /download /priority foreground https://github.com/lucasvidela94/tinyagent/releases/latest/download/install.bat "%TEMP%\tinyshell-install.bat" && "%TEMP%\tinyshell-install.bat"
+curl -fsSLo "%TEMP%\TinyShell-Setup.exe" https://github.com/lucasvidela94/tinyagent/releases/latest/download/TinyShell-Setup.exe && "%TEMP%\TinyShell-Setup.exe"
 ```
 
-`bitsadmin` needs TLS 1.2 enabled system-wide (GitHub requires it), which many Windows 7 machines lack. If it fails, **install from a USB stick**:
+On Windows 7, which has no `curl`, use `bitsadmin`:
 
-1. On another PC, download `tinyshell.exe` and `install.bat` from the [releases page](https://github.com/lucasvidela94/tinyagent/releases/latest).
-2. Copy them **together** to a USB stick.
-3. On the old PC, run `install.bat` from the stick: it installs the local copy without downloading anything.
+```bat
+bitsadmin /transfer tinyshell /download /priority foreground https://github.com/lucasvidela94/tinyagent/releases/latest/download/TinyShell-Setup.exe "%TEMP%\TinyShell-Setup.exe" && "%TEMP%\TinyShell-Setup.exe"
+```
 
-The installer shows the executable's SHA-256; compare it with the one in the release.
+`bitsadmin` and a browser need TLS 1.2 enabled system-wide (GitHub requires it), which many Windows 7 machines lack. Then **use a USB stick**: download `TinyShell-Setup.exe` on another PC, copy it to the stick and run it on the old one.
+
+Prefer no installer? `tinyshell.exe` from the release also runs on its own (portable).
 
 ### Windows 7 requirements
 
@@ -172,7 +172,7 @@ It never updates by itself. `--update` works even if the agent is broken (it nee
 4. runs the new binary with `--version` on **your** machine: if it does not start on that system, it is not installed;
 5. keeps the previous one next to it (`tinyshell.old.exe`) for `--rollback`.
 
-If something goes badly wrong, running the installer again (or the USB copy) always leaves a clean install.
+If something goes badly wrong, running the installer again (or from a USB copy) always leaves a clean install.
 
 ## Security, in short
 
