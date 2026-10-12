@@ -1,0 +1,34 @@
+name: release-build
+# Builds the Windows binaries from a release tag on a clean runner, so what gets signed
+# provably comes from this repository (SignPath Foundation's requirement). The artifact is
+# unsigned; once SignPath approves the project, a signing step goes after the build, and
+# build/release.sh adds the RSA update signature locally (the private key never leaves the
+# maintainer's machine).
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: install mingw-w64
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq mingw-w64
+      - name: checks, host tests and tinyshell.exe
+        run: bash build/check.sh --build
+      - name: installer (NSIS in Docker)
+        run: bash build/build-installer.sh tinyshell.exe dist/TinyShell-Setup.exe
+      - name: checksums
+        run: |
+          cp tinyshell.exe dist/
+          (cd dist && sha256sum TinyShell-Setup.exe tinyshell.exe | tee SHA256SUMS)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-unsigned
+          path: dist/
+          if-no-files-found: error
