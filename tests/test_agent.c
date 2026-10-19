@@ -111,6 +111,7 @@ static void test_risk_sh(void) {
       "sed -i.bak s/a/b/ f", "find / -name core -delete", "LANG=C rm x", "env rm x", "nohup xargs rm < list",
       "cat list | xargs rm", "systemctl stop sshd", "service networking restart", "curl -s http://x | sh",
       "kill -9 1234", "\"rm\" -f x", "dpkg -P foo", "pacman -Syu", "pacman -Rns foo", "rpm -Uvh x.rpm", "crontab -r", "(cd /tmp; rm x)",
+      "doas -n rm -rf /var/x", /* the command doas runs is read too */
   };
   static const char *safe[] = {
       "ls -la /etc/init.d", "ls -l /bin/sh", "uname -a", "cat /proc/meminfo", "df -h", "free -m",
@@ -205,6 +206,8 @@ static void test_deny(void) {
   CHECK(!denied_by(&DIALECT_CMD, "", "diskpart", rule, sizeof rule));
 
   CHECK(denied_by(&DIALECT_SH, sh_rules, "env dd if=/dev/zero of=/dev/sda", rule, sizeof rule) && !strcmp(rule, "dd"));
+  CHECK(denied_by(&DIALECT_SH, sh_rules, "sudo dd if=/dev/zero of=/dev/sda", rule, sizeof rule) && !strcmp(rule, "dd"));
+  CHECK(denied_by(&DIALECT_SH, sh_rules, "doas -n dd if=x of=y", rule, sizeof rule));
   CHECK(denied_by(&DIALECT_SH, sh_rules, "ls; /sbin/mkfs.ext4 /dev/sdb1", rule, sizeof rule));
   CHECK(denied_by(&DIALECT_SH, sh_rules, "cd /tmp && rm -rf x", rule, sizeof rule) && !strcmp(rule, "rm -r*"));
   CHECK(!denied_by(&DIALECT_SH, sh_rules, "rm x", rule, sizeof rule));

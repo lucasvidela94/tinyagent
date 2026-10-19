@@ -77,25 +77,31 @@ static int is_wrapper(const char *w, size_t n) {
   return 0;
 }
 
-/* The command of a segment: past VAR=value and wrappers, its basename before any '.'. */
+/* The command of a segment: past VAR=value and wrappers, its basename before any '.'.
+ * After sudo or doas the command they run (past their flags) comes out too, since sudo
+ * has a rule of its own: "sudo dd" yields " sudo  dd ". */
 static void command_of(const char *all, Buf *out) {
   const char *p = all;
+  int elevated = 0;
   for (;;) {
-    size_t n;
+    size_t n, len;
     const char *base, *dot;
     while (*p == ' ') p++;
     n = strcspn(p, " ");
     if (!n) return;
-    if (memchr(p, '=', n) || is_wrapper(p, n)) {
+    if (memchr(p, '=', n) || is_wrapper(p, n) || (elevated && *p == '-')) {
       p += n;
       continue;
     }
     for (base = p + n; base > p && base[-1] != '/'; base--) {}
     dot = memchr(base, '.', (size_t)(p + n - base));
+    len = (size_t)((dot ? dot : p + n) - base);
     buf_str(out, " ");
-    buf_add(out, base, (size_t)((dot ? dot : p + n) - base));
+    buf_add(out, base, len);
     buf_str(out, " ");
-    return;
+    if (elevated || len != 4 || (strncmp(base, "sudo", 4) && strncmp(base, "doas", 4))) return;
+    elevated = 1;
+    p += n;
   }
 }
 
