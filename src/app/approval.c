@@ -39,13 +39,16 @@ static char *rejected(Session *s, int ask_why) {
   return buf_take(&b);
 }
 
+enum { ONCE, ALWAYS, ADMIN, NO };
+
 char *approval_run(Session *s, const ToolCall *tc) {
   const Dialect *d = system_dialect();
   char rules[1024], rule[64], msg[160], prefix[64], always[128], *out;
-  const char *items[3];
-  int n = 0, pick, eligible = command_prefix(d, tc->command, prefix, sizeof prefix);
+  const char *items[4];
+  int kind[4], n = 0, pick, choice = ONCE, asked_admin = tc->admin && d->elevate;
+  int eligible = command_prefix(d, tc->command, prefix, sizeof prefix);
   Buf head = {0};
-  buf_str(&head, "$ ");
+  buf_str(&head, asked_admin ? "# " : "$ "); /* "#": the usual prompt of an administrator shell */
   buf_str(&head, tc->command);
   tui_panel(head.p, tc->reason);
   free(head.p);
@@ -56,22 +59,27 @@ char *approval_run(Session *s, const ToolCall *tc) {
     return xstrdup(msg);
   }
   s->proposed++;
-  if (!eligible || !approved_always(s, prefix)) {
-    items[n++] = tr("Yes, once");
+  /* A command the model wants elevated is always asked: each one has its own UAC prompt. */
+  if (asked_admin || !eligible || !approved_always(s, prefix)) {
+    /* Administrator rights are offered on every command where the platform has them,
+     * first when the model asked for them; "always" never elevates. */
+    if (asked_admin) items[n] = tr("Yes, once, as administrator (Windows will ask)"), kind[n++] = ADMIN;
+    items[n] = tr("Yes, once"), kind[n++] = ONCE;
     if (eligible) {
       snprintf(always, sizeof always, tr("Yes, always \"%s\" in this session"), prefix);
-      items[n++] = always;
+      items[n] = always, kind[n++] = ALWAYS;
     }
-    items[n++] = tr("No, and tell it what to do instead");
+    if (d->elevate && !asked_admin) items[n] = tr("Yes, once, as administrator (Windows will ask)"), kind[n++] = ADMIN;
+    items[n] = tr("No, and tell it what to do instead"), kind[n++] = NO;
     console_flush_input(); /* leftover pasted lines must not answer the question */
     pick = tui_select(tr("Run it?"), items, n, 0);
     if (pick < 0) return rejected(s, 0); /* Esc */
-    if (pick == n - 1) return rejected(s, 1);
-    if (eligible && pick == 1 && s->nalways < MAX_ALWAYS)
+    if ((choice = kind[pick]) == NO) return rejected(s, 1);
+    if (choice == ALWAYS && s->nalways < MAX_ALWAYS)
       snprintf(s->always[s->nalways++], sizeof s->always[0], "%s", prefix);
   }
   s->approved++;
-  out = run_command(tc->command);
+  out = choice == ADMIN ? run_command_admin(tc->command) : run_command(tc->command);
   tui_output(out);
   return out;
 }

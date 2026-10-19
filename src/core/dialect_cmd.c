@@ -64,5 +64,9 @@ const Dialect DIALECT_CMD = {
     "batch scripts",
     "no dir /s on a whole drive, no full event logs",
     "- Use built-in tools (cmd, wmic, reg query, sc, netsh, findstr, type, where). PowerShell may be missing or "
-    "very old on these systems; do not assume it, and do not assume modern command options exist.\n",
+    "very old on these systems; do not assume it, and do not assume modern command options exist.\n"
+    "- Commands run without administrator rights. When one needs them (\"Access is denied\", installing, "
+    "uninstalling, services, system folders, HKLM), call shell with admin set to true: Windows asks the user "
+    "to allow it, and only that command runs elevated.\n",
+    1,
 };

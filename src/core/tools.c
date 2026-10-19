@@ -8,13 +8,16 @@ static void shell_json(Buf *b, const Dialect *d) {
   buf_str(b, d->shell);
   buf_str(b, " command on the local ");
   buf_str(b, d->os);
-  buf_str(b, " machine after the user approves it. Use it to inspect the system and files and to make changes the "
-             "user agreed to. No interactive input; time-limited; long output is cut.\","
+  buf_str(b, " machine after the user approves it, for whatever the task needs. No interactive input; "
+             "time-limited; long output is cut.\","
              "\"parameters\":{\"type\":\"object\",\"properties\":{"
              "\"command\":{\"type\":\"string\",\"description\":\"Exact command to run in ");
   buf_str(b, d->shell);
-  buf_str(b, "\"},\"reason\":{\"type\":\"string\",\"description\":\"Why this command is needed\"}},"
-             "\"required\":[\"command\",\"reason\"],\"additionalProperties\":false}}}");
+  buf_str(b, "\"},\"reason\":{\"type\":\"string\",\"description\":\"What this command does\"}");
+  if (d->elevate)
+    buf_str(b, ",\"admin\":{\"type\":\"boolean\",\"description\":\"true to run it with administrator rights; "
+               "Windows asks the user to allow it\"}");
+  buf_str(b, "},\"required\":[\"command\",\"reason\"],\"additionalProperties\":false}}}");
 }
 
 static void question_json(Buf *b) {
@@ -48,6 +51,7 @@ void tool_call_parse(const Json *j, int call, ToolCall *tc) {
   tc->name = json_str(j, json_key(j, fn, "name"));
   tc->command = json_str(&a, json_key(&a, 0, "command"));
   tc->reason = json_str(&a, json_key(&a, 0, "reason"));
+  tc->admin = json_type(&a, json_key(&a, 0, "admin")) == 't'; /* only the JSON literal true */
   tc->question = json_str(&a, json_key(&a, 0, "question"));
   opts = json_key(&a, 0, "options");
   tc->noptions = json_type(&a, opts) == '[' ? json_size(&a, opts) : 0;

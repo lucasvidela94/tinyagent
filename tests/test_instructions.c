@@ -38,6 +38,7 @@ int main(void) {
     CHECK(has(win, "Run one cmd.exe command on the local Windows machine") && !has(win, "/bin/sh"));
     CHECK(has(lin, "Run one /bin/sh command on the local Linux machine") && !has(lin, "cmd.exe"));
     CHECK(has(win, "\"name\":\"question\"") && has(win, "\"maxItems\":8"));
+    CHECK(has(win, "\"admin\":{\"type\":\"boolean\"") && !has(lin, "\"admin\"")); /* UAC is Windows only */
     snprintf(limits, sizeof limits, "\"max_tokens\":%d,", MAX_ANSWER_TOKENS);
     CHECK(has(win, limits) && MAX_ANSWER_TOKENS >= 16384); /* room to think and still answer */
     {

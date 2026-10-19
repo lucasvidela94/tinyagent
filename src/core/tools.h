@@ -20,7 +20,7 @@ void tools_json(Buf *b, const Dialect *d);
  * MAX_OPTIONS of them are kept, so more than MAX_OPTIONS means too many. */
 typedef struct {
   char *id, *name;
-  char *command, *reason;                         /* shell */
+  char *command, *reason; int admin;               /* shell; admin: run elevated (Windows) */
   char *question, *options[MAX_OPTIONS]; int noptions; /* question */
 } ToolCall;
 void tool_call_parse(const Json *j, int call, ToolCall *tc);

@@ -125,3 +125,11 @@ char *run_command(const char *cmd) {
   free(text);
   return res;
 }
+
+/* The tool offers "admin" only on Windows (dialect elevate = 0 here): sudo needs a
+ * password prompt, which commands without stdin cannot answer. */
+char *run_command_admin(const char *cmd) {
+  (void)cmd;
+  return xstrdup(tr("There is no administrator mode here; use sudo in the command if it needs no password. "
+                    "Nothing was run."));
+}

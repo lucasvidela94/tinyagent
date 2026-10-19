@@ -38,7 +38,17 @@ static void test_tool_calls(void) {
   tc = parse_call("{\"choices\":[{\"message\":{\"tool_calls\":[{\"id\":\"c2\",\"function\":{\"name\":\"shell\","
                   "\"arguments\":{\"command\":\"tasklist\",\"reason\":\"r\"}}}]}}]}");
   CHECK(!strcmp(tc.command, "tasklist"));
-  CHECK(tool_problem(&tc) == NULL);
+  CHECK(tool_problem(&tc) == NULL && !tc.admin);
+  tool_call_free(&tc);
+
+  /* admin: only the JSON literal true asks for elevation */
+  tc = parse_call("{\"choices\":[{\"message\":{\"tool_calls\":[{\"id\":\"c5\",\"function\":{\"name\":\"shell\","
+                  "\"arguments\":{\"command\":\"sc stop x\",\"reason\":\"r\",\"admin\":true}}}]}}]}");
+  CHECK(tc.admin && tool_problem(&tc) == NULL);
+  tool_call_free(&tc);
+  tc = parse_call("{\"choices\":[{\"message\":{\"tool_calls\":[{\"id\":\"c6\",\"function\":{\"name\":\"shell\","
+                  "\"arguments\":{\"command\":\"sc stop x\",\"reason\":\"r\",\"admin\":\"true\"}}}]}}]}");
+  CHECK(!tc.admin);
   tool_call_free(&tc);
 
   /* unknown tool is refused even with a valid command */

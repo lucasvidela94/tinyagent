@@ -8,4 +8,10 @@
  * Must only be called after local approval. */
 char *run_command(const char *cmd);
 
+/* Like run_command, but with administrator rights: on Windows through the UAC prompt
+ * ("runas"), the output read back from a temporary file. Says so, and runs nothing, when
+ * the user declines or the platform has no such mode. Must only be called after local
+ * approval of this command. */
+char *run_command_admin(const char *cmd);
+
 #endif

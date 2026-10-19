@@ -1,5 +1,6 @@
 #include "win32.h"
 
+#include <shellapi.h> /* ShellExecuteExW, left out by WIN32_LEAN_AND_MEAN */
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -133,5 +134,79 @@ char *run_command(const char *cmd) {
   CloseHandle(pi.hProcess);
   CloseHandle(rd);
   if (job) CloseHandle(job);
+  return finish(&out, dropped, timed_out, code);
+}
+
+/* "cmd.exe" parameters that run cmd with stdout and stderr in `file`; /s makes cmd strip
+ * only the outer quotes, so the command keeps its own. */
+static wchar_t *admin_params(const char *cmd, const wchar_t *file) {
+  int wn = MultiByteToWideChar(CP_UTF8, 0, cmd, -1, NULL, 0);
+  wchar_t *p;
+  if (wn <= 0) return NULL;
+  p = (wchar_t *)xrealloc(NULL, ((size_t)wn + (size_t)lstrlenW(file) + 32) * sizeof(wchar_t));
+  /* sized above for both strings plus the fixed parts (under 32 characters) */
+  lstrcpyW(p, L"/d /s /c \"");
+  MultiByteToWideChar(CP_UTF8, 0, cmd, -1, p + lstrlenW(p), wn);
+  lstrcatW(p, L" >\"");
+  lstrcatW(p, file);
+  lstrcatW(p, L"\" 2>&1\"");
+  return p;
+}
+
+char *run_command_admin(const char *cmd) {
+  wchar_t app[MAX_PATH + 16], dir[MAX_PATH], tmp[MAX_PATH], *params;
+  SHELLEXECUTEINFOW sei;
+  UINT sl = GetSystemDirectoryW(app, MAX_PATH);
+  DWORD code = 0, start, got;
+  int timed_out = 0;
+  size_t dropped = 0;
+  Buf out = {0};
+  HANDLE f;
+  char msg[192], buf[4096];
+  if (!sl || sl >= MAX_PATH) return xstrdup(tr("cmd.exe was not found. Nothing was run."));
+  lstrcatW(app, L"\\cmd.exe");
+  if (!GetTempPathW(MAX_PATH, dir) || !GetTempFileNameW(dir, L"tsh", 0, tmp))
+    return xstrdup(tr("Could not create a temporary file. Nothing was run."));
+  if (!(params = admin_params(cmd, tmp))) {
+    DeleteFileW(tmp);
+    return xstrdup(tr("The command has an invalid encoding. Nothing was run."));
+  }
+  /* An elevated process cannot write to our pipe: it gets its own hidden console and the
+   * output comes back through the file. */
+  ZeroMemory(&sei, sizeof sei);
+  sei.cbSize = sizeof sei;
+  sei.fMask = SEE_MASK_NOCLOSEPROCESS;
+  sei.lpVerb = L"runas";
+  sei.lpFile = app;
+  sei.lpParameters = params;
+  sei.nShow = SW_HIDE;
+  if (!ShellExecuteExW(&sei) || !sei.hProcess) {
+    DWORD e = GetLastError();
+    free(params);
+    DeleteFileW(tmp);
+    if (e == ERROR_CANCELLED) return xstrdup(tr("The user declined the administrator prompt. Nothing was run."));
+    snprintf(msg, sizeof msg, tr("Could not start cmd.exe as administrator (error %lu). Nothing was run."),
+             (unsigned long)e);
+    return xstrdup(msg);
+  }
+  free(params);
+  start = GetTickCount();
+  while (WaitForSingleObject(sei.hProcess, 100) == WAIT_TIMEOUT) {
+    if (cancel_requested() || GetTickCount() - start > CMD_TIMEOUT_MS) {
+      timed_out = !cancel_requested();
+      TerminateProcess(sei.hProcess, 1); /* may be refused for an elevated process */
+      WaitForSingleObject(sei.hProcess, 2000);
+      break;
+    }
+  }
+  GetExitCodeProcess(sei.hProcess, &code);
+  CloseHandle(sei.hProcess);
+  f = CreateFileW(tmp, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, 0,
+                  NULL);
+  if (f != INVALID_HANDLE_VALUE) {
+    while (ReadFile(f, buf, sizeof buf, &got, NULL) && got) buf_add_capped(&out, buf, got, MAX_OUTPUT, &dropped);
+    CloseHandle(f);
+  }
+  DeleteFileW(tmp);
   return finish(&out, dropped, timed_out, code);
 }

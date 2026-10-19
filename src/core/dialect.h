@@ -28,6 +28,7 @@ typedef struct {
   const char *scripts; /* "batch scripts" */
   const char *no_scan; /* examples of scans that are too heavy for the machine */
   const char *tools;   /* the built-in tools bullet */
+  int elevate;         /* 1: the shell tool takes "admin" (run elevated through UAC) */
 } Dialect;
 
 extern const Dialect DIALECT_CMD, DIALECT_SH;
