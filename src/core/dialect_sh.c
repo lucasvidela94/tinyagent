@@ -90,5 +90,4 @@ const Dialect DIALECT_SH = {
     "- Use the tools a minimal or old distro has (ls, cat, grep, ps, df, free, uname, ip or ifconfig, mount, "
     "dmesg | tail). It may be busybox, without systemd or bash; prefer POSIX options and do not assume modern "
     "flags exist. The user may not be root: say when a step needs sudo.\n",
-    "deleting, packages, services, /etc, permissions, partitions, the bootloader, firewall settings",
 };

@@ -28,7 +28,6 @@ typedef struct {
   const char *scripts; /* "batch scripts" */
   const char *no_scan; /* examples of scans that are too heavy for the machine */
   const char *tools;   /* the built-in tools bullet */
-  const char *changes; /* what counts as changing the system */
 } Dialect;
 
 extern const Dialect DIALECT_CMD, DIALECT_SH;

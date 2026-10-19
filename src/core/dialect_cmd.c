@@ -65,5 +65,4 @@ const Dialect DIALECT_CMD = {
     "no dir /s on a whole drive, no full event logs",
     "- Use built-in tools (cmd, wmic, reg query, sc, netsh, findstr, type, where). PowerShell may be missing or "
     "very old on these systems; do not assume it, and do not assume modern command options exist.\n",
-    "deleting, registry, services, drivers, partitions, installing, security settings",
 };
