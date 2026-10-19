@@ -120,7 +120,7 @@ Other files:
 3. The model streams a normal answer or tool calls: `shell` or `question`.
 4. For `shell`, the program shows the command and the reason in a shaded panel and asks in a menu: yes once, yes always for its prefix in this session, or no with what to do instead; a command whose prefix was approved "always" runs without asking. For `question`, it shows the question and its options in the menu (plus "other answer"), and the choice goes back as the result; nothing runs.
 5. A rejection goes back to the model as such, with the user's reason if given; an approved command runs in the platform shell and its output's last lines are shown in the same panel.
-6. The result goes back as a tool message and the model may continue, up to 25 steps per message (`MAX_TURNS`).
+6. The result goes back as a tool message and the model may continue, up to 25 steps per message (`MAX_TURNS`). Each request allows 16 384 answer tokens (`MAX_ANSWER_TOKENS`), which reasoning models also spend thinking.
 7. Before each request the history is trimmed to ~192 KB: first old command outputs over 1 KB are replaced by a short note that keeps the exit status (all but the last two, oldest first), then whole exchanges are dropped (a `tool_calls` message is never separated from its results). Eliding before dropping follows the context-management results in arXiv:2609.20804, where cheap elision matched summarization in accuracy at lower cost.
 
 ## Constraints / design choices

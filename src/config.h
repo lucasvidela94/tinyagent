@@ -20,6 +20,7 @@
 #define MAX_COMMAND 2000         /* proposed command, bytes */
 #define MAX_LINE 4096            /* typed line, bytes */
 #define MAX_TURNS 25             /* model round trips per user message (each tool call is approved) */
+#define MAX_ANSWER_TOKENS 16384  /* max_tokens per request; reasoning models spend it thinking too */
 #define MAX_TOKENS 20000         /* JSON tokens per document */
 #define MAX_DEPTH 64             /* JSON nesting */
 #ifndef CMD_TIMEOUT_MS

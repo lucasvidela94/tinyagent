@@ -118,7 +118,7 @@ char *tool_result_json(const char *id, const char *output) {
 
 char *build_request(const History *h, const char *model, const Dialect *d) {
   Buf b = {0};
-  char *em = jesc(model);
+  char *em = jesc(model), tail[128];
   int i;
   buf_str(&b, "{\"model\":\"");
   buf_str(&b, em);
@@ -128,7 +128,9 @@ char *build_request(const History *h, const char *model, const Dialect *d) {
     if (i) buf_str(&b, ",");
     buf_str(&b, h->m[i].json);
   }
-  buf_str(&b, "],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"max_tokens\":4096,");
+  snprintf(tail, sizeof tail, "],\"stream\":true,\"stream_options\":{\"include_usage\":true},\"max_tokens\":%d,",
+           MAX_ANSWER_TOKENS);
+  buf_str(&b, tail);
   tools_json(&b, d);
   buf_str(&b, "}");
   return buf_take(&b);

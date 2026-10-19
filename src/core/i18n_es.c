@@ -24,6 +24,8 @@ const I18nPair I18N_ES[] = {
      " (límite de uso; esperá y reintentá)"},
     {"%s \xc2\xb7 %s in \xc2\xb7 %s out \xc2\xb7 %d%%",
      "%s \xc2\xb7 %s entrada \xc2\xb7 %s salida \xc2\xb7 %d%%"},
+    {"(the model used up its answer limit before writing anything; type \"continue\")",
+     "(el modelo agotó su límite de respuesta antes de escribir nada; escribí \"seguí\")"},
     {"(answer cut off by the token limit)",
      "(respuesta cortada por el límite de tokens)"},
     {"(empty answer)",

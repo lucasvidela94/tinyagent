@@ -117,9 +117,13 @@ static int handle_response(Session *s, const Json *j, int streamed) {
     free(text);
     return !cancel_requested(); /* a cancelled turn stops here */
   }
-  if (!streamed || !*text) tui_text(*text ? text : tr("(empty answer)"));
   finish = json_str(j, json_key(j, choice, "finish_reason"));
-  if (!strcmp(finish, "length")) tui_note(tr("(answer cut off by the token limit)"));
+  if (!*text && !strcmp(finish, "length")) /* a reasoning model spent it all thinking */
+    tui_note(tr("(the model used up its answer limit before writing anything; type \"continue\")"));
+  else {
+    if (!streamed || !*text) tui_text(*text ? text : tr("(empty answer)"));
+    if (!strcmp(finish, "length")) tui_note(tr("(answer cut off by the token limit)"));
+  }
   free(finish);
   history_add(&s->history, message_json("assistant", text), 0);
   free(text);
