@@ -56,8 +56,8 @@ a growing file is split along a real interface, not by size.
 | `src/core/json.c` | `json_parse/key/index/str` | bounded tokenizer (depth, tokens), `\uXXXX` to UTF-8; fuzzed |
 | `src/core/stream.c` | `stream_feed`, `stream_response` | SSE streaming: live text, joins tool-call pieces, rebuilds the plain response; fuzzed |
 | `src/core/conversation.c` | `History`, `build_request` | history bounded by eliding old outputs, then by whole exchanges; request body |
-| `src/core/tools.c` | `tools_json`, `ToolCall` | the tools offered to the model (shell described per dialect) and tool-call extraction |
-| `src/core/policy.c` | `command_problem`, `risk_reason`, `denied_by`, `is_yes` | pre-approval refusals, risk heuristic per dialect, the user's deny rules, approval answers |
+| `src/core/tools.c` | `tools_json`, `ToolCall` | the tools offered to the model (shell described per dialect, question) and tool-call extraction |
+| `src/core/policy.c` | `tool_problem`, `risk_reason`, `denied_by`, `is_yes` | refusals before the user is asked (commands and questions), risk heuristic per dialect, the user's deny rules, approval answers |
 | `src/core/dialect.h`, `dialect_cmd.c`, `dialect_sh.c` | `DIALECT_CMD`, `DIALECT_SH` | what depends on the shell, as data: risk rules and prompt guidance for `cmd.exe` and `/bin/sh` |
 | `src/core/instructions.c` | `instructions` | the task-agnostic prompt instructions, with the dialect's parts |
 | `src/core/command.c` | `command_result` | the text a command result goes back to the model as, the same on every platform |
@@ -76,7 +76,8 @@ a growing file is split along a real interface, not by size.
 | `src/app/main.c` | `main` | interface language, API key, chat loop |
 | `src/app/cli.c` | `cli_run` | subcommands (`login`, `logout`, `report`, `telemetry`) and flags (`--version/--update/--rollback`), with the earlier Spanish names as aliases |
 | `src/app/slash.c` | `slash_run` | chat commands (`/help`, `/model`, `/login`, `/report`, `/reset`, `/update`, `/quit`), with Spanish aliases |
-| `src/app/session.c` | `session_send` | system prompt, history, approval gate (`decide`), turn loop, token counts |
+| `src/app/session.c` | `session_send` | system prompt, history, tool dispatch (`run_tool`), approval gate (`decide`), turn loop, token counts |
+| `src/app/question.c` | `question_ask` | the `question` tool: the question, its options in the menu and a typed "other answer" |
 | `src/app/tui.c`, `tui_select.c` | `tui_*`, `tui_select` | minimal inline TUI: user block, proposal, output summary, editor between rules, footer; arrow-key menu with filtering; plain mode without a console |
 | `src/app/login.c` | `login_run`, `login_pick_model` | `tinyshell login`: provider, key (checked against `/models`), model from the live list |
 | `src/app/reporter.c` | `reporter_run` | `/reporte`: builds, saves, shows and sends the report |
@@ -115,8 +116,8 @@ Other files:
 
 1. The person writes a goal.
 2. The program adds it to the history and sends it over HTTPS.
-3. The model streams a normal answer or a call to `shell`.
-4. For `shell`, the program shows the command and the reason.
+3. The model streams a normal answer or tool calls: `shell` or `question`.
+4. For `shell`, the program shows the command and the reason. For `question`, it shows the question and its options in the menu (plus "other answer"), and the choice goes back as the result; nothing runs.
 5. A rejection goes back to the model as such; an approved command runs in the platform shell.
 6. The result goes back as a tool message and the model may continue, up to 25 steps per message (`MAX_TURNS`).
 7. Before each request the history is trimmed to ~192 KB: first old command outputs over 1 KB are replaced by a short note that keeps the exit status (all but the last two, oldest first), then whole exchanges are dropped (a `tool_calls` message is never separated from its results). Eliding before dropping follows the context-management results in arXiv:2609.20804, where cheap elision matched summarization in accuracy at lower cost.
@@ -133,4 +134,4 @@ Other files:
 ## Future changes
 
 - No microservices or extra runtimes: the target machines must stay simple.
-- A second tool (for example read-only file access) is what would justify generalizing tool dispatch; with one tool, it is not worth it.
+- Tools are a closed set in `src/core/tools.c` (schema and argument parsing) and `tool_problem()` (limits), host-tested; `session.c` dispatches by name with a plain `if`. A new tool adds its schema, fields and checks there and one branch in the session, not a registry or function pointers.

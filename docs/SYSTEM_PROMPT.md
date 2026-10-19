@@ -6,7 +6,7 @@ The system prompt is built in code, with no runtime file: `src/core/instructions
 
 - **Task-agnostic.** TinyShell is a general-purpose terminal agent for old PCs (Windows or Linux), in the spirit of OpenCode or Pi, not a single-purpose cleanup or repair bot. The prompt lists example uses (troubleshooting, inspecting files, writing scripts, maintenance, questions) without privileging any.
 - **Machine-agnostic.** No hardcoded hardware. At startup the program appends what it detects: OS name and version (Windows: `RtlGetVersion`; Linux: distro and kernel), 32/64-bit, total/free RAM, logical CPUs and current directory.
-- **Tool contract.** One `shell` tool; every command is approved by a human; stdin is empty; time and output limits are stated with the values from `src/config.h`.
+- **Tool contract.** A `shell` tool: every command is approved by a human; stdin is empty; time and output limits are stated with the values from `src/config.h`. A `question` tool: the model asks the user to pick one of a few options (or type another answer) when the choice is theirs, instead of guessing; never to ask permission for a command.
 
 ## Working rules it gives the model
 

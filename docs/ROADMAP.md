@@ -75,7 +75,7 @@ Features:
 
 - [ ] `/compact`: the model summarizes the older part of the conversation into one message.
       Long sessions keep their context while using fewer tokens and less RAM than trimming.
-- [ ] `question` tool: the model asks a multiple-choice question shown with the existing menu
+- [x] `question` tool: the model asks a multiple-choice question shown with the existing menu
       (arrows, filter) instead of guessing; the answer goes back as the tool result.
 - [ ] Machine notes, like OpenCode's `AGENTS.md` and `/init`: `/init` lets the model propose
       a short `TINYSHELL.md` (what this PC is, what was already fixed, what not to touch),

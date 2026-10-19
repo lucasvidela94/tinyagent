@@ -11,6 +11,7 @@
 #include "json.h"
 #include "policy.h"
 #include "machine.h"
+#include "question.h"
 #include "session.h"
 #include "settings.h"
 #include "shell.h"
@@ -65,13 +66,8 @@ void session_free(Session *s) {
 
 /* The approval gate. Returns the text sent back to the model as the tool result. */
 static char *decide(Session *s, const ToolCall *tc) {
-  const char *problem = command_problem(tc), *risk;
+  const char *risk;
   char answer[64], *out, rules[1024], rule[64], msg[160];
-  if (problem) {
-    say("\n");
-    tui_error(tr(problem));
-    return xstrdup(tr(problem));
-  }
   /* Read on every command, so an edit to config.ini applies without restarting. */
   if (settings_get("deny", "commands", rules, sizeof rules) && denied_by(system_dialect(), rules, tc->command, rule, sizeof rule)) {
     snprintf(msg, sizeof msg, tr("Blocked by the deny rule \"%s\" in config.ini. Nothing was run."), rule);
@@ -100,6 +96,18 @@ static char *decide(Session *s, const ToolCall *tc) {
   out = run_command(tc->command);
   tui_output(out);
   return out;
+}
+
+/* One tool call: refused, asked as a question, or a command through the approval gate. */
+static char *run_tool(Session *s, const ToolCall *tc) {
+  const char *problem = tool_problem(tc);
+  if (problem) {
+    say("\n");
+    tui_error(tr(problem));
+    return xstrdup(tr(problem));
+  }
+  if (!strcmp(tc->name, "question")) return question_ask(tc);
+  return decide(s, tc);
 }
 
 static void count_usage(Session *s, const Json *j) {
@@ -135,7 +143,7 @@ static int handle_response(Session *s, const Json *j, int streamed) {
       char *out;
       tool_call_parse(j, json_index(j, calls, i), &tc);
       /* After Ctrl+C every remaining call still needs a result, but nothing is asked or run. */
-      out = cancel_requested() ? xstrdup(tr("Cancelled by the user with Ctrl+C. Nothing was run.")) : decide(s, &tc);
+      out = cancel_requested() ? xstrdup(tr("Cancelled by the user with Ctrl+C. Nothing was run.")) : run_tool(s, &tc);
       history_add(&s->history, tool_result_json(tc.id, out), 0); /* every call gets a result */
       free(out);
       tool_call_free(&tc);

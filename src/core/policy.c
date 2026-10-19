@@ -9,13 +9,33 @@
 #include "i18n.h"
 #include "util.h"
 
-const char *command_problem(const ToolCall *tc) {
+/* Control characters other than those in `allowed`. */
+static int has_control(const char *s, const char *allowed) {
   const unsigned char *p;
+  for (p = (const unsigned char *)s; *p; p++)
+    if ((*p < 0x20 || *p == 0x7F) && !strchr(allowed, *p)) return 1;
+  return 0;
+}
+
+/* Each option is one menu row; the question may span lines. */
+static const char *question_problem(const ToolCall *tc) {
+  int i;
+  if (!*tc->question || tc->noptions < 2 || tc->noptions > MAX_OPTIONS)
+    return N_("The question needs its text and 2 to 8 options. Nothing was asked.");
+  if (strlen(tc->question) > MAX_QUESTION || has_control(tc->question, "\n"))
+    return N_("The question is too long or has control characters. Nothing was asked.");
+  for (i = 0; i < tc->noptions; i++)
+    if (!*tc->options[i] || strlen(tc->options[i]) > MAX_OPTION || has_control(tc->options[i], ""))
+      return N_("An option is empty, too long or has control characters. Nothing was asked.");
+  return NULL;
+}
+
+const char *tool_problem(const ToolCall *tc) {
+  if (!strcmp(tc->name, "question")) return question_problem(tc);
   if (strcmp(tc->name, "shell")) return N_("Tool not allowed. Nothing was run.");
   if (!*tc->command) return N_("The command is missing (no arguments or invalid JSON). Nothing was run.");
   if (strlen(tc->command) > MAX_COMMAND) return N_("Command too long. Nothing was run.");
-  for (p = (const unsigned char *)tc->command; *p; p++)
-    if (*p < 0x20 || *p == 0x7F) return N_("The command has line breaks or control characters. Nothing was run.");
+  if (has_control(tc->command, "")) return N_("The command has line breaks or control characters. Nothing was run.");
   return NULL;
 }
 

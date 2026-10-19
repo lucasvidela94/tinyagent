@@ -8,6 +8,7 @@
 #include "config.h"
 #include "conversation.h"
 #include "instructions.h"
+#include "json.h"
 
 static int has(const char *s, const char *part) { return strstr(s, part) != NULL; }
 
@@ -22,6 +23,7 @@ int main(void) {
   CHECK(!has(lin, "cmd.exe") && !has(lin, "Windows") && !has(lin, "wmic") && !has(lin, "registry"));
   CHECK(has(win, limits) && has(lin, limits)); /* limits come from config.h */
   CHECK(has(win, "approves every command") && has(lin, "approves every command"));
+  CHECK(has(win, "Tool: `question`") && has(lin, "Tool: `question`"));
   free(win);
   free(lin);
   { /* the shell tool sent with every request describes the same shell */
@@ -31,6 +33,13 @@ int main(void) {
     lin = build_request(&h, "m", &DIALECT_SH);
     CHECK(has(win, "Run one cmd.exe command on the local Windows machine") && !has(win, "/bin/sh"));
     CHECK(has(lin, "Run one /bin/sh command on the local Linux machine") && !has(lin, "cmd.exe"));
+    CHECK(has(win, "\"name\":\"question\"") && has(win, "\"maxItems\":8"));
+    {
+      Json j = {0};
+      CHECK(json_parse(&j, win)); /* both tools in one well-formed body */
+      CHECK(json_size(&j, json_key(&j, 0, "tools")) == 2);
+      json_free(&j);
+    }
     free(win);
     free(lin);
   }

@@ -11,7 +11,7 @@ CC="${HOST_CC:-cc}"
 OUT="$(mktemp -d)"
 trap 'rm -rf "$OUT"' EXIT
 "$CC" -std=c11 -Wall -Wextra -Werror "${INCLUDES[@]}" -Isrc/platform/posix -o "$OUT/demo" tests/tui/demo.c \
-  src/app/tui.c src/app/tui_select.c "${CORE_SRC[@]}" src/platform/posix/console_posix.c \
+  src/app/tui.c src/app/tui_select.c src/app/question.c "${CORE_SRC[@]}" src/platform/posix/console_posix.c \
   src/platform/posix/console_input_posix.c src/platform/posix/cancel_posix.c
 if command -v uv >/dev/null 2>&1; then
   uv run -q --with pyte python3 tests/tui/run.py "$OUT/demo"

@@ -21,6 +21,9 @@ char *instructions(const Dialect *d) {
            "input (stdin is empty), are stopped after %d seconds, and output beyond %d bytes is cut.\n\n",
            CMD_TIMEOUT_MS / 1000, MAX_OUTPUT);
   buf_str(&b, limits);
+  buf_str(&b, "Tool: `question` asks the user to pick one of a few short options (they can also type another "
+              "answer). Use it when a choice is the user's to make, instead of guessing; not to ask permission for "
+              "a command, which is approved anyway.\n\n");
   buf_str(&b, "How to work:\n"
               "- Reply in the language the user writes in. Be concise and practical.\n"
               "- Plain text only: the console cannot render Markdown (no **, #, tables or code fences). Use simple\n"

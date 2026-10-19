@@ -11,6 +11,7 @@ parentheses). The interface speaks Spanish or English (see "Language" below).
 | Editor (between two rules, footer below) | User request | One message per line in any language (max 4095 bytes; longer lines are refused). Windows: native console editing (arrows, F7 history, right-click paste). Linux: the terminal's line editing |
 | Prompt `run it? [y/N]` (Spanish: `¿ejecutar? [s/N]`; pending input is flushed first) | Local approval gate | Only `y`, `yes`, `s`, `si` or `sí` (any case) approve. Anything else, EOF, Ctrl+C or an over-long line rejects |
 | `RUN` confirmation (Spanish: `EJECUTAR`) | Extra gate | Required when `risk_reason()` (`src/core/policy.c`) flags the command; the reason is shown |
+| `question` tool menu | Model question | The question, its 2 to 8 options and "Other answer (type it)" in the menu (arrows, filter, Enter; Esc skips); plain mode reads a number or a name. Input is flushed first. The choice, the typed answer or "closed" goes back to the model; nothing runs |
 | `[deny] commands` in `config.ini` | Pre-filter | Comma-separated rules (`diskpart, del /s, rm -r*`): a command matching one is refused before asking, and the rule is shown and sent to the model (`denied_by()`, `src/core/policy.c`). Read on every command. There are no allow rules |
 | `/quit` (`/salir`, `/exit`), Ctrl+C at an empty prompt | Session termination | Ends the process |
 | `tinyshell --version` / `--help` | CLI flags | Print version / usage and exit |
@@ -36,7 +37,7 @@ parentheses). The interface speaks Spanish or English (see "Language" below).
 - Default: `POST https://opencode.ai/zen/go/v1/chat/completions`, model `deepseek-v4.1-flash`, header `x-opencode-session`.
 - Transport: Windows uses WinHTTP (TLS 1.1/1.2 requested explicitly through `WINHTTP_OPTION_SECURE_PROTOCOLS`); Linux uses Mbed TLS with the system roots plus Mozilla's embedded ones. `http://` works for a model server on the LAN, with a warning at startup (key and conversation unencrypted).
 - Auth: `Authorization: Bearer <API key>` when a key is set (local servers can run without one).
-- Content: JSON, OpenAI-compatible chat-completions messages and the `shell` tool declaration (worded for the platform's shell).
+- Content: JSON, OpenAI-compatible chat-completions messages and the `shell` (worded for the platform's shell) and `question` tool declarations.
 
 The API key is read from the saved store if the user chose to save it (Windows Credential Manager, target `TinyShell/<provider name>`; Linux `~/.config/tinyshell/credentials`, mode 0600), otherwise asked for at startup without echo, and held in process memory.
 

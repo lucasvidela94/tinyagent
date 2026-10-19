@@ -1,6 +1,6 @@
-/* Regression tests for src/core/conversation.c and src/core/policy.c: tool-call extraction,
- * unknown tools, rejected and risky commands, approval answers, history bounds and
- * oversized output. Run: ./build/test-core.sh */
+/* Regression tests for src/core/conversation.c and src/core/policy.c: risky commands, deny
+ * rules, approval answers, history bounds and oversized output (tool calls: test_tools.c).
+ * Run: ./build/test-core.sh */
 #include <stdlib.h>
 #include <string.h>
 
@@ -11,69 +11,6 @@
 #include "tools.h"
 #include "util.h"
 #include "check.h"
-
-static ToolCall parse_call(const char *response) {
-  Json j = {0};
-  ToolCall tc;
-  int msg;
-  CHECK(json_parse(&j, response));
-  msg = json_key(&j, json_index(&j, json_key(&j, 0, "choices"), 0), "message");
-  tool_call_parse(&j, json_index(&j, json_key(&j, msg, "tool_calls"), 0), &tc);
-  json_free(&j);
-  return tc;
-}
-
-static void test_tool_calls(void) {
-  ToolCall tc;
-  char longcmd[MAX_COMMAND + 32];
-  tc = parse_call("{\"choices\":[{\"message\":{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"c1\","
-                  "\"type\":\"function\",\"function\":{\"name\":\"shell\",\"arguments\":\"{\\\"command\\\":\\\"ver\\\","
-                  "\\\"reason\\\":\\\"versi\\\\u00f3n\\\"}\"}}]}}]}");
-  CHECK(!strcmp(tc.id, "c1"));
-  CHECK(!strcmp(tc.command, "ver"));
-  CHECK(!strcmp(tc.reason, "versi\xc3\xb3n"));
-  CHECK(command_problem(&tc) == NULL);
-  tool_call_free(&tc);
-
-  /* arguments as an object instead of a string */
-  tc = parse_call("{\"choices\":[{\"message\":{\"tool_calls\":[{\"id\":\"c2\",\"function\":{\"name\":\"shell\","
-                  "\"arguments\":{\"command\":\"tasklist\",\"reason\":\"r\"}}}]}}]}");
-  CHECK(!strcmp(tc.command, "tasklist"));
-  CHECK(command_problem(&tc) == NULL);
-  tool_call_free(&tc);
-
-  /* unknown tool is refused even with a valid command */
-  tc = parse_call("{\"choices\":[{\"message\":{\"tool_calls\":[{\"id\":\"c3\",\"function\":{\"name\":\"python\","
-                  "\"arguments\":\"{\\\"command\\\":\\\"ver\\\"}\"}}]}}]}");
-  CHECK(command_problem(&tc) != NULL);
-  tool_call_free(&tc);
-
-  /* malformed arguments: nothing to run */
-  tc = parse_call("{\"choices\":[{\"message\":{\"tool_calls\":[{\"id\":\"c4\",\"function\":{\"name\":\"shell\","
-                  "\"arguments\":\"{\\\"command\\\": \\\"del\"}}]}}]}");
-  CHECK(!strcmp(tc.command, ""));
-  CHECK(command_problem(&tc) != NULL);
-  tool_call_free(&tc);
-
-  /* missing function and id */
-  tc = parse_call("{\"choices\":[{\"message\":{\"tool_calls\":[{}]}}]}");
-  CHECK(!strcmp(tc.id, "") && !strcmp(tc.name, "") && !strcmp(tc.command, ""));
-  CHECK(command_problem(&tc) != NULL);
-  tool_call_free(&tc);
-
-  /* control characters and oversized commands are refused before approval */
-  tc.id = xstrdup("x");
-  tc.name = xstrdup("shell");
-  tc.reason = xstrdup("");
-  tc.command = xstrdup("ver\r\ndel /q c:\\x");
-  CHECK(command_problem(&tc) != NULL);
-  free(tc.command);
-  memset(longcmd, 'a', sizeof longcmd - 1);
-  longcmd[sizeof longcmd - 1] = 0;
-  tc.command = xstrdup(longcmd);
-  CHECK(command_problem(&tc) != NULL);
-  tool_call_free(&tc);
-}
 
 static void test_risk(void) {
   static const char *risky[] = {
@@ -254,7 +191,6 @@ static void test_capped_output(void) {
 }
 
 int main(void) {
-  test_tool_calls();
   test_risk();
   test_risk_sh();
   test_is_yes();

@@ -20,7 +20,7 @@
 ## Important implementation caveats
 
 - `risk_reason()` (`src/core/policy.c`) is only a keyword heuristic; it can miss destructive commands and can flag harmless commands. It is not a security boundary. It flags `^`, `>`, `&`, delete/format/partition tools, `chkdsk /f /r /x /b`, registry/service/firewall/boot changes, process killing, permission changes, installers and script hosts.
-- Checks enforced in local code before the user is even asked (`command_problem()`): only the `shell` tool, non-empty command, at most 2000 bytes, no control characters or line breaks. What is displayed for approval is exactly what runs.
+- Checks enforced in local code before the user is even asked (`tool_problem()`): only the `shell` and `question` tools; a non-empty command of at most 2000 bytes with no control characters or line breaks; a question of at most 1000 bytes with 2 to 8 one-line options. What is displayed for approval is exactly what runs. A question runs nothing: the answer only goes back to the model.
 - The user's deny rules (`[deny] commands` in `config.ini`, `denied_by()`) refuse matching commands before asking. They use the same word matching as `risk_reason()`, so they share its limits (a command can be spelled to slip past them); they narrow what reaches the approval gate, they do not replace it.
 - Over-long typed lines are consumed and refused, and pending console input is flushed before every approval question, so leftover or multi-line pasted input can never answer it.
 - Since all commands already ask for confirmation, that confirmation is the primary safeguard. Read the full command before answering yes.

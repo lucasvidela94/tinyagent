@@ -6,6 +6,7 @@
 
 #include "cancel.h"
 #include "console.h"
+#include "question.h"
 #include "tui.h"
 
 int main(void) {
@@ -33,6 +34,18 @@ int main(void) {
   say("API key: ");
   r = read_secret(key, sizeof key);
   say("clave de %d caracteres\n", r == LINE_OK ? (int)strlen(key) : -1);
+  {
+    ToolCall tc;
+    char *answer;
+    memset(&tc, 0, sizeof tc);
+    tc.question = (char *)"\xc2\xbfQu\xc3\xa9 disco reviso?";
+    tc.options[0] = (char *)"C:";
+    tc.options[1] = (char *)"D:";
+    tc.noptions = 2;
+    answer = question_ask(&tc);
+    say("[%s]\n", answer);
+    free(answer);
+  }
   r = tui_prompt(line, sizeof line, "fin", "");
   say(r == LINE_EOF ? "EOF\n" : "linea\n");
   return 0;
