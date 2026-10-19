@@ -12,3 +12,4 @@ relay/.wrangler/
 node_modules/
 fuzz-findings/
 tinyshell-linux-i386
+build/.cache/

@@ -16,9 +16,20 @@ if "$CC" -fsanitize=address,undefined -x c -o "$OUT/probe" - <<<'int main(void){
   FLAGS+=(-fsanitize=address,undefined -fno-sanitize-recover=all)
 fi
 status=0
+# SQLite (not our code, so not our warning set) is built once, only for the store's test,
+# and cached by its source, flags and compiler: it takes most of a minute.
+CACHE="$ROOT/build/.cache"
+key=$( (cat "$SQLITE_SRC"; echo "${SQLITE_FLAGS[*]}"; "$CC" --version) | sha256sum | cut -c1-16)
+SQLITE_OBJ="$CACHE/sqlite3-host-$key.o"
+if [[ ! -f "$SQLITE_OBJ" ]]; then
+  mkdir -p "$CACHE"
+  "$CC" -O1 -w "${SQLITE_FLAGS[@]}" -c "$SQLITE_SRC" -o "$SQLITE_OBJ.tmp" && mv "$SQLITE_OBJ.tmp" "$SQLITE_OBJ"
+fi
 for t in tests/test_*.c; do
   name="$(basename "$t" .c)"
-  "$CC" "${FLAGS[@]}" "${INCLUDES[@]}" -o "$OUT/$name" "$t" "${CORE_SRC[@]}"
+  extra=()
+  [[ "$name" == test_store ]] && extra=("${STORE_SRC[@]}" "$SQLITE_OBJ")
+  "$CC" "${FLAGS[@]}" "${INCLUDES[@]}" -o "$OUT/$name" "$t" "${CORE_SRC[@]}" "${extra[@]}"
   "$OUT/$name" || status=1
 done
 # The POSIX adapters run natively on a Linux host, so they are tested here too (with a

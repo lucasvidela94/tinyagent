@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Includes say what a file depends on, so they are checked, not promised:
 #   - system headers only from the allowlist (no third-party libraries): C99 anywhere, OS
-#     headers only in that OS's adapters (windows.h in win32/, unistd.h in posix/);
+#     headers only in that OS's adapters (windows.h in win32/, unistd.h in posix/); the
+#     vendored sqlite3.h only in src/core/store.c (ADR 0002);
 #   - layering (build/sources.sh): core includes core and config.h; app includes core,
 #     app and platform interfaces; adapters include core, platform interfaces and their own
 #     OS folder. Nothing includes app except app; nothing outside an OS folder includes it.
@@ -41,6 +42,8 @@ for f in "$@"; do
   while IFS= read -r hdr; do
     if echo "$hdr" | grep -Eq "$STD" || echo "$hdr" | grep -Eq "$(os_headers "$f")"; then
       :
+    elif [[ "$hdr" == sqlite3.h && "$f" == src/core/store.c ]]; then
+      : # vendored SQLite, for the store alone (docs/adr/0002-sqlite-session-store.md)
     elif [[ "$hdr" == */* ]]; then
       echo "check-includes: $f: no paths in includes ($hdr); folders go in build/sources.sh" >&2
       fail=1

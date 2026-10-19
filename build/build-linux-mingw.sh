@@ -24,7 +24,16 @@ fi
 # TINYSHELL_VERSION ("0.8.0" -> 0,8,0,0).
 VER="$(sed -n 's/^#define TINYSHELL_VERSION "\([0-9.]*\)".*/\1/p' src/config.h)"
 "${CC%gcc}windres" -Isrc -DTS_VERSION_NUM="${VER//./,},0" -O coff -o "$PROBE/tinyshell.res" src/platform/win32/tinyshell.rc
-"$CC" -std=c11 -Os -s -flto -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wstrict-prototypes -Werror "${CRT[@]}" "${INCLUDES[@]}" -Isrc/platform/win32 -o tinyshell.exe "${CORE_SRC[@]}" "${APP_SRC[@]}" "${WIN32_SRC[@]}" "$PROBE/tinyshell.res" -lwinhttp -lcrypt32 -ladvapi32 -luser32 -lshell32
+# SQLite (docs/adr/0002-sqlite-session-store.md) is compiled on its own, without our -Werror
+# warning set, and cached by its source, flags and compiler: it takes about a minute.
+CACHE="$ROOT/build/.cache"
+key=$( (cat "$SQLITE_SRC"; echo "${SQLITE_FLAGS[*]} ${CRT[*]}"; "$CC" --version) | sha256sum | cut -c1-16)
+SQLITE_OBJ="$CACHE/sqlite3-mingw-$key.o"
+if [[ ! -f "$SQLITE_OBJ" ]]; then
+  mkdir -p "$CACHE"
+  "$CC" -Os -flto -w "${CRT[@]}" "${SQLITE_FLAGS[@]}" -c "$SQLITE_SRC" -o "$SQLITE_OBJ.tmp" && mv "$SQLITE_OBJ.tmp" "$SQLITE_OBJ"
+fi
+"$CC" -std=c11 -Os -s -flto -Wall -Wextra -Wpedantic -Wshadow -Wconversion -Wstrict-prototypes -Werror "${CRT[@]}" "${INCLUDES[@]}" -Isrc/platform/win32 -o tinyshell.exe "${CORE_SRC[@]}" "${STORE_SRC[@]}" "${APP_SRC[@]}" "${WIN32_SRC[@]}" "$SQLITE_OBJ" "$PROBE/tinyshell.res" -lwinhttp -lcrypt32 -ladvapi32 -luser32 -lshell32
 file tinyshell.exe 2>/dev/null || true
 if command -v "${CC%gcc}objdump" >/dev/null 2>&1; then
   DLLS="$("${CC%gcc}objdump" -p tinyshell.exe | awk '/DLL Name/{print $3}' | tr '\n' ' ')"
