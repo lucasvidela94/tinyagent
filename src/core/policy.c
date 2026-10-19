@@ -1,6 +1,7 @@
 #include "policy.h"
 
 #include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -45,10 +46,10 @@ static int rule_fires(const RiskRule *rule, const char *words, const char *all) 
   return 0;
 }
 
-static const char *first_rule(const Dialect *d, const char *words, const char *all) {
+static const RiskRule *first_rule(const RiskRule *rules, int n, const char *words, const char *all) {
   int r;
-  for (r = 0; r < d->nrules; r++)
-    if (rule_fires(&d->rules[r], words, all)) return d->rules[r].reason;
+  for (r = 0; r < n; r++)
+    if (rule_fires(&rules[r], words, all)) return &rules[r];
   return NULL;
 }
 
@@ -98,30 +99,65 @@ static void command_of(const char *all, Buf *out) {
   }
 }
 
-const char *risk_reason(const Dialect *d, const char *cmd) {
-  const char *found = NULL, *seg = cmd;
-  int m;
-  for (m = 0; m < d->nmarks; m++)
-    if (strstr(cmd, d->marks[m].text)) return d->marks[m].reason;
+/* The first of rules[0..n) that fires on cmd, read the dialect's way. */
+static const RiskRule *first_match(const Dialect *d, const RiskRule *rules, int n, const char *cmd) {
+  const RiskRule *found = NULL;
+  const char *seg = cmd;
   if (!d->command_words) {
     Buf all = {0};
     words_of(d, cmd, strlen(cmd), &all);
-    found = first_rule(d, all.p, all.p);
+    found = first_rule(rules, n, all.p, all.p);
     free(all.p);
     return found;
   }
   while (!found) { /* each | ; & ( ) segment on its own */
-    size_t n = strcspn(seg, "|;&()");
+    size_t len = strcspn(seg, "|;&()");
     Buf all = {0}, word = {0};
-    words_of(d, seg, n, &all);
+    words_of(d, seg, len, &all);
     command_of(all.p, &word);
-    if (word.p) found = first_rule(d, word.p, all.p);
+    if (word.p) found = first_rule(rules, n, word.p, all.p);
     free(all.p);
     free(word.p);
-    if (!seg[n]) break;
-    seg += n + 1;
+    if (!seg[len]) break;
+    seg += len + 1;
   }
   return found;
+}
+
+const char *risk_reason(const Dialect *d, const char *cmd) {
+  const RiskRule *r;
+  int m;
+  for (m = 0; m < d->nmarks; m++)
+    if (strstr(cmd, d->marks[m].text)) return d->marks[m].reason;
+  r = first_match(d, d->rules, d->nrules, cmd);
+  return r ? r->reason : NULL;
+}
+
+int denied_by(const Dialect *d, const char *rules, const char *cmd, char *out, size_t cap) {
+  const char *r = rules;
+  for (;;) {
+    size_t n = strcspn(r, ","), i;
+    char rule[64], *word = rule, *sp;
+    RiskRule rr = {NULL, NULL, NULL};
+    if (n < sizeof rule) {
+      memcpy(rule, r, n);
+      rule[n] = 0;
+      trim_line(rule);
+      while (*word == ' ' || *word == '\t') word++;
+      if (d->fold_case)
+        for (i = 0; word[i]; i++) word[i] = (char)tolower((unsigned char)word[i]);
+      snprintf(out, cap, "%s", word);
+      if ((sp = strchr(word, ' ')) != NULL) { /* "del /s": the word, then its flags */
+        *sp++ = 0;
+        while (*sp == ' ') sp++;
+        rr.flags = sp;
+      }
+      rr.word = word;
+      if (*word && first_match(d, &rr, 1, cmd)) return 1;
+    }
+    if (!r[n]) return 0;
+    r += n + 1;
+  }
 }
 
 int is_yes(const char *answer) {

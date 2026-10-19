@@ -23,7 +23,10 @@ static const char *SECTIONS =
     "session_header = x-opencode-session\r\n"
     "\r\n"
     "[ui]\r\n"
-    "language = auto\r\n";
+    "language = auto\r\n"
+    "\r\n"
+    "[deny]\r\n"
+    "commands =\r\n";
 
 /* <data dir>/config.ini (see sys_data_path), kept wide for the profile API. */
 static int resolve_path(void) {
@@ -47,7 +50,9 @@ static void write_template(void) {
                         ";   DeepSeek    url = https://api.deepseek.com/chat/completions        model = deepseek-chat\r\n"
                         ";   LM Studio   url = http://192.168.0.10:1234/v1/chat/completions    (http: the key travels unencrypted)\r\n"
                         "; For providers other than OpenCode Go, leave session_header empty.\r\n"
-                        "; [ui] language: es, en or auto (the system's language).\r\n");
+                        "; [ui] language: es, en or auto (the system's language).\r\n"
+                        "; [deny] commands: refused without asking, comma-separated, a command and optional flags.\r\n"
+                        ";   Example: commands = diskpart, format, del /s, rd /s, reg delete\r\n");
   HANDLE f = CreateFileW(path_w, GENERIC_WRITE, 0, NULL, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, NULL);
   if (f == INVALID_HANDLE_VALUE) return;
   WriteFile(f, head, (DWORD)strlen(head), &done, NULL);

@@ -61,7 +61,9 @@ const I18nPair I18N_ES[] = {
      ";   DeepSeek    url = https://api.deepseek.com/chat/completions        model = deepseek-chat\r\n"
      ";   LM Studio   url = http://192.168.0.10:1234/v1/chat/completions    (http: the key travels unencrypted)\r\n"
      "; For providers other than OpenCode Go, leave session_header empty.\r\n"
-     "; [ui] language: es, en or auto (the system's language).\r\n",
+     "; [ui] language: es, en or auto (the system's language).\r\n"
+     "; [deny] commands: refused without asking, comma-separated, a command and optional flags.\r\n"
+     ";   Example: commands = diskpart, format, del /s, rd /s, reg delete\r\n",
      "; TinyShell: proveedor del modelo. Sin secretos: las API keys van al Administrador de\r\n"
      "; credenciales de Windows (una por 'name'). Cualquier servicio compatible con OpenAI chat completions.\r\n"
      ";\r\n"
@@ -71,7 +73,9 @@ const I18nPair I18N_ES[] = {
      ";   DeepSeek    url = https://api.deepseek.com/chat/completions        model = deepseek-chat\r\n"
      ";   LM Studio   url = http://192.168.0.10:1234/v1/chat/completions    (http: la key viaja sin cifrar)\r\n"
      "; Para proveedores que no son OpenCode Go, dejá session_header vacío.\r\n"
-     "; [ui] language: es, en o auto (el idioma del sistema).\r\n"},
+     "; [ui] language: es, en o auto (el idioma del sistema).\r\n"
+     "; [deny] commands: se rechazan sin preguntar; separados por coma, un comando y flags opcionales.\r\n"
+     ";   Ejemplo: commands = diskpart, format, del /s, rd /s, reg delete\r\n"},
     {"; TinyShell: the model provider. No secrets here: API keys go to\n"
      "; ~/.config/tinyshell/credentials (mode 0600, one per 'name'). Any OpenAI-compatible\n"
      "; chat-completions service.\n"
@@ -82,7 +86,9 @@ const I18nPair I18N_ES[] = {
      ";   DeepSeek    url = https://api.deepseek.com/chat/completions        model = deepseek-chat\n"
      ";   LM Studio   url = http://192.168.0.10:1234/v1/chat/completions    (http: the key travels unencrypted)\n"
      "; For providers other than OpenCode Go, leave session_header empty.\n"
-     "; [ui] language: es, en or auto (the system's language).\n",
+     "; [ui] language: es, en or auto (the system's language).\n"
+     "; [deny] commands: refused without asking, comma-separated, a command and optional flags.\n"
+     ";   Example: commands = dd, mkfs*, rm -r*, shutdown\n",
      "; TinyShell: proveedor del modelo. Sin secretos: las API keys van a\n"
      "; ~/.config/tinyshell/credentials (permisos 0600, una por 'name'). Cualquier servicio\n"
      "; compatible con OpenAI chat completions.\n"
@@ -93,13 +99,17 @@ const I18nPair I18N_ES[] = {
      ";   DeepSeek    url = https://api.deepseek.com/chat/completions        model = deepseek-chat\n"
      ";   LM Studio   url = http://192.168.0.10:1234/v1/chat/completions    (http: la key viaja sin cifrar)\n"
      "; Para proveedores que no son OpenCode Go, dejá session_header vacío.\n"
-     "; [ui] language: es, en o auto (el idioma del sistema).\n"},
+     "; [ui] language: es, en o auto (el idioma del sistema).\n"
+     "; [deny] commands: se rechazan sin preguntar; separados por coma, un comando y flags opcionales.\n"
+     ";   Ejemplo: commands = dd, mkfs*, rm -r*, shutdown\n"},
     {"A new version is available: %s. Install it? [y/N]: ",
      "Hay una versión nueva: %s. ¿Instalarla? [s/N]: "},
     {"API key for %s (%s; Enter if none): ",
      "API key de %s (%s; Enter si no usa): "},
     {"API key for %s deleted.\n",
      "API key de %s borrada.\n"},
+    {"Blocked by the deny rule \"%s\" in config.ini. Nothing was run.",
+     "Bloqueado por la regla de denegación \"%s\" de config.ini. No se ejecutó nada."},
     {"Beta: TinyShell sends technical usage and error data (version, OS, model, error codes;\n"
      "never what you type or the commands). See it: tinyshell telemetry --show \xc2\xb7\n"
      "turn it off: tinyshell telemetry off",

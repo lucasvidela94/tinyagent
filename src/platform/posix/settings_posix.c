@@ -24,7 +24,10 @@ static const char *SECTIONS = "\n"
                               "session_header = x-opencode-session\n"
                               "\n"
                               "[ui]\n"
-                              "language = auto\n";
+                              "language = auto\n"
+                              "\n"
+                              "[deny]\n"
+                              "commands =\n";
 
 static void write_template(void) {
   Buf b = {0};
@@ -38,7 +41,9 @@ static void write_template(void) {
                  ";   DeepSeek    url = https://api.deepseek.com/chat/completions        model = deepseek-chat\n"
                  ";   LM Studio   url = http://192.168.0.10:1234/v1/chat/completions    (http: the key travels unencrypted)\n"
                  "; For providers other than OpenCode Go, leave session_header empty.\n"
-                 "; [ui] language: es, en or auto (the system's language).\n"));
+                 "; [ui] language: es, en or auto (the system's language).\n"
+                 "; [deny] commands: refused without asking, comma-separated, a command and optional flags.\n"
+                 ";   Example: commands = dd, mkfs*, rm -r*, shutdown\n"));
   buf_str(&b, SECTIONS);
   sys_write_file(path, b.p, b.len, 0);
   free(b.p);

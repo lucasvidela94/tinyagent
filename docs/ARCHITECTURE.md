@@ -56,7 +56,7 @@ a growing file is split along a real interface, not by size.
 | `src/core/json.c` | `json_parse/key/index/str` | bounded tokenizer (depth, tokens), `\uXXXX` to UTF-8; fuzzed |
 | `src/core/stream.c` | `stream_feed`, `stream_response` | SSE streaming: live text, joins tool-call pieces, rebuilds the plain response; fuzzed |
 | `src/core/conversation.c` | `History`, `build_request`, `ToolCall` | history trimmed by whole exchanges, request body with the shell tool (per dialect), tool-call extraction |
-| `src/core/policy.c` | `command_problem`, `risk_reason`, `is_yes` | pre-approval refusals, risk heuristic per dialect, approval answers |
+| `src/core/policy.c` | `command_problem`, `risk_reason`, `denied_by`, `is_yes` | pre-approval refusals, risk heuristic per dialect, the user's deny rules, approval answers |
 | `src/core/dialect.h`, `dialect_cmd.c`, `dialect_sh.c` | `DIALECT_CMD`, `DIALECT_SH` | what depends on the shell, as data: risk rules and prompt guidance for `cmd.exe` and `/bin/sh` |
 | `src/core/instructions.c` | `instructions` | the task-agnostic prompt instructions, with the dialect's parts |
 | `src/core/command.c` | `command_result` | the text a command result goes back to the model as, the same on every platform |

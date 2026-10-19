@@ -11,6 +11,7 @@ parentheses). The interface speaks Spanish or English (see "Language" below).
 | Editor (between two rules, footer below) | User request | One message per line in any language (max 4095 bytes; longer lines are refused). Windows: native console editing (arrows, F7 history, right-click paste). Linux: the terminal's line editing |
 | Prompt `run it? [y/N]` (Spanish: `¿ejecutar? [s/N]`; pending input is flushed first) | Local approval gate | Only `y`, `yes`, `s`, `si` or `sí` (any case) approve. Anything else, EOF, Ctrl+C or an over-long line rejects |
 | `RUN` confirmation (Spanish: `EJECUTAR`) | Extra gate | Required when `risk_reason()` (`src/core/policy.c`) flags the command; the reason is shown |
+| `[deny] commands` in `config.ini` | Pre-filter | Comma-separated rules (`diskpart, del /s, rm -r*`): a command matching one is refused before asking, and the rule is shown and sent to the model (`denied_by()`, `src/core/policy.c`). Read on every command. There are no allow rules |
 | `/quit` (`/salir`, `/exit`), Ctrl+C at an empty prompt | Session termination | Ends the process |
 | `tinyshell --version` / `--help` | CLI flags | Print version / usage and exit |
 | `tinyshell --update` or `/update` (`/actualizar`) | Self-update | Manual only; asks; verifies the RSA signature; self-tests the new binary; keeps the previous one as `.old` |

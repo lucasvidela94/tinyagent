@@ -21,6 +21,7 @@
 
 - `risk_reason()` (`src/core/policy.c`) is only a keyword heuristic; it can miss destructive commands and can flag harmless commands. It is not a security boundary. It flags `^`, `>`, `&`, delete/format/partition tools, `chkdsk /f /r /x /b`, registry/service/firewall/boot changes, process killing, permission changes, installers and script hosts.
 - Checks enforced in local code before the user is even asked (`command_problem()`): only the `shell` tool, non-empty command, at most 2000 bytes, no control characters or line breaks. What is displayed for approval is exactly what runs.
+- The user's deny rules (`[deny] commands` in `config.ini`, `denied_by()`) refuse matching commands before asking. They use the same word matching as `risk_reason()`, so they share its limits (a command can be spelled to slip past them); they narrow what reaches the approval gate, they do not replace it.
 - Over-long typed lines are consumed and refused, and pending console input is flushed before every approval question, so leftover or multi-line pasted input can never answer it.
 - Since all commands already ask for confirmation, that confirmation is the primary safeguard. Read the full command before answering yes.
 - Commands still run through `cmd.exe /d /s /c` (now via `CreateProcessW`, stdin = NUL, 180 s limit). Quoting and shell metacharacters can change what runs.

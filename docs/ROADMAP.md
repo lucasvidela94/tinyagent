@@ -87,7 +87,7 @@ Features:
       for desktop shortcuts and scripts.
 - [ ] `/export`: write the conversation to a text file the user can keep or send.
 - [ ] `/stats`: tokens per session and per day, from the local counters.
-- [ ] Deny rules in `config.ini` (command patterns refused before asking). Never allow rules:
+- [x] Deny rules in `config.ini` (`[deny] commands`, refused before asking). Never allow rules:
       every command still needs approval.
 - [ ] `webfetch` tool: fetch one URL as text (bounded size, http(s) only, approved like a
       command), e.g. to read a driver's download page or an error code's explanation.

@@ -193,6 +193,26 @@ static void test_history(void) {
   history_free(&h);
 }
 
+static void test_deny(void) {
+  char rule[64];
+  const char *cmd_rules = " diskpart, Del /S ,reg delete,,";
+  const char *sh_rules = "dd, mkfs*, rm -r*";
+  CHECK(denied_by(&DIALECT_CMD, cmd_rules, "DISKPART", rule, sizeof rule) && !strcmp(rule, "diskpart"));
+  CHECK(denied_by(&DIALECT_CMD, cmd_rules, "del/s/q C:\\temp", rule, sizeof rule) && !strcmp(rule, "del /s"));
+  CHECK(denied_by(&DIALECT_CMD, cmd_rules, "reg delete HKCU\\x /f", rule, sizeof rule) && !strcmp(rule, "reg delete"));
+  CHECK(!denied_by(&DIALECT_CMD, cmd_rules, "del archivo.txt", rule, sizeof rule)); /* no /s */
+  CHECK(!denied_by(&DIALECT_CMD, cmd_rules, "reg query HKCU\\x", rule, sizeof rule));
+  CHECK(!denied_by(&DIALECT_CMD, "", "diskpart", rule, sizeof rule));
+
+  CHECK(denied_by(&DIALECT_SH, sh_rules, "env dd if=/dev/zero of=/dev/sda", rule, sizeof rule) && !strcmp(rule, "dd"));
+  CHECK(denied_by(&DIALECT_SH, sh_rules, "ls; /sbin/mkfs.ext4 /dev/sdb1", rule, sizeof rule));
+  CHECK(denied_by(&DIALECT_SH, sh_rules, "cd /tmp && rm -rf x", rule, sizeof rule) && !strcmp(rule, "rm -r*"));
+  CHECK(!denied_by(&DIALECT_SH, sh_rules, "rm x", rule, sizeof rule));
+  CHECK(!denied_by(&DIALECT_SH, sh_rules, "echo dd rm -rf", rule, sizeof rule)); /* not the command of its segment */
+  CHECK(!denied_by(&DIALECT_SH, sh_rules, "ddrescue --help", rule, sizeof rule));
+  CHECK(!denied_by(&DIALECT_SH, "RM", "rm x", rule, sizeof rule)); /* sh is case-sensitive */
+}
+
 /* Old command outputs give way before whole exchanges, and the newest stay verbatim. */
 static void test_elision(void) {
   History h = {0};
@@ -234,6 +254,7 @@ int main(void) {
   test_risk();
   test_risk_sh();
   test_is_yes();
+  test_deny();
   test_history();
   test_elision();
   test_capped_output();
