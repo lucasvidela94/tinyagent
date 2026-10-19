@@ -6,7 +6,11 @@
 #include "conversation.h"
 #include "provider.h"
 
+#define MAX_ALWAYS 32 /* command prefixes approved "always" in one session */
+
 typedef struct {
+  char always[MAX_ALWAYS][64]; /* see command_prefix(); cleared by session_reset, never saved */
+  int nalways;
   History history;
   Provider provider;
   long tokens_in, tokens_out; /* summed from the API "usage" field */

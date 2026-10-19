@@ -45,7 +45,7 @@ def check(cond, what, lines):
         print("\n".join(lines))
 
 demo = sys.argv[1]
-keys = [b"hola agente\r", b"s\r", b"\x1b[B", b"\x1b[B", b"\r", "sk-ñ12".encode(), b"\x7f", b"3\r",
+keys = [b"hola agente\r", b"s", b"\r", b"\x1b[B", b"\x1b[B", b"\r", "sk-ñ12".encode(), b"\x7f", b"3\r",
         b"\x1b[B", b"\x1b[B", b"\r", b"E:\r", b"\x04"]
 lines, screen, prompt = run(demo, "es_AR.UTF-8", keys)
 text = "\n".join(lines)
@@ -53,11 +53,17 @@ check("hola agente" in text, "the user block shows the message", lines)
 user_row = next((i for i, l in enumerate(lines) if "hola agente" in l), -1)
 check(user_row >= 0 and screen.buffer[user_row][2].reverse, "the user block is shaded", lines)
 check("Hola, ¿qué tal? Miro los archivos." in text, "streamed text, UTF-8 kept", lines)
-check("pensando" not in text, "the thinking line is erased", lines)
-check("$ ls -la" in text and "uno.txt" in text, "proposal, approval and output", lines)
+check("thinking" not in text, "the thinking line is erased", lines)
+check("$ ls -la" in text and "setup.log" in text, "proposal, approval and output", lines)
+check("Run it?" not in text and "Yes, once" not in text, "the approval menu is erased after the choice", lines)
+cmd_row = next((i for i, l in enumerate(lines) if "$ ls -la" in l), -1)
+check(cmd_row >= 0 and screen.buffer[cmd_row][2].bg == "blue" and screen.buffer[cmd_row][79].bg == "blue",
+      "the command panel is shaded across the row", lines)
+check("(3 earlier lines)" in text and "l3" not in text and "l4" in text and "exit=0" in text,
+      "output: earlier lines counted, the last 8 shown, then the exit code", lines)
 check("glm-5" in text and "kimi" not in text, "menu: two arrows down, Enter; list erased", lines)
 # "sk-ñ13": 6 characters (6 stars), 7 bytes in UTF-8 (the demo prints the byte length)
-check("API key: ******\n" in text + "\n" and "clave de 7 caracteres" in text, "secret: one * per character, Backspace", lines)
+check("API key: ******\n" in text + "\n" and "key of 7 bytes" in text, "secret: one * per character, Backspace", lines)
 check("¿Qué disco reviso?" in text and "[The user answered: E:]" in text, "question: the last option types an answer", lines)
 check("EOF" in text, "Ctrl+D at the prompt is EOF", lines)
 ptext = "\n".join(prompt)
@@ -65,13 +71,13 @@ check("─" * 20 in ptext and ">" in ptext and "deepseek-v4.1-flash" in ptext, "
 used = [l for l in prompt if l]
 check(used[-1].startswith("/home/pepa") and used[-1].endswith("deepseek-v4.1-flash"), "footer below the editor, model on the right", prompt)
 
-lines, _, prompt = run(demo, "C", [b"hola\r", b"n\r", b"\r", b"x\r", b"\r", b"\x04"])
+lines, _, prompt = run(demo, "C", [b"hola\r", b"\x1b[B", b"\x1b[B", b"\r", b"\r", b"x\r", b"\r", b"\x04"])
 text = "\n".join(lines)
 ptext = "\n".join(prompt)
 check("Hola, ?que tal? Miro los archivos." in text, "LANG=C: accents become ASCII", lines)
 check("─" not in ptext and "-" * 20 in ptext, "LANG=C: rules become '-'", prompt)
-check("TinyShell demo - opencode-go - /ayuda" in text, "LANG=C: the separator becomes '-'", lines)
-check("(rechazado)" in text, "anything but s rejects", lines)
+check("TinyShell demo - opencode-go - /help" in text, "LANG=C: the separator becomes '-'", lines)
+check("(rejected)" in text, "the last option rejects", lines)
 check("[The user chose: C:]" in text, "question: Enter picks the first option", lines)
 print("tui: %d failures" % failures)
 sys.exit(1 if failures else 0)

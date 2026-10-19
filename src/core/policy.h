@@ -12,9 +12,20 @@
  * if a command may be shown for approval or a question asked. */
 const char *tool_problem(const ToolCall *tc);
 
-/* Keyword heuristic, per shell dialect, that demands a second, typed confirmation. It is
- * NOT a security boundary: the per-command approval is. Returns a short Spanish reason, or NULL. */
+/* Keyword heuristic, per shell dialect: a risky command can be approved only once, never
+ * "always". Redirections to the null device ("2>nul", "2>/dev/null") add no risk. It is
+ * NOT a security boundary: the per-command approval is. Returns a short reason (English;
+ * show it through tr()), or NULL. */
 const char *risk_reason(const Dialect *d, const char *cmd);
+
+/* Whether the user may approve this command "always" for the session, and under what
+ * prefix: its command name ("dir"), or name and subcommand for tools like reg, git or
+ * netsh ("reg query"); lowercase and without ".exe" where the dialect ignores case. Only a
+ * single plain command qualifies: no chaining, redirection or substitution, not risky,
+ * no path or quotes in the name, not a program that runs others (cmd, start, sudo, find).
+ * A later command is approved automatically when its prefix is one the user chose.
+ * Returns 1 and writes the prefix to out, or 0. */
+int command_prefix(const Dialect *d, const char *cmd, char *out, size_t cap);
 
 /* The user's deny rules ([deny] commands in config.ini): "word flags, word, ...", each
  * matched like a risk rule of the dialect, so "del /s" does not fire on "echo del" where

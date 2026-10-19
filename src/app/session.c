@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "approval.h"
 #include "cancel.h"
 #include "config.h"
 #include "console.h"
@@ -13,8 +14,6 @@
 #include "machine.h"
 #include "question.h"
 #include "session.h"
-#include "settings.h"
-#include "shell.h"
 #include "stream.h"
 #include "sys.h"
 #include "telemetry.h"
@@ -46,7 +45,7 @@ void session_init(Session *s) {
   char *sys = system_prompt();
   new_session_id(s);
   memset(&s->history, 0, sizeof s->history);
-  s->turns = s->proposed = s->approved = s->rejected = 0;
+  s->turns = s->proposed = s->approved = s->rejected = s->nalways = 0;
   s->started_ms = sys_ms();
   s->tokens_in = s->tokens_out = 0;
   history_add(&s->history, message_json("system", sys), 0);
@@ -56,46 +55,13 @@ void session_init(Session *s) {
 void session_reset(Session *s) {
   history_reset(&s->history);
   s->tokens_in = s->tokens_out = 0;
+  s->nalways = 0; /* "always" belongs to the conversation it was given in */
   new_session_id(s);
 }
 
 void session_free(Session *s) {
   history_free(&s->history);
   wipe(s->api_key, sizeof s->api_key);
-}
-
-/* The approval gate. Returns the text sent back to the model as the tool result. */
-static char *decide(Session *s, const ToolCall *tc) {
-  const char *risk;
-  char answer[64], *out, rules[1024], rule[64], msg[160];
-  /* Read on every command, so an edit to config.ini applies without restarting. */
-  if (settings_get("deny", "commands", rules, sizeof rules) && denied_by(system_dialect(), rules, tc->command, rule, sizeof rule)) {
-    snprintf(msg, sizeof msg, tr("Blocked by the deny rule \"%s\" in config.ini. Nothing was run."), rule);
-    say("\n");
-    tui_error(msg);
-    return xstrdup(msg);
-  }
-  risk = risk_reason(system_dialect(), tc->command);
-  tui_proposal(tc->command, tc->reason, risk ? tr(risk) : NULL);
-  s->proposed++;
-  console_flush_input(); /* leftover pasted lines must not answer the question */
-  say("%s", tr("  run it? [y/N] "));
-  if (read_line(answer, sizeof answer, 1) != LINE_OK || !is_yes(answer)) {
-    s->rejected++;
-    return xstrdup(tr("The user rejected it. Nothing was run."));
-  }
-  if (risk) {
-    console_flush_input();
-    console_write(tr("  type RUN to confirm: "), COLOR_DANGER);
-    if (read_line(answer, sizeof answer, 1) != LINE_OK || strcmp(answer, tr("RUN"))) {
-      s->rejected++;
-      return xstrdup(tr("Cancelled for safety. Nothing was run."));
-    }
-  }
-  s->approved++;
-  out = run_command(tc->command);
-  tui_output(out);
-  return out;
 }
 
 /* One tool call: refused, asked as a question, or a command through the approval gate. */
@@ -107,7 +73,7 @@ static char *run_tool(Session *s, const ToolCall *tc) {
     return xstrdup(tr(problem));
   }
   if (!strcmp(tc->name, "question")) return question_ask(tc);
-  return decide(s, tc);
+  return approval_run(s, tc);
 }
 
 static void count_usage(Session *s, const Json *j) {

@@ -32,15 +32,24 @@ static int plain_select(const char *title, const char *const *items, int n, int 
   return -1;
 }
 
-/* Rows: filter hint, VISIBLE items, "+N more". All reserved up front so redraws never scroll. */
-static void draw(int top, const char *const *items, const int *shown, int count, int sel, int first,
+/* Short menus (an approval, a question) show just their items; longer ones add a filter
+ * hint row above and a "+N more" row below. */
+#define LONG_MENU 5
+
+/* Rows: filter hint, up to VISIBLE items, "+N more", as many as the menu needs. All
+ * reserved up front so redraws never scroll. */
+static int menu_rows(int n) { return (n > LONG_MENU) + (n < VISIBLE ? n : VISIBLE) + (n > VISIBLE); }
+
+static void draw(int top, int n, const char *const *items, const int *shown, int count, int sel, int first,
                  const char *filter) {
   char hint[160];
   int i;
-  console_clear(top, top + VISIBLE + 1);
+  console_clear(top, top + menu_rows(n) - 1);
   console_goto(top, 0);
-  snprintf(hint, sizeof hint, tr("  filter: %s_"), filter);
-  tui_line("", *filter ? hint : tr("  (type to filter)"), COLOR_DIM);
+  if (n > LONG_MENU) {
+    snprintf(hint, sizeof hint, tr("  filter: %s_"), filter);
+    tui_line("", *filter ? hint : tr("  (type to filter)"), COLOR_DIM);
+  }
   for (i = first; i < count && i < first + VISIBLE; i++)
     tui_line(i == sel ? "> " : "  ", items[shown[i]], i == sel ? COLOR_ACCENT : COLOR_NORMAL);
   if (!count) tui_line("  ", tr("(no matches)"), COLOR_DIM);
@@ -60,8 +69,8 @@ int tui_select(const char *title, const char *const *items, int n, int initial) 
   shown = (int *)malloc((size_t)n * sizeof(int));
   if (!shown) return -1;
   tui_line("", title, COLOR_DIM);
-  for (i = 0; i < VISIBLE + 2; i++) say("\n");
-  top = console_row() - (VISIBLE + 2);
+  for (i = 0; i < menu_rows(n); i++) say("\n");
+  top = console_row() - menu_rows(n);
   sel = initial;
   while (result == -2) {
     for (count = 0, i = 0; i < n; i++)
@@ -69,7 +78,7 @@ int tui_select(const char *title, const char *const *items, int n, int initial) 
     if (sel >= count) sel = count ? count - 1 : 0;
     if (sel < first) first = sel;
     if (sel >= first + VISIBLE) first = sel - VISIBLE + 1;
-    draw(top, items, shown, count, sel, first, filter);
+    draw(top, n, items, shown, count, sel, first, filter);
     switch (read_key(&ch)) {
     case KEY_UP: if (sel > 0) sel--; break;
     case KEY_DOWN: if (sel + 1 < count) sel++; break;
@@ -77,15 +86,15 @@ int tui_select(const char *title, const char *const *items, int n, int initial) 
     case KEY_ESC:
     case KEY_EOF: result = -1; break;
     case KEY_BACK: if (fl) filter[--fl] = 0; sel = first = 0; break;
-    case KEY_CHAR:
-      if (fl + 1 < sizeof filter) { filter[fl++] = ch; filter[fl] = 0; }
+    case KEY_CHAR: /* a short menu does not filter: a stray letter must not hide choices */
+      if (n > LONG_MENU && fl + 1 < sizeof filter) { filter[fl++] = ch; filter[fl] = 0; }
       sel = first = 0;
       break;
     default: break;
     }
   }
-  console_clear(top, top + VISIBLE + 1); /* leave one line: the choice, printed by the caller */
-  console_goto(top, 0);
+  console_clear(top - 1, top + menu_rows(n) - 1); /* the title too: the caller shows the choice */
+  console_goto(top - 1, 0);
   free(shown);
   return result;
 }

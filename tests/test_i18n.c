@@ -26,7 +26,7 @@ static void test_lookup(void) {
   i18n_set(LANG_ES);
   CHECK(i18n_lang() == LANG_ES);
   CHECK(!strcmp(tr("thinking..."), "pensando..."));
-  CHECK(!strcmp(tr("RUN"), "EJECUTAR"));
+  CHECK(!strcmp(tr("Yes, once"), "S\xc3\xad, una vez"));
   CHECK(!strcmp(tr("no such string"), "no such string")); /* missing: falls back to English */
   i18n_set(7); /* anything else is English */
   CHECK(i18n_lang() == LANG_EN);

@@ -11,7 +11,7 @@ A general-purpose terminal agent (in the spirit of OpenCode or Pi) for **old, lo
 
 - One 32-bit binary per platform, in C: `tinyshell.exe` for Windows 7 and later (~130 KB, system DLLs only) and `tinyshell-linux-i386` for any x86 Linux from a Pentium up (static, ~1 MB with its own TLS). No Node, Python, .NET, services or database.
 - The model runs remotely, on any OpenAI-compatible API (default: OpenCode Go); the PC only keeps the console, speaks HTTPS and runs commands.
-- **You approve every command** before it runs. Risky ones also ask you to type `RUN`.
+- **You approve every command** before it runs: once, always for that kind of command during the session, or no, telling the model what to do instead.
 - The interface speaks English or Spanish, following the system's language.
 - Main test machine: Noblex NT1013E, Windows 7 SP1 32-bit, Atom N2600, 2 GB RAM.
 
@@ -96,11 +96,18 @@ TinyShell 0.10.1 · opencode-go · /help
 
  which programs start with Windows?                     <- your message
 
-$ wmic startup get caption,command                      <- proposal (yellow; red if risky)
+  $ wmic startup get caption,command                    <- the command, in a shaded panel
   list the programs that start with Windows
-  run it? [y/N] y
+Run it?                                                 <- menu (arrows + Enter),
+> Yes, once                                                erased once you choose
+  Yes, always "wmic startup" in this session
+  No, and tell it what to do instead
+
+  $ wmic startup get caption,command                    <- after "Yes, once": the output
+  list the programs that start with Windows                in the same panel
+  (15 earlier lines)
   Adobe ARM   "C:\Program Files\...\reader_sl.exe"
-  ... +18 lines · exit=0
+  exit=0
 
 You have 23 startup programs. The heaviest ones are...
 ─────────────────────────────────────────────────────────

@@ -23,17 +23,23 @@ void tui_stream_end(void);         /* ends the streamed paragraph, if any */
 void tui_note(const char *text);  /* secondary information, dimmed */
 void tui_error(const char *text); /* problems, in red */
 
-/* Menu (tui_select.c): arrows move, typing filters, Enter picks, Esc cancels; shows
- * at most 10 rows at a time. Returns the chosen index or -1. Without a console it prints a
- * numbered list and reads a number or a name (Enter = initial). */
+/* Menu (tui_select.c): arrows move, Enter picks, Esc cancels; menus of more than 5 items
+ * filter as you type and show at most 10 rows at a time. Takes only the rows it needs and
+ * erases itself and its title when done, so the caller shows the choice. Returns the
+ * chosen index or -1. Without a console it prints a numbered list and reads a number or a
+ * name (Enter = initial). */
 int tui_select(const char *title, const char *const *items, int n, int initial);
 
 void tui_line(const char *indent, const char *text, int color); /* one line in a color */
 int tui_is_fancy(void);
 
-/* A proposed command: "$ cmd" (yellow, or red when risky), the reason and the risk. */
-void tui_proposal(const char *cmd, const char *reason, const char *risk);
-/* Command output: first lines dimmed, then "... +N líneas · exit X". */
+/* A shaded panel, like OpenCode's tool blocks: `head` ("$ cmd", a question) and a dimmer
+ * `detail` (the reason; may be NULL). It stays open for tui_output or tui_panel_end. */
+void tui_panel(const char *head, const char *detail);
+/* Closes the open panel, with a last dim line (an answer, "not run") if `text` is set. */
+void tui_panel_end(const char *text);
+/* Command output in the open panel: "(N earlier lines)", the last lines, then the exit
+ * code and other notes; closes the panel. */
 void tui_output(const char *output);
 
 #endif

@@ -134,11 +134,28 @@ void tui_line(const char *indent, const char *text, int color) {
 void tui_note(const char *text) { tui_line("", text, COLOR_DIM); }
 void tui_error(const char *text) { tui_line("", text, COLOR_DANGER); }
 
-void tui_proposal(const char *cmd, const char *reason, const char *risk) {
+/* One row inside a panel; plain mode has no panels, just indented lines. */
+static void panel_text(const char *text, int color) {
+  if (fancy) block(text, color);
+  else tui_line("  ", text, COLOR_DIM);
+}
+
+void tui_panel(const char *head, const char *detail) {
   say("\n");
-  tui_line("$ ", cmd, risk ? COLOR_DANGER : COLOR_ACCENT);
-  tui_line("  ", *reason ? reason : tr("(no reason given)"), COLOR_DIM);
-  if (risk) tui_line(tr("  risk: "), risk, COLOR_DANGER);
+  if (!fancy) {
+    tui_line("", head, COLOR_ACCENT);
+    if (detail && *detail) tui_line("  ", detail, COLOR_DIM);
+    return;
+  }
+  block("", COLOR_PANEL);
+  block(head, COLOR_PANEL);
+  if (detail && *detail) block(detail, COLOR_PANEL_DIM);
+  block("", COLOR_PANEL);
+}
+
+void tui_panel_end(const char *text) {
+  if (text) panel_text(text, COLOR_PANEL_DIM);
+  if (fancy) block("", COLOR_PANEL);
 }
 
 /* Where the notes command_result() appends begin: the trailing "[...]" lines, in whatever
@@ -159,42 +176,47 @@ static const char *notes_start(const char *s) {
   return start;
 }
 
-void tui_output(const char *output) {
-  char *copy = xstrdup(output), *l, *next, *notes = copy + (notes_start(output) - output);
-  int shown = 0, hidden = 0, w = fancy ? console_width() - 3 : 1 << 20;
-  Buf meta = {0};
-  for (l = copy; l; l = next) {
+/* The output's lines one at a time: blank ones skipped, '\r' dropped. Returns NULL at
+ * the end; *next walks the copy. */
+static char *next_line(char **next) {
+  while (*next) {
+    char *l = *next;
     size_t n;
-    next = strchr(l, '\n');
-    if (next) *next++ = 0;
+    *next = strchr(l, '\n');
+    if (*next) *(*next)++ = 0;
     n = strlen(l);
     if (n && l[n - 1] == '\r') l[--n] = 0;
-    if (!l[strspn(l, " \t")]) continue; /* blank lines add nothing to a preview */
-    if (l >= notes) {
-      buf_str(&meta, meta.len ? " · " : "");
-      buf_add(&meta, l + 1, n > 1 ? n - 2 : 0); /* without the brackets */
-    } else if (shown < PREVIEW_LINES) {
-      l[text_fit(l, w)] = 0;
-      tui_line("  ", l, COLOR_DIM);
-      shown++;
-    } else {
-      hidden++;
-    }
+    if (l[strspn(l, " \t")]) return l;
   }
-  if (hidden || meta.len) {
-    Buf b = {0};
+  return NULL;
+}
+
+/* The end of the output, like OpenCode: "(N earlier lines)", the last lines, then the
+ * notes (exit code, truncation), closing the command's panel. */
+void tui_output(const char *output) {
+  char *copy = xstrdup(output), *notes = copy + (notes_start(output) - output), *l, *next;
+  int total = 0, i = 0, w = fancy ? console_width() - 3 : 1 << 20;
+  Buf meta = {0};
+  for (next = copy; (l = next_line(&next)) != NULL && l < notes;) total++;
+  free(copy); /* next_line cut it into lines; the second pass needs it whole */
+  copy = xstrdup(output);
+  notes = copy + (notes_start(output) - output);
+  if (total > PREVIEW_LINES) {
     char num[48];
-    if (hidden) {
-      snprintf(num, sizeof num, tr("... +%d lines"), hidden);
-      buf_str(&b, num);
-    }
-    if (meta.len) {
-      buf_str(&b, hidden ? " · " : "");
-      buf_str(&b, meta.p);
-    }
-    tui_line("  ", b.p, COLOR_DIM);
-    free(b.p);
+    snprintf(num, sizeof num, tr("(%d earlier lines)"), total - PREVIEW_LINES);
+    panel_text(num, COLOR_PANEL_DIM);
   }
+  for (next = copy; (l = next_line(&next)) != NULL;) {
+    if (l >= notes) {
+      size_t n = strlen(l);
+      buf_str(&meta, meta.len ? " \xc2\xb7 " : "");
+      buf_add(&meta, l + 1, n > 1 ? n - 2 : 0); /* without the brackets */
+    } else if (i++ >= total - PREVIEW_LINES) {
+      l[text_fit(l, w)] = 0;
+      panel_text(l, COLOR_PANEL_DIM);
+    }
+  }
+  tui_panel_end(meta.len ? meta.p : NULL);
   free(meta.p);
   free(copy);
 }

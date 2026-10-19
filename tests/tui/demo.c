@@ -16,7 +16,9 @@ int main(void) {
   console_init();
   cancel_init();
   tui_init();
-  tui_note("TinyShell demo \xc2\xb7 opencode-go \xc2\xb7 /ayuda");
+  /* Interface labels are English, as in the source; the user's and the model's words are
+   * Spanish, to check UTF-8 and the ASCII fallback. */
+  tui_note("TinyShell demo \xc2\xb7 opencode-go \xc2\xb7 /help");
   r = tui_prompt(line, sizeof line, "/home/pepa \xc2\xb7 0 in \xc2\xb7 0 out \xc2\xb7 0%", "deepseek-v4.1-flash");
   if (r != LINE_OK) return 2;
   tui_user(line);
@@ -25,15 +27,20 @@ int main(void) {
   tui_stream("Hola, \xc2\xbfqu\xc3\xa9 tal? ");
   tui_stream("Miro los archivos.");
   tui_stream_end();
-  tui_proposal("ls -la", "ver qu\xc3\xa9 hay en la carpeta", NULL);
-  say("  ejecutar? [s/N] ");
-  r = read_line(line, sizeof line, 1);
-  tui_output(r == LINE_OK && !strcmp(line, "s") ? "uno.txt\ndos.txt" : "(rechazado)");
-  pick = tui_select("Eleg\xc3\xad un modelo:", models, 3, 0);
-  tui_note(pick >= 0 ? models[pick] : "(ninguno)");
+  tui_panel("$ ls -la", "ver qu\xc3\xa9 hay en la carpeta");
+  {
+    const char *answers[] = {"Yes, once", "Yes, always \"ls\" in this session", "No"};
+    pick = tui_select("Run it?", answers, 3, 0);
+  }
+  if (pick == 0)
+    tui_output("l1\nl2\nl3\nl4\nl5\nl6\nl7\nl8\nl9\nreadme.txt\nsetup.log\n[exit=0]");
+  else
+    tui_panel_end("(rejected)");
+  pick = tui_select("Pick a model:", models, 3, 0);
+  tui_note(pick >= 0 ? models[pick] : "(none)");
   say("API key: ");
   r = read_secret(key, sizeof key);
-  say("clave de %d caracteres\n", r == LINE_OK ? (int)strlen(key) : -1);
+  say("key of %d bytes\n", r == LINE_OK ? (int)strlen(key) : -1);
   {
     ToolCall tc;
     char *answer;
@@ -46,7 +53,7 @@ int main(void) {
     say("[%s]\n", answer);
     free(answer);
   }
-  r = tui_prompt(line, sizeof line, "fin", "");
-  say(r == LINE_EOF ? "EOF\n" : "linea\n");
+  r = tui_prompt(line, sizeof line, "end", "");
+  say(r == LINE_EOF ? "EOF\n" : "line\n");
   return 0;
 }

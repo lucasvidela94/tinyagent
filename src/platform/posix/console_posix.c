@@ -59,13 +59,16 @@ static void write_text(const char *s) {
   free(b.p);
 }
 
-/* Bold yellow/red and reverse video: the Linux text console has them all. */
+/* Bold yellow/red, reverse video and the 8 basic backgrounds: the Linux text console has
+ * them all. */
 static const char *sgr_for(int color) {
   switch (color) {
   case COLOR_DIM: return "\033[2m";
   case COLOR_ACCENT: return "\033[1;33m";
   case COLOR_DANGER: return "\033[1;31m";
   case COLOR_USER: return "\033[7m";
+  case COLOR_PANEL: return "\033[1;37;44m";
+  case COLOR_PANEL_DIM: return "\033[37;44m";
   default: return "";
   }
 }

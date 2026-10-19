@@ -150,13 +150,90 @@ static const RiskRule *first_match(const Dialect *d, const RiskRule *rules, int 
   return found;
 }
 
+static int is_nul(const char *r) {
+  return (r[0] | 0x20) == 'n' && (r[1] | 0x20) == 'u' && (r[2] | 0x20) == 'l' && !isalnum((unsigned char)r[3]) &&
+         r[3] != '.';
+}
+
+/* A copy with redirections to the null device blanked ("2>nul", ">nul", "2>/dev/null",
+ * "2>&1"): they hide output and touch no file, so they add no risk. */
+static char *without_null_redirects(const char *cmd) {
+  char *s = xstrdup(cmd), *p;
+  for (p = s; *p; p++) {
+    char *r = p + (*p >= '0' && *p <= '9' && p[1] == '>'), *end = NULL;
+    if (*r != '>') continue;
+    r += r[1] == '>' ? 2 : 1;
+    if (*r == '&' && r[1] >= '0' && r[1] <= '9') end = r + 2;
+    else {
+      while (*r == ' ') r++;
+      if (is_nul(r)) end = r + 3;
+      else if (!strncmp(r, "/dev/null", 9) && !isalnum((unsigned char)r[9])) end = r + 9;
+    }
+    if (end) {
+      memset(p, ' ', (size_t)(end - p));
+      p = end - 1;
+    }
+  }
+  return s;
+}
+
 const char *risk_reason(const Dialect *d, const char *cmd) {
-  const RiskRule *r;
+  const RiskRule *r = NULL;
+  const char *found = NULL;
+  char *c = without_null_redirects(cmd);
   int m;
-  for (m = 0; m < d->nmarks; m++)
-    if (strstr(cmd, d->marks[m].text)) return d->marks[m].reason;
-  r = first_match(d, d->rules, d->nrules, cmd);
-  return r ? r->reason : NULL;
+  for (m = 0; m < d->nmarks && !found; m++)
+    if (strstr(c, d->marks[m].text)) found = d->marks[m].reason;
+  if (!found && (r = first_match(d, d->rules, d->nrules, c)) != NULL) found = r->reason;
+  free(c);
+  return found;
+}
+
+/* Lowercase in place (cmd matches ignoring case). */
+static void lower(char *s) {
+  for (; *s; s++) *s = (char)tolower((unsigned char)*s);
+}
+
+static int in_list(const char *w, const char *const *list) {
+  for (; *list; list++)
+    if (!strcmp(w, *list)) return 1;
+  return 0;
+}
+
+int command_prefix(const Dialect *d, const char *cmd, char *out, size_t cap) {
+  /* They run other commands, so "always" for them would approve anything. */
+  static const char *const RUNS_OTHERS[] = {"cmd", "start", "call", "runas", "forfiles", "for", "if", "sh", "bash",
+                                            "dash", "zsh", "env", "sudo", "doas", "su", "xargs", "nohup", "nice",
+                                            "exec", "eval", "busybox", "find", "time", "command", "watch",
+                                            "timeout", NULL};
+  /* Tools whose second word says what they do: "reg query" is not "reg delete". */
+  static const char *const SUBCOMMANDS[] = {"reg", "sc", "net", "netsh", "wmic", "schtasks", "git", "apt",
+                                            "apt-get", "systemctl", "service", "dpkg", "pacman", "npm", "pnpm",
+                                            "pip", "docker", "ip", "nmcli", NULL};
+  char *c = without_null_redirects(cmd), w[2][32];
+  const char *p = c;
+  size_t n, len;
+  int i, ok = 0;
+  if (strpbrk(c, d->command_words ? ";&|<>`$()" : "&|<>^()") || risk_reason(d, cmd)) goto done;
+  for (i = 0; i < 2; i++) { /* the first two words */
+    while (*p == ' ' || *p == '\t') p++;
+    n = strcspn(p, " \t");
+    if (n >= sizeof w[i]) goto done;
+    memcpy(w[i], p, n);
+    w[i][n] = 0;
+    if (d->fold_case) lower(w[i]);
+    p += n;
+  }
+  len = strlen(w[0]);
+  if (d->fold_case && len > 4 && !strcmp(w[0] + len - 4, ".exe")) w[0][len - 4] = 0;
+  /* a path or quotes could name any program; a bare name is looked up the usual way */
+  if (!*w[0] || strpbrk(w[0], "/\\\"'") || in_list(w[0], RUNS_OTHERS)) goto done;
+  if (!in_list(w[0], SUBCOMMANDS)) ok = snprintf(out, cap, "%s", w[0]) < (int)cap;
+  else if (*w[1] && strspn(w[1], "abcdefghijklmnopqrstuvwxyz-") == strlen(w[1]))
+    ok = snprintf(out, cap, "%s %s", w[0], w[1]) < (int)cap;
+done:
+  free(c);
+  return ok;
 }
 
 int denied_by(const Dialect *d, const char *rules, const char *cmd, char *out, size_t cap) {

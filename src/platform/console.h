@@ -7,7 +7,8 @@
 #include <stddef.h>
 
 enum { LINE_EOF = 0, LINE_OK = 1, LINE_TOO_LONG = 2 };
-enum { COLOR_NORMAL, COLOR_DIM, COLOR_ACCENT, COLOR_DANGER, COLOR_USER };
+/* COLOR_PANEL and COLOR_PANEL_DIM: main and secondary text on the shaded tool panels. */
+enum { COLOR_NORMAL, COLOR_DIM, COLOR_ACCENT, COLOR_DANGER, COLOR_USER, COLOR_PANEL, COLOR_PANEL_DIM };
 
 extern const char CONSOLE_PASTE_HINT[]; /* how to paste here (English; show it through tr()) */
 
