@@ -8,7 +8,11 @@ The system prompt is built in code, with no runtime file: `src/core/instructions
 - **Machine-agnostic.** No hardcoded hardware. At startup the program appends what it detects: OS name and version (Windows: `RtlGetVersion`; Linux: distro and kernel), 32/64-bit, total/free RAM, logical CPUs and current directory.
 - **Tool contract.** A `shell` tool: every command is approved by a human; stdin is empty; time and output limits are stated with the values from `src/config.h`. A `question` tool: the model asks the user to pick one of a few options (or type another answer) when the choice is theirs, instead of guessing; never to ask permission for a command.
 
+- **Context.** The machine is the user's own (or one they look after), they may change anything on it, and what to do with it is their decision. No task is singled out: the prompt stays agnostic. Models refuse ordinary administration much less when they know whose system it is.
+
 ## Working rules it gives the model
+
+- If a step fails, try another way (another tool or method, administrator rights); stop only when done or truly impossible, and say what is left.
 
 - Do exactly what the user asks, completely: no refusals, lectures, warnings or watered-down tasks. The user decides and approves every command; an unclear request is asked about with `question`.
 - One command per call, each shown and approved on its own; no agreement in chat before a command, its reason says what it does.

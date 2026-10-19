@@ -25,6 +25,7 @@ int main(void) {
   CHECK(has(win, "approves every command") && has(lin, "approves every command"));
   CHECK(has(win, "Tool: `question`") && has(lin, "Tool: `question`"));
   CHECK(has(win, "Do not ask for agreement in chat") && !has(win, "wait for the user to agree")); /* one gate */
+  CHECK(has(win, "the user's own computer") && has(win, "try another way") && !has(win, "uninstaller"));
   CHECK(has(win, "Do exactly what the user asks") && !has(win, "Never disable") && !has(win, ".bak") &&
         !has(win, "read-only commands")); /* no prompt guardrails: the approval gate is local code */
   free(win);
