@@ -92,7 +92,7 @@ The key is checked against the provider before it is saved (if rejected, nothing
 Then start TinyShell: from the Start menu or by typing `tinyshell` in a **new** CMD window on Windows, or `tinyshell` in a terminal on Linux. It is a conversation: you ask, the agent proposes commands one step at a time and you approve them, until the task is done. The answer streams in as the model writes it.
 
 ```text
-TinyShell 0.10.0 · opencode-go · /help
+TinyShell 0.10.1 · opencode-go · /help
 
  which programs start with Windows?                     <- your message
 

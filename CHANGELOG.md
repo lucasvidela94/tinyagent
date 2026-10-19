@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.10.1 — Windows 7 console fixes
+
+First report from the Windows 7 target machine:
+
+- The "save the key?" question after typing the API key could ignore `s` and `n`: the console was left in character mode, where Enter never ends a line. Every line read now sets line mode itself.
+- Right-click in the TinyShell window shows the console menu again (Mark, Copy, Paste) on Windows 7.
+- Ctrl+V pastes at the API key prompt, which the Windows 7 console does not do on its own.
+
 ## 0.10.0 — questions, deny rules, longer sessions
 
 - The model can ask instead of guessing: a new `question` tool shows its question with 2 to 8 options in the menu (arrows, filter, Enter; Esc skips), plus "Other answer" to type your own. Nothing runs; the answer goes back to the model.
