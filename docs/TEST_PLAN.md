@@ -6,12 +6,17 @@ Items checked before 0.8.0 record the Spanish command names and screens of the t
 
 - [x] `build/build-linux-mingw.sh` exits successfully (`-Werror`).
 - [x] `file tinyshell.exe` identifies a PE32 Intel 80386 Windows executable.
-- [x] Imports only `KERNEL32.dll`, `msvcrt.dll`, `WINHTTP.dll` (no UCRT).
+- [x] Imports only system DLLs: `KERNEL32`, `msvcrt`, `WINHTTP`, `ADVAPI32`, `CRYPT32`, `USER32` (clipboard) (no UCRT).
 - [x] No API key is embedded in the binary or source.
 - [x] `build/test-core.sh` passes under ASan/UBSan: malformed/oversized JSON, missing fields, null content, `\u` escapes, invalid UTF-8, unknown tools, malformed arguments, control characters, oversized commands, risk heuristic, approval answers, history trimming, output cap.
 
 ## Local behavior (Windows 7 x86)
 
+First report from the Noblex (0.10.0, 2026-10-19): after the key, the "save it?" question ignored `s` and `n`, and pasting worked neither with Ctrl+V nor with the right-click menu, whether TinyShell was opened from the Start menu or from CMD. The items below check the fix.
+
+- [ ] After pasting or typing the key, "save it?" shows the typed `s`/`n` and answers on Enter.
+- [ ] Right-click in the TinyShell window shows the menu (Mark, Copy, Paste) or pastes (QuickEdit), at the key prompt and in the editor.
+- [ ] Ctrl+V at the key prompt pastes the clipboard (one `*` per character, up to the first line break).
 - [ ] Program starts from normal CMD without missing-DLL error.
 - [ ] Empty API key exits with a clear message.
 - [ ] `/quit` exits cleanly (and the alias `/salir`).

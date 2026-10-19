@@ -13,7 +13,8 @@
 #define TMPF_TRUETYPE 0x04 /* wingdi.h, excluded by WIN32_LEAN_AND_MEAN */
 #endif
 
-const char CONSOLE_PASTE_HINT[] = N_("right-click to paste"); /* Ctrl+V does nothing in the Win7 console */
+/* Ctrl+V does nothing in the Win7 console; the secret prompt handles it itself. */
+const char CONSOLE_PASTE_HINT[] = N_("Ctrl+V or right-click to paste");
 
 static HANDLE con_in, con_out;
 static int in_is_console, out_is_console, raster_font = 1;
@@ -39,6 +40,9 @@ void console_init(void) {
   con_in = GetStdHandle(STD_INPUT_HANDLE);
   con_out = GetStdHandle(STD_OUTPUT_HANDLE);
   in_is_console = GetConsoleMode(con_in, &mode) != 0;
+  /* A new console window sends mouse clicks to the program, which on Windows 7 takes away
+   * the right-click menu (Mark, Copy, Paste); TinyShell reads no mouse events. */
+  if (in_is_console && (mode & ENABLE_MOUSE_INPUT)) SetConsoleMode(con_in, mode & ~(DWORD)ENABLE_MOUSE_INPUT);
   out_is_console = GetConsoleMode(con_out, &mode) != 0;
   if (out_is_console && GetConsoleScreenBufferInfo(con_out, &bi)) base_attr = bi.wAttributes;
   if (out_is_console) raster_font = detect_raster_font();

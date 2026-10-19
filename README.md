@@ -78,7 +78,7 @@ C:\> tinyshell login
 Pick a provider (arrows and Enter):
 > opencode-go    OpenCode Go (pick the model next)
 
-API key for opencode-go (right-click to paste): ****************************
+API key for opencode-go (Ctrl+V or right-click to paste): ****************************
 
 Pick a model from opencode-go (38; type to filter, Enter):
   filter: kimi_

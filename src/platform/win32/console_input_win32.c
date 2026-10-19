@@ -38,6 +38,13 @@ static int read_redirected(char *out, size_t cap) {
   return status;
 }
 
+/* Line mode, whatever an earlier read or another program left: in character mode Enter
+ * gives only '\r', so a line read would wait forever for its '\n' and echo nothing. */
+static DWORD line_mode(DWORD mode, int echo) {
+  mode |= ENABLE_LINE_INPUT | ENABLE_PROCESSED_INPUT;
+  return echo ? mode | ENABLE_ECHO_INPUT : mode & ~(DWORD)ENABLE_ECHO_INPUT;
+}
+
 int read_line(char *out, size_t cap, int echo) {
   int status = LINE_OK, got_any = 0, eol = 0, n;
   size_t wn = 0;
@@ -47,7 +54,7 @@ int read_line(char *out, size_t cap, int echo) {
   input_init();
   if (!in_is_console) return read_redirected(out, cap);
   GetConsoleMode(con_in, &mode);
-  if (!echo) SetConsoleMode(con_in, mode & ~(DWORD)ENABLE_ECHO_INPUT);
+  SetConsoleMode(con_in, line_mode(mode, echo));
   w = (wchar_t *)xrealloc(NULL, cap * sizeof(wchar_t));
   while (!eol) {
     wchar_t chunk[256];
@@ -62,10 +69,8 @@ int read_line(char *out, size_t cap, int echo) {
       else status = LINE_TOO_LONG;
     }
   }
-  if (!echo) {
-    SetConsoleMode(con_in, mode);
-    say("\n");
-  }
+  SetConsoleMode(con_in, line_mode(mode, 1));
+  if (!echo) say("\n");
   n = wn ? WideCharToMultiByte(CP_UTF8, 0, w, (int)wn, out, (int)cap - 1, NULL, NULL) : 0;
   if (wn && n == 0) status = LINE_TOO_LONG; /* UTF-8 form does not fit */
   out[n] = 0;
@@ -87,6 +92,27 @@ static int finish_wide(wchar_t *w, size_t wn, size_t wcap, char *out, size_t cap
   SecureZeroMemory(w, wcap * sizeof(wchar_t));
   free(w);
   return status;
+}
+
+/* Ctrl+V: the Windows 7 console has no paste key, so the secret prompt reads the
+ * clipboard itself, up to the first line break, one '*' per character. */
+static void paste(wchar_t *w, size_t *wn, size_t cap, int *status) {
+  HANDLE h;
+  const wchar_t *p;
+  if (!OpenClipboard(NULL)) return;
+  if ((h = GetClipboardData(CF_UNICODETEXT)) != NULL && (p = (const wchar_t *)GlobalLock(h)) != NULL) {
+    for (; *p && *p != L'\r' && *p != L'\n'; p++) {
+      if (*p < 0x20) continue;
+      if (*wn < cap - 1) {
+        w[(*wn)++] = *p;
+        say("*");
+      } else {
+        *status = LINE_TOO_LONG;
+      }
+    }
+    GlobalUnlock(h);
+  }
+  CloseClipboard();
 }
 
 int read_secret(char *out, size_t cap) {
@@ -113,6 +139,10 @@ int read_secret(char *out, size_t cap) {
       }
       continue;
     }
+    if (c == 0x16) { /* Ctrl+V */
+      paste(w, &wn, cap, &status);
+      continue;
+    }
     if (c < 0x20) continue;
     if (wn < cap - 1) {
       w[wn++] = c;
@@ -121,7 +151,7 @@ int read_secret(char *out, size_t cap) {
       status = LINE_TOO_LONG;
     }
   }
-  SetConsoleMode(con_in, mode);
+  SetConsoleMode(con_in, line_mode(mode, 1));
   say("\n");
   status = finish_wide(w, wn, cap, out, cap, status);
   trim_line(out);
