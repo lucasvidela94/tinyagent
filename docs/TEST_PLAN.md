@@ -83,6 +83,7 @@ First report from the Noblex (0.10.0, 2026-10-19): after the key, the "save it?"
 - [x] Custom provider over `http://` (local mock): URL with query string, model from `config.ini`, no `Authorization` without key, no session header when empty, full tool loop, `/modelo X` saved. (wine)
 - [x] Invalid `config.ini` values (bad name, `ftp://`, header injection) are reported and defaults used. (wine)
 - [x] `question` tool accepted by the API and used by the model (wine, real API, `deepseek-v4.1-flash`, 2026-10-19): asked to choose before acting, the model called `question`, the menu showed its options, the chosen one went back and the model went on with it; rejected commands afterwards were reported as such and not retried.
+- [x] Saved conversations (wine, real API, 2026-10-19): a session saved to `sessions.db`; in a new run `/sessions` listed it, picking it resumed it ("resumed: ... (2 messages)") and the model answered from its earlier messages. Still to check on Windows 7: the file under `%LOCALAPPDATA%\TinyShell`, and resuming after a power cut.
 - [ ] HTTP 401 and 429 are reported usefully. (401 seen under wine with a rejected key: "answered HTTP 401 (invalid API key or no access to the model)", and the session continued.)
 - [ ] Malformed JSON does not trigger shell execution.
 - [ ] Unknown tool name is never executed.

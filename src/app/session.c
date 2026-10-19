@@ -13,6 +13,7 @@
 #include "policy.h"
 #include "machine.h"
 #include "question.h"
+#include "saved.h"
 #include "session.h"
 #include "stream.h"
 #include "sys.h"
@@ -46,6 +47,8 @@ void session_init(Session *s) {
   new_session_id(s);
   memset(&s->history, 0, sizeof s->history);
   s->turns = s->proposed = s->approved = s->rejected = s->nalways = 0;
+  s->store = NULL; /* saved_open() opens it */
+  s->store_id = 0;
   s->started_ms = sys_ms();
   s->tokens_in = s->tokens_out = 0;
   history_add(&s->history, message_json("system", sys), 0);
@@ -56,10 +59,12 @@ void session_reset(Session *s) {
   history_reset(&s->history);
   s->tokens_in = s->tokens_out = 0;
   s->nalways = 0; /* "always" belongs to the conversation it was given in */
+  s->store_id = 0; /* the next message starts a new saved conversation */
   new_session_id(s);
 }
 
 void session_free(Session *s) {
+  saved_close(s);
   history_free(&s->history);
   wipe(s->api_key, sizeof s->api_key);
 }
@@ -103,14 +108,14 @@ static int handle_response(Session *s, const Json *j, int streamed) {
   text = json_str(j, json_key(j, msg, "content"));
   if (json_size(j, calls) > 0) {
     if (*text && !streamed) tui_text(text);
-    history_add(&s->history, json_raw(j, msg), 0);
+    saved_add(s, json_raw(j, msg), 0, NULL);
     for (i = 0; i < json_size(j, calls); i++) {
       ToolCall tc;
       char *out;
       tool_call_parse(j, json_index(j, calls, i), &tc);
       /* After Ctrl+C every remaining call still needs a result, but nothing is asked or run. */
       out = cancel_requested() ? xstrdup(tr("Cancelled by the user with Ctrl+C. Nothing was run.")) : run_tool(s, &tc);
-      history_add(&s->history, tool_result_json(tc.id, out), 0); /* every call gets a result */
+      saved_add(s, tool_result_json(tc.id, out), 0, NULL); /* every call gets a result */
       free(out);
       tool_call_free(&tc);
     }
@@ -125,7 +130,7 @@ static int handle_response(Session *s, const Json *j, int streamed) {
     if (!strcmp(finish, "length")) tui_note(tr("(answer cut off by the token limit)"));
   }
   free(finish);
-  history_add(&s->history, message_json("assistant", text), 0);
+  saved_add(s, message_json("assistant", text), 0, NULL);
   free(text);
   return 0;
 }
@@ -159,7 +164,7 @@ static char *round_trip(Session *s, const char *body, int *shown) {
 unsigned long session_send(Session *s, const char *text) {
   int turn;
   cancel_reset();
-  history_add(&s->history, message_json("user", text), 1);
+  saved_add(s, message_json("user", text), 1, text);
   for (turn = 0; turn < MAX_TURNS; turn++) {
     Json j = {0};
     int more = 0, shown = 0;

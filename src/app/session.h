@@ -5,12 +5,15 @@
 
 #include "conversation.h"
 #include "provider.h"
+#include "store.h"
 
 #define MAX_ALWAYS 32 /* command prefixes approved "always" in one session */
 
 typedef struct {
   char always[MAX_ALWAYS][64]; /* see command_prefix(); cleared by session_reset, never saved */
   int nalways;
+  Store *store;   /* saved conversations (saved.h); NULL when saving is off */
+  long store_id;  /* this conversation in the store; 0 until its first message */
   History history;
   Provider provider;
   long tokens_in, tokens_out; /* summed from the API "usage" field */

@@ -5,6 +5,7 @@
 #include "i18n.h"
 #include "login.h"
 #include "reporter.h"
+#include "saved.h"
 #include "settings.h"
 #include "slash.h"
 #include "tui.h"
@@ -53,6 +54,7 @@ static void help(void) {
               "/login      change provider or API key\n"
               "/report     tell the developers about a problem\n"
               "/reset      start a new conversation\n"
+              "/sessions [text]  resume a saved conversation (optionally one that contains text)\n"
               "/update     check for and install the latest version\n"
               "/quit       quit"));
 }
@@ -68,6 +70,7 @@ int slash_run(Session *s, const char *input) {
   else if (is(input, "/report", "/reporte")) reporter_run(s);
   else if (is(input, "/login", "/clave")) login_run(&s->provider, s->api_key, sizeof s->api_key);
   else if (is(input, "/model", "/modelo")) model_command(s, argument(input));
+  else if (is(input, "/sessions", "/sesiones") || is(input, "/resume", NULL)) saved_pick(s, argument(input));
   else tui_error(tr("Unknown command. /help lists the commands."));
   return SLASH_DONE;
 }

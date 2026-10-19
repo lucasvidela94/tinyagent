@@ -12,6 +12,7 @@
 #include "i18n.h"
 #include "machine.h"
 #include "policy.h"
+#include "saved.h"
 #include "session.h"
 #include "settings.h"
 #include "slash.h"
@@ -109,6 +110,7 @@ int main(int argc, char **argv) {
   }
   telemetry_init();
   session_init(&s);
+  saved_open(&s);
   {
     char data[400];
     snprintf(data, sizeof data, "{\"provider\":\"%s\",\"model\":\"%s\",\"tui\":%d}", s.provider.name,

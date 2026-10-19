@@ -9,7 +9,7 @@
 
 A general-purpose terminal agent (in the spirit of OpenCode or Pi) for **old, low-resource PCs**: diagnosing problems, inspecting files, writing scripts, maintenance, or answering questions about the machine.
 
-- One 32-bit binary per platform, in C: `tinyshell.exe` for Windows 7 and later (~130 KB, system DLLs only) and `tinyshell-linux-i386` for any x86 Linux from a Pentium up (static, ~1 MB with its own TLS). No Node, Python, .NET, services or database.
+- One 32-bit binary per platform, in C: `tinyshell.exe` for Windows 7 and later (~750 KB, system DLLs only) and `tinyshell-linux-i386` for any x86 Linux from a Pentium up (static, with its own TLS). No Node, Python, .NET, services or database server: conversations are saved with SQLite compiled in, and `/sessions` resumes them.
 - The model runs remotely, on any OpenAI-compatible API (default: OpenCode Go); the PC only keeps the console, speaks HTTPS and runs commands.
 - **You approve every command** before it runs: once, always for that kind of command during the session, or no, telling the model what to do instead.
 - The interface speaks English or Spanish, following the system's language.

@@ -21,7 +21,8 @@ parentheses). The interface speaks Spanish or English (see "Language" below).
 | `tinyshell report` (`reporte`), `/report` (`/reporte`) | Report a problem | Asks what happened, builds the report, saves it, shows it, sends it after `y` (falls back to emailing the file) |
 | `tinyshell telemetry on\|off\|--show` (`telemetria`, `--ver`) | Telemetry | Turn beta telemetry on or off; show what was sent |
 | `/help` (`/ayuda`), `/model [x]` (`/modelo`) | Session commands | List the commands; pick a model from the live list or set one by name (saved to `config.ini`) |
-| `/reset` (`/reiniciar`) | Session reset | Drops the conversation history, keeps the system prompt |
+| `/reset` (`/reiniciar`) | Session reset | Drops the conversation history, keeps the system prompt; the next message starts a new saved conversation |
+| `/sessions [text]` (`/sesiones`, `/resume`) | Saved conversations | The 20 most recently used (or those whose title or messages contain `text`) in the menu, with date and message count; the one picked replaces the current conversation and new messages continue it. Every message is saved as it happens in `sessions.db` in the data folder (SQLite); the 50 most recent are kept; `[sessions] save = 0` in `config.ini` turns saving off |
 | `run_command()` (`shell_win32.c`, `shell_posix.c`) | Local command boundary | Windows: `CreateProcessW` of `%SystemRoot%\System32\cmd.exe /d /s /c "<cmd>"` in a job. Linux: `/bin/sh -c` in its own process group. stdin empty, 180 s limit, output capped at 24 KB |
 
 ## Language

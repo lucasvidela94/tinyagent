@@ -90,7 +90,7 @@ static void copy_col(sqlite3_stmt *s, int col, char *out, size_t cap) {
 
 int store_list(Store *st, const char *filter, StoreItem *out, int max) {
   int n = 0;
-  sqlite3_stmt *s = prepare(st, "SELECT s.id, substr(s.updated, 1, 16), s.title, "
+  sqlite3_stmt *s = prepare(st, "SELECT s.id, substr(datetime(s.updated, 'localtime'), 1, 16), s.title, "
                                 "(SELECT count(*) FROM messages m WHERE m.session = s.id) FROM sessions s "
                                 "WHERE ?1 = '' OR s.title LIKE '%' || ?1 || '%' OR EXISTS (SELECT 1 FROM messages m "
                                 "WHERE m.session = s.id AND m.json LIKE '%' || ?1 || '%') "

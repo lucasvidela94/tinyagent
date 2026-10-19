@@ -4,7 +4,7 @@
 
 **Single-process, synchronous CLI / thin remote-agent harness.** Native C with the system's
 HTTP stack (WinHTTP on Windows; Mbed TLS, statically linked, on Linux) and the system shell
-(`cmd.exe` or `/bin/sh`). No local server, daemon, database, framework or managed runtime.
+(`cmd.exe` or `/bin/sh`). No local server, daemon, database server, framework or managed runtime; saved conversations use SQLite compiled into the binary (`docs/adr/0002-sqlite-session-store.md`).
 The remote provider proposes; the executable is the local mediator that asks for approval and
 runs the command.
 
@@ -57,6 +57,7 @@ a growing file is split along a real interface, not by size.
 | `src/core/stream.c` | `stream_feed`, `stream_response` | SSE streaming: live text, joins tool-call pieces, rebuilds the plain response; fuzzed |
 | `src/core/conversation.c` | `History`, `build_request` | history bounded by eliding old outputs, then by whole exchanges; request body |
 | `src/core/tools.c` | `tools_json`, `ToolCall` | the tools offered to the model (shell described per dialect, question) and tool-call extraction |
+| `src/core/store.c` | `store_open`, `store_add`, `store_list`, `store_load`, `store_prune` | saved conversations in SQLite (`vendor/sqlite`), the only includer of `sqlite3.h`; outside `CORE_SRC` |
 | `src/core/policy.c` | `tool_problem`, `risk_reason`, `command_prefix`, `denied_by`, `is_yes` | refusals before the user is asked (commands and questions), risk heuristic per dialect, which commands may be approved "always" and under what prefix, the user's deny rules, yes/no answers |
 | `src/core/dialect.h`, `dialect_cmd.c`, `dialect_sh.c` | `DIALECT_CMD`, `DIALECT_SH` | what depends on the shell, as data: risk rules and prompt guidance for `cmd.exe` and `/bin/sh` |
 | `src/core/instructions.c` | `instructions` | the task-agnostic prompt instructions, with the dialect's parts |
@@ -78,6 +79,7 @@ a growing file is split along a real interface, not by size.
 | `src/app/slash.c` | `slash_run` | chat commands (`/help`, `/model`, `/login`, `/report`, `/reset`, `/update`, `/quit`), with Spanish aliases |
 | `src/app/session.c` | `session_send` | system prompt, history, tool dispatch (`run_tool`), turn loop, token counts |
 | `src/app/approval.c` | `approval_run` | the approval gate: command panel, deny rules, menu (once, always for the prefix in this session, no with a reason), run |
+| `src/app/saved.c` | `saved_open`, `saved_add`, `saved_pick` | each message saved as it is added to the history; `/sessions` lists, searches and resumes |
 | `src/app/question.c` | `question_ask` | the `question` tool: the question, its options in the menu and a typed "other answer" |
 | `src/app/tui.c`, `tui_select.c` | `tui_*`, `tui_select` | minimal inline TUI: user block, proposal, output summary, editor between rules, footer; arrow-key menu with filtering; plain mode without a console |
 | `src/app/login.c` | `login_run`, `login_pick_model` | `tinyshell login`: provider, key (checked against `/models`), model from the live list |

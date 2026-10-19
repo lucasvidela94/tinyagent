@@ -11,7 +11,7 @@ typedef struct Store Store;
 
 typedef struct {
   long id;
-  char when[20];   /* "YYYY-MM-DD HH:MM" of the last message, UTC */
+  char when[20];   /* "YYYY-MM-DD HH:MM" of the last message, local time */
   char title[96];  /* the first user message, cut to fit */
   int messages;
 } StoreItem;

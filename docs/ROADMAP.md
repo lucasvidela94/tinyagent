@@ -45,12 +45,10 @@
 
 ## Next
 
-- [ ] Saved conversations: `/history` lists past sessions, `/resume N` continues one, with
-      search across them. Stored in SQLite (an amalgamation compiled in: ~600 KB, well within
-      what the target machines can hold; searchable, robust to power cuts). This revisits the
-      "no database" rule in AGENTS.md on purpose: it is an embedded library in the same binary,
-      not a server. Encrypted per user with DPAPI on Windows, mode 0600 on Linux; a retention
-      limit and a switch to turn it off, since outputs may hold sensitive data.
+- [x] Saved conversations: `/sessions [text]` lists, searches and resumes them, in SQLite
+      compiled in (ADR 0002). Not encrypted, since DPAPI per message would rule out search:
+      private to the user by the data folder's permissions; 50 kept; `[sessions] save = 0`
+      turns it off.
 - [ ] Code-sign the installer and the exe (Authenticode), so Windows stops warning about an
       unknown publisher.
 

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Size budget for the Windows exe: one binary, a checkable size.
-# Now ~132 KB (2026-10-11): code ~110 KB, the Spanish string table ~18 KB, icon and version
-# details ~5 KB. Ceiling 160 KB; raising it needs a reason in the commit.
+# Now ~755 KB (2026-10-19): SQLite ~610 KB (saved conversations, docs/adr/0002), TinyShell's
+# own code and Spanish table ~140 KB, icon and version details ~5 KB. Ceiling 832 KB (was
+# 160 KB before SQLite); raising it needs a reason in the commit.
 set -euo pipefail
-MAX="${MAX_EXE:-163840}"
+MAX="${MAX_EXE:-851968}"
 f="${1:-tinyshell.exe}"
 [ -f "$f" ] || { echo "check-exe-size: $f does not exist (build it first)" >&2; exit 1; }
 n=$(wc -c <"$f")

@@ -44,14 +44,18 @@ const I18nPair I18N_ES[] = {
      "/login      change provider or API key\n"
      "/report     tell the developers about a problem\n"
      "/reset      start a new conversation\n"
+     "/sessions [text]  resume a saved conversation (optionally one that contains text)\n"
      "/update     check for and install the latest version\n"
      "/quit       quit",
      "/model [x]  elegir modelo de la lista (o escribir el nombre)\n"
      "/login      cambiar de proveedor o de API key\n"
      "/report     contar un problema a los desarrolladores\n"
      "/reset      empezar una conversación nueva\n"
+     "/sessions [texto]  retomar una conversación guardada (o una que contenga el texto)\n"
      "/update     buscar e instalar la última versión\n"
      "/quit       salir"},
+    {"/sessions resumes a saved conversation",
+     "/sessions retoma una conversación guardada"},
     {"; TinyShell: the model provider. No secrets here: API keys go to the Windows\r\n"
      "; Credential Manager (one per 'name'). Any OpenAI-compatible chat-completions service.\r\n"
      ";\r\n"
@@ -176,6 +180,8 @@ const I18nPair I18N_ES[] = {
      "OpenCode Go (el modelo se elige después)"},
     {"Other answer (type it)",
      "Otra respuesta (escribila)"},
+    {"Pick a conversation to resume:",
+     "Elegí una conversación para retomar:"},
     {"Pick a model from %s (%d; type to filter, Enter):",
      "Elegí un modelo de %s (%d; escribí para filtrar, Enter):"},
     {"Pick a provider (arrows and Enter):",
@@ -228,6 +234,8 @@ const I18nPair I18N_ES[] = {
      "La pregunta es demasiado larga o tiene caracteres de control. No se preguntó nada."},
     {"The question needs its text and 2 to 8 options. Nothing was asked.",
      "La pregunta necesita su texto y de 2 a 8 opciones. No se preguntó nada."},
+    {"That conversation could not be loaded.",
+     "No se pudo cargar esa conversación."},
     {"The user answered: ",
      "El usuario respondió: "},
     {"The user chose: ",
@@ -354,6 +362,8 @@ const I18nPair I18N_ES[] = {
      "[tiempo agotado: terminado tras %d s]"},
     {"cancelled",
      "cancelado"},
+    {"conversations will not be saved (the sessions file could not be opened)",
+     "las conversaciones no se van a guardar (no se pudo abrir el archivo de sesiones)"},
     {"cancelled: no key was entered",
      "cancelado: no se ingresó ninguna clave"},
     {"certificate out of date: check the Windows date and time",
@@ -494,6 +504,10 @@ const I18nPair I18N_ES[] = {
      "conversación nueva"},
     {"no API key",
      "sin API key"},
+    {"no saved conversation contains that",
+     "ninguna conversación guardada contiene eso"},
+    {"no saved conversations yet",
+     "todavía no hay conversaciones guardadas"},
     {"no answer",
      "sin respuesta"},
     {"not run",
@@ -540,6 +554,10 @@ const I18nPair I18N_ES[] = {
      "ejecuta como root"},
     {"runs code from a DLL",
      "ejecuta código de una DLL"},
+    {"resumed: %s (%d messages)",
+     "retomada: %s (%d mensajes)"},
+    {"saving conversations is off ([sessions] save = 0 in config.ini)",
+     "el guardado de conversaciones está apagado ([sessions] save = 0 en config.ini)"},
     {"saved \xc2\xb7 tinyshell logout deletes it",
      "guardada \xc2\xb7 tinyshell logout la borra"},
     {"send",
