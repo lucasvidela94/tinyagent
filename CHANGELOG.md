@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.12.0 — saved conversations
+
+- Conversations are saved as they happen and survive closing TinyShell: `/sessions` lists the recent ones (date, first message, length) and resumes the one you pick; `/sessions text` finds those that mention it. The 50 most recent are kept; `[sessions] save = 0` in `config.ini` turns saving off.
+- They are stored with SQLite, compiled into the program (no extra files or services to install), in `sessions.db` in TinyShell's data folder, private to your user. The exe grows to ~750 KB.
+
 ## 0.11.0 — approvals like OpenCode, administrator commands
 
 - Each command is shown in a shaded panel, with its output's last lines and exit code inside, like OpenCode's tool blocks. The model's questions use the same panel.
