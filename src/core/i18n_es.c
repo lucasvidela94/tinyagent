@@ -340,8 +340,6 @@ const I18nPair I18N_ES[] = {
      "[timed out: stopped after %d s]",
      "\n"
      "[tiempo agotado: terminado tras %d s]"},
-    {"answer: ",
-     "respuesta: "},
     {"cancelled",
      "cancelado"},
     {"cancelled: no key was entered",
