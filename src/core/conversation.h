@@ -1,11 +1,10 @@
-/* Chat Completions protocol: message history, request body and tool-call extraction. Portable C. */
+/* Chat Completions protocol: message history and request body (the tools are in tools.h). Portable C. */
 #ifndef TINYSHELL_CONVERSATION_H
 #define TINYSHELL_CONVERSATION_H
 
 #include <stddef.h>
 
 #include "dialect.h"
-#include "json.h"
 
 /* One JSON object per message; m[0] is the system prompt. Zero-initialize before use. */
 typedef struct { char *json; int user; } Msg;
@@ -22,11 +21,6 @@ void history_free(History *h);
 
 char *message_json(const char *role, const char *content);
 char *tool_result_json(const char *id, const char *output);
-char *build_request(const History *h, const char *model, const Dialect *d); /* POST body with the shell tool */
-
-/* One entry of message.tool_calls. Missing pieces become "", never NULL. */
-typedef struct { char *id, *name, *command, *reason; } ToolCall;
-void tool_call_parse(const Json *j, int call, ToolCall *tc);
-void tool_call_free(ToolCall *tc);
+char *build_request(const History *h, const char *model, const Dialect *d); /* POST body with the tools */
 
 #endif

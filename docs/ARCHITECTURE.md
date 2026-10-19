@@ -55,7 +55,8 @@ a growing file is split along a real interface, not by size.
 | `src/core/util.c` | `Buf`, `utf8_valid`, `jesc`, `wipe` | buffers, UTF-8 checks, JSON escaping (invalid bytes become `�`), wiping secrets |
 | `src/core/json.c` | `json_parse/key/index/str` | bounded tokenizer (depth, tokens), `\uXXXX` to UTF-8; fuzzed |
 | `src/core/stream.c` | `stream_feed`, `stream_response` | SSE streaming: live text, joins tool-call pieces, rebuilds the plain response; fuzzed |
-| `src/core/conversation.c` | `History`, `build_request`, `ToolCall` | history trimmed by whole exchanges, request body with the shell tool (per dialect), tool-call extraction |
+| `src/core/conversation.c` | `History`, `build_request` | history bounded by eliding old outputs, then by whole exchanges; request body |
+| `src/core/tools.c` | `tools_json`, `ToolCall` | the tools offered to the model (shell described per dialect) and tool-call extraction |
 | `src/core/policy.c` | `command_problem`, `risk_reason`, `denied_by`, `is_yes` | pre-approval refusals, risk heuristic per dialect, the user's deny rules, approval answers |
 | `src/core/dialect.h`, `dialect_cmd.c`, `dialect_sh.c` | `DIALECT_CMD`, `DIALECT_SH` | what depends on the shell, as data: risk rules and prompt guidance for `cmd.exe` and `/bin/sh` |
 | `src/core/instructions.c` | `instructions` | the task-agnostic prompt instructions, with the dialect's parts |

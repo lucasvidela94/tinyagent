@@ -3,8 +3,8 @@
 #ifndef TINYSHELL_POLICY_H
 #define TINYSHELL_POLICY_H
 
-#include "conversation.h"
 #include "dialect.h"
+#include "tools.h"
 
 /* Refuses a proposal before the user is asked (unknown tool, empty, oversized, control
  * characters). Returns the message (English; show it through tr()), or NULL if it may be

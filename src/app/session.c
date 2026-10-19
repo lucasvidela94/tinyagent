@@ -17,6 +17,7 @@
 #include "stream.h"
 #include "sys.h"
 #include "telemetry.h"
+#include "tools.h"
 #include "tui.h"
 #include "util.h"
 

@@ -8,6 +8,7 @@
 #include "conversation.h"
 #include "json.h"
 #include "policy.h"
+#include "tools.h"
 #include "util.h"
 #include "check.h"
 
