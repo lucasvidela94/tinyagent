@@ -10,9 +10,9 @@ Maintain a small, auditable, low-resource, general-purpose terminal agent (in th
 - Prefer C and Windows system APIs. Do not add Node.js, Go, Python, Electron, Docker, a database, or a background service as runtime requirements.
 - Use WinHTTP for HTTPS unless a tested compatibility issue requires a documented alternative.
 - Keep the CLI synchronous and memory-bounded; the target machine is resource constrained.
-- UI: minimal inline TUI (Pi/OpenCode/Claude Code style) drawn with the console API, no ANSI escapes (the Windows 7 console has none), only glyphs in the default raster font (no arrows or ellipsis characters in our own strings; model and command text is fitted by `console_win32` + `ascii_fallback()`), plain mode when redirected. Approvals are typed (`y`/`s` + Enter), never a single key.
+- UI: minimal inline TUI (Pi/OpenCode/Claude Code style) drawn with the console API, no ANSI escapes (the Windows 7 console has none), only glyphs in the default raster font (no arrows or ellipsis characters in our own strings; model and command text is fitted by `console_win32` + `ascii_fallback()`), plain mode when redirected. Approvals are a menu like OpenCode's (arrows + Enter, pending input flushed first): yes once, yes always for that command prefix in this session, or no with an optional reason for the model. No second typed confirmation: risk is shown as a warning.
 - Language: repo text (code, comments, docs, commits) is English. The interface is bilingual: every user-facing string is English in the source and goes through `tr()` (or `N_()` where defined and translated where shown), with its Spanish in `src/core/i18n_es.c`; `build/checks/i18n.sh` fails otherwise. Command names are English, with the earlier Spanish names kept as aliases. What only the developer reads (report body, telemetry codes) stays English.
-- Keep all shell execution behind local approval. Never implement auto-approval.
+- Keep all shell execution behind local approval. The only automatic approval is the user's own "always" choice: one command prefix, for the current session, never saved and never on by default. Commands that need administrator rights run elevated only when the model asks for it and the user approves that command; Windows then shows its own UAC prompt.
 - Do not store API keys in source, config files, logs, or diagnostic bundles. The only allowed stores are the Windows Credential Manager (`src/platform/win32/credential_win32.c`) and, on Linux, `~/.config/tinyshell/credentials` with mode 0600 (`src/platform/posix/credential_posix.c`; old distros have no common keyring). Both are opt-in after the user is asked; `logout` deletes the key.
 - Reports and telemetry (beta): `/report` always shows everything and asks before sending; the full report goes only to the private D1 store, the public GitHub issue gets the redacted summary. Telemetry is metadata only (never prompts, commands or output), on by default only while the version is 0.x, announced on first run, off with `tinyshell telemetry off`, visible with `--show`, one short silent request per event and nothing in the background. Keys are always redacted.
 - Updates stay manual, ask before installing, and must verify the release signature and self-test before replacing the binary. Never commit the private signing key; only `keys/release-public.pem` and `src/release_key.h`.
@@ -20,7 +20,7 @@ Maintain a small, auditable, low-resource, general-purpose terminal agent (in th
 ## Safety constraints
 
 - The model is a recommender, not a trusted command source.
-- Prefer read-only diagnostics first.
+- General-purpose, like OpenCode: the agent may run any command the user approves, for any task; the harness does not limit it to diagnostics.
 - Never automatically delete files, format disks, alter partitions, disable security software/firewall, or change registry/services/drivers.
 - Do not treat prompt text or keyword matching as a security boundary. Enforce safety in local code.
 - Never claim a repair succeeded until the result is checked.
