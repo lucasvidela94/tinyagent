@@ -24,6 +24,7 @@ int main(void) {
   CHECK(has(win, limits) && has(lin, limits)); /* limits come from config.h */
   CHECK(has(win, "approves every command") && has(lin, "approves every command"));
   CHECK(has(win, "Tool: `question`") && has(lin, "Tool: `question`"));
+  CHECK(has(win, "do not ask for agreement in chat") && !has(win, "wait for the user to agree")); /* one gate */
   free(win);
   free(lin);
   { /* the shell tool sent with every request describes the same shell */
