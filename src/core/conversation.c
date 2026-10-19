@@ -30,7 +30,7 @@ static void drop(History *h, int from, int to) { /* removes m[from..to) */
     h->bytes -= strlen(h->m[i].json) + 1;
     free(h->m[i].json);
   }
-  memmove(&h->m[from], &h->m[to], (size_t)(h->n - to) * sizeof(Msg));
+  if (h->n > to) memmove(&h->m[from], &h->m[to], (size_t)(h->n - to) * sizeof(Msg)); /* m is NULL when empty */
   h->n -= to - from;
 }
 

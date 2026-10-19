@@ -95,6 +95,8 @@ static void test_history(void) {
   Json j = {0};
   char *req, big[2000];
   int round, i;
+  history_free(&h); /* an empty history (m is NULL) frees cleanly */
+  CHECK(h.n == 0 && h.m == NULL);
   memset(big, 'x', sizeof big - 1);
   big[sizeof big - 1] = 0;
   history_add(&h, message_json("system", "sys"), 0);
