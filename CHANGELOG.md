@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.11.0 — approvals like OpenCode, administrator commands
+
+- Each command is shown in a shaded panel, with its output's last lines and exit code inside, like OpenCode's tool blocks. The model's questions use the same panel.
+- Approval is a menu: **Yes, once**; **Yes, always** that kind of command (e.g. `reg query`, `dir`) for the rest of the session; **Yes, once, as administrator** on Windows; **No, and tell it what to do instead**. No more typing `RUN` and no red warnings; a risky command can be approved once but never "always".
+- Administrator commands on Windows: the model can ask for one, or you can pick it yourself; Windows shows its UAC prompt and only that command runs elevated, its output coming back to the model.
+- The agent does what you ask: the prompt no longer asks it to look read-only first, back up to `.bak`, avoid security settings or ask for agreement in chat before a command, says the machine is yours, and tells it to try another way when a step fails.
+- Reasoning models get room to think (16 384 answer tokens instead of 4096), and an answer that ran out before writing anything says so.
+- Redirections to `nul` / `/dev/null` no longer count as risky.
+
 ## 0.10.1 — Windows 7 console fixes
 
 First report from the Windows 7 target machine:
