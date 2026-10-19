@@ -76,7 +76,8 @@ Items checked before 0.8.0 record the Spanish command names and screens of the t
 - [x] Missing `x-opencode-session` is rejected with HTTP 400; with it, requests succeed. (wine, real API)
 - [x] Custom provider over `http://` (local mock): URL with query string, model from `config.ini`, no `Authorization` without key, no session header when empty, full tool loop, `/modelo X` saved. (wine)
 - [x] Invalid `config.ini` values (bad name, `ftp://`, header injection) are reported and defaults used. (wine)
-- [ ] HTTP 401 and 429 are reported usefully.
+- [x] `question` tool accepted by the API and used by the model (wine, real API, `deepseek-v4.1-flash`, 2026-10-19): asked to choose before acting, the model called `question`, the menu showed its options, the chosen one went back and the model went on with it; rejected commands afterwards were reported as such and not retried.
+- [ ] HTTP 401 and 429 are reported usefully. (401 seen under wine with a rejected key: "answered HTTP 401 (invalid API key or no access to the model)", and the session continued.)
 - [ ] Malformed JSON does not trigger shell execution.
 - [ ] Unknown tool name is never executed.
 

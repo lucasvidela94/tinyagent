@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.10.0 — questions, deny rules, longer sessions
+
+- The model can ask instead of guessing: a new `question` tool shows its question with 2 to 8 options in the menu (arrows, filter, Enter; Esc skips), plus "Other answer" to type your own. Nothing runs; the answer goes back to the model.
+- Deny rules: `[deny] commands = diskpart, del /s, rm -r*` in `config.ini` refuses matching commands before you are asked, and tells the model which rule blocked them. There are no allow rules: every command still needs your approval. New `config.ini` files include a commented example.
+- Longer sessions keep more of the conversation: when the history fills up, old command outputs are replaced by a short note that keeps the exit status, before any earlier messages are dropped. A single long task with many commands now fits the memory budget.
+- Commands run through `sudo` or `doas` are now checked as the command they run: `doas rm -rf` is flagged as risky and a deny rule for `dd` also blocks `sudo dd`.
+
 ## 0.9.0 — Linux
 
 - TinyShell for Linux: `tinyshell-linux-i386`, one static binary for x86 PCs from the Pentium up (i586, no SSE2 needed), 32- or 64-bit distros, whatever their libc or OpenSSL. It brings its own TLS (Mbed TLS 4.1 LTS) and Mozilla's root certificates, so old distros with expired roots still connect; it ran and connected on 32-bit Debian 4.0 (2007) to 8 userlands. Same agent, approval gate, login, reports and signed updates as on Windows, with `/bin/sh` risk rules and prompt guidance; the API key, if saved, goes to `~/.config/tinyshell/credentials` (mode 0600).
