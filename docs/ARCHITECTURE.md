@@ -118,7 +118,7 @@ Other files:
 4. For `shell`, the program shows the command and the reason.
 5. A rejection goes back to the model as such; an approved command runs in the platform shell.
 6. The result goes back as a tool message and the model may continue, up to 25 steps per message (`MAX_TURNS`).
-7. Before each request the history is trimmed to ~192 KB by dropping whole exchanges (a `tool_calls` message is never separated from its results).
+7. Before each request the history is trimmed to ~192 KB: first old command outputs over 1 KB are replaced by a short note that keeps the exit status (all but the last two, oldest first), then whole exchanges are dropped (a `tool_calls` message is never separated from its results). Eliding before dropping follows the context-management results in arXiv:2609.20804, where cheap elision matched summarization in accuracy at lower cost.
 
 ## Constraints / design choices
 
@@ -126,7 +126,7 @@ Other files:
 - HTTP: WinHTTP on Windows, so TLS and certificates depend on the Windows 7 installation; Mbed TLS 4.1 LTS on Linux, with its own roots, so an old distro's expired bundle does not matter (TLS 1.2 is requested explicitly on Windows).
 - JSON: small embedded tokenizer, no external dependency; treated as sensitive code, tested and fuzzed against unexpected responses.
 - Execution: the platform shell in its own job or process group; not a sandbox, and command quoting has limits.
-- Memory: response ≤ 1 MB (`MAX_HTTP`), history ~192 KB (`MAX_HISTORY`, soft: the last exchange is always kept), command output ≤ 24 KB (`MAX_OUTPUT`), command ≤ 2000 bytes (`MAX_COMMAND`), JSON ≤ 20 000 tokens (`MAX_TOKENS`) and 64 levels (`MAX_DEPTH`), commands stopped after 180 s (`CMD_TIMEOUT_MS`).
+- Memory: response ≤ 1 MB (`MAX_HTTP`), history ~192 KB (`MAX_HISTORY`, soft: the last two command outputs and the last exchange are always kept), command output ≤ 24 KB (`MAX_OUTPUT`), command ≤ 2000 bytes (`MAX_COMMAND`), JSON ≤ 20 000 tokens (`MAX_TOKENS`) and 64 levels (`MAX_DEPTH`), commands stopped after 180 s (`CMD_TIMEOUT_MS`).
 - Text: UTF-8 internally; the Windows console uses the UTF-16 API and command output is converted from the OEM code page; on Linux, output to non-UTF-8 terminals goes through `core/charset`.
 
 ## Future changes

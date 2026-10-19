@@ -12,7 +12,8 @@ typedef struct { char *json; int user; } Msg;
 typedef struct { Msg *m; int n, cap; size_t bytes; } History;
 
 void history_add(History *h, char *json, int user); /* takes ownership of json */
-/* Drops the oldest whole exchanges (a user message up to the next one), so an assistant
+/* First replaces old bulky tool results with a short note (all but the last two), then
+ * drops the oldest whole exchanges (a user message up to the next one), so an assistant
  * tool_calls message is never separated from its tool results. The system prompt and
  * the latest exchange always stay, so the budget is soft. */
 void history_trim(History *h, size_t budget);

@@ -1,10 +1,15 @@
 #include "conversation.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "config.h"
+#include "i18n.h"
 #include "util.h"
+
+#define KEEP_RESULTS 2 /* latest tool results always sent verbatim */
+#define ELIDE_MIN 1024 /* smaller results are not worth replacing */
 
 void history_add(History *h, char *json, int user) {
   if (h->n == h->cap) {
@@ -27,7 +32,43 @@ static void drop(History *h, int from, int to) { /* removes m[from..to) */
   h->n -= to - from;
 }
 
+static int is_tool_result(const Msg *m) { return !strncmp(m->json, "{\"role\":\"tool\"", 14); }
+
+/* Keeps the last line (the exit status), so the model still knows how the command ended. */
+static void elide(History *h, int i) {
+  Json j = {0};
+  Buf b = {0};
+  char *id, *out, *tail, head[160];
+  if (!json_parse(&j, h->m[i].json)) return;
+  id = json_str(&j, json_key(&j, 0, "tool_call_id"));
+  out = json_str(&j, json_key(&j, 0, "content"));
+  json_free(&j);
+  snprintf(head, sizeof head, tr("[output of %lu bytes left out to save context; run the command again if you need it]"),
+           (unsigned long)strlen(out));
+  buf_str(&b, head);
+  tail = strrchr(out, '\n');
+  if (tail && strlen(tail) < 200) buf_str(&b, tail);
+  h->bytes -= strlen(h->m[i].json) + 1;
+  free(h->m[i].json);
+  h->m[i].json = tool_result_json(id, b.p ? b.p : "");
+  h->bytes += strlen(h->m[i].json) + 1;
+  free(b.p);
+  free(id);
+  free(out);
+}
+
+/* Old command outputs are the bulk of a long session and the model rarely needs them again,
+ * so they go first, oldest first, before any whole exchange is dropped. */
+static void elide_old_results(History *h, size_t budget) {
+  int i, last, kept = 0;
+  for (last = h->n - 1; last > 0 && kept < KEEP_RESULTS; last--)
+    if (is_tool_result(&h->m[last])) kept++;
+  for (i = 1; i <= last && h->bytes > budget; i++)
+    if (is_tool_result(&h->m[i]) && strlen(h->m[i].json) > ELIDE_MIN) elide(h, i);
+}
+
 void history_trim(History *h, size_t budget) {
+  elide_old_results(h, budget);
   while (h->bytes > budget) {
     int i, next = -1;
     for (i = 2; i < h->n; i++)

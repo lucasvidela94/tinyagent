@@ -193,6 +193,30 @@ static void test_history(void) {
   history_free(&h);
 }
 
+/* Old command outputs give way before whole exchanges, and the newest stay verbatim. */
+static void test_elision(void) {
+  History h = {0};
+  char big[3000];
+  int i;
+  memset(big, 'x', sizeof big);
+  memcpy(big + sizeof big - 10, "\n[exit=3]", 10);
+  history_add(&h, message_json("system", "sys"), 0);
+  history_add(&h, message_json("user", "pregunta"), 1);
+  for (i = 0; i < 10; i++) {
+    history_add(&h, xstrdup("{\"role\":\"assistant\",\"content\":null,\"tool_calls\":[{\"id\":\"a\",\"type\":\"function\","
+                            "\"function\":{\"name\":\"shell\",\"arguments\":\"{}\"}}]}"), 0);
+    history_add(&h, tool_result_json("a", big), 0);
+  }
+  history_trim(&h, 10000);
+  CHECK(h.n == 22); /* nothing dropped: the single long exchange now fits */
+  CHECK(h.bytes <= 10000);
+  CHECK(strstr(h.m[3].json, "left out to save context") != NULL);
+  CHECK(strstr(h.m[3].json, "[exit=3]") != NULL); /* the exit status survives */
+  CHECK(strstr(h.m[3].json, "\"tool_call_id\":\"a\"") != NULL);
+  CHECK(strstr(h.m[19].json, "xxxx") != NULL && strstr(h.m[21].json, "xxxx") != NULL);
+  history_free(&h);
+}
+
 static void test_capped_output(void) {
   Buf b = {0};
   size_t dropped = 0;
@@ -211,6 +235,7 @@ int main(void) {
   test_risk_sh();
   test_is_yes();
   test_history();
+  test_elision();
   test_capped_output();
   return CHECK_DONE("test_agent");
 }

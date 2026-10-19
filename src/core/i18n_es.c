@@ -246,6 +246,8 @@ const I18nPair I18N_ES[] = {
      "Ya tenés la última versión.\n"},
     {"[exit=%lu]",
      "[código de salida %lu]"},
+    {"[output of %lu bytes left out to save context; run the command again if you need it]",
+     "[salida de %lu bytes omitida para ahorrar contexto; volvé a ejecutar el comando si la necesitás]"},
     {"\n"
      "%s answered HTTP %d%s%s%s\n",
      "\n"
